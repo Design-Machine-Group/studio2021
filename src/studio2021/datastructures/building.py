@@ -19,7 +19,6 @@ Residential surface area {} sqft
 
 """
 
-
 class Building(object):
 
     def __init__(self, gsf, retail_percent, office_percent, residential_percent):
@@ -30,7 +29,17 @@ class Building(object):
         self.office_percent         = office_percent
         self.office_area            = gsf * office_percent  
         self.residential_percent    = residential_percent
-        self.residential_area       = gsf * residential_percent  
+        self.residential_area       = gsf * residential_percent
+
+        self.site_area              = None
+        self.out_amenity_area       = None
+
+        self.pv_percent             = None
+        self.pv_gross               = None
+        self.pv_net                 = None
+
+        self.green_percent          = None
+        self.green_area             = None
 
         self.percentage_check()
 

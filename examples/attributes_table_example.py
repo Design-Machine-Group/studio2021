@@ -7,10 +7,13 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 from studio2021.datastructures import Building
+from studio2021.datastructures import Seattle
+
 
 
 for i in range(60): print()
 
 b = Building(50e3, .2, .6, .2)
-
+c = Seattle()
 print(b)
+print(c)
