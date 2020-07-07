@@ -29,7 +29,7 @@ optional_requirements = {}
 setup(
     name="studio2021",
     version="0.1.0",
-    description="Embodied and operational energy tools developed for the "Designing for low emissions" research studio. University of Washington, College of Built Environments, Department of Architecture.",
+    description="Embodied and operational energy tools developed for the \"Designing for low emissions\" research studio. University of Washington, College of Built Environments, Department of Architecture.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/DMG-IDL/studio2021",

@@ -19,7 +19,7 @@ import sys
 
 
 __author__ = ["Tomas Mendez Echenagucia"]
-__copyright__ = ""Copyright 2020, Design Machine Group - University of Washington""
+__copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
 __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
@@ -54,3 +54,8 @@ except Exception:
     pass
 
 __all__ = ["HOME", "DATA", "DOCS", "TEMP"]
+
+
+def get(filename):
+    filename = filename.strip('/')
+    return os.path.abspath(os.path.join(DATA, filename))
