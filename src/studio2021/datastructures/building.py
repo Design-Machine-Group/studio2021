@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import math
+
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
 __license__ = "MIT License"
@@ -21,7 +23,16 @@ Residential surface area {} sqft
 
 class Building(object):
 
-    def __init__(self, gsf, retail_percent, office_percent, residential_percent):
+    def __init__(self,
+                 gsf,
+                 retail_percent,
+                 office_percent,
+                 residential_percent,
+                 site_area,
+                 out_amenity_percent,
+                 pv_percent,
+                 green_percent):
+        
         self.__name__               = 'StudioBuilding'
         self.gsf                    = gsf
         self.retail_percent         = retail_percent
@@ -31,17 +42,20 @@ class Building(object):
         self.residential_percent    = residential_percent
         self.residential_area       = gsf * residential_percent
 
-        self.site_area              = None
-        self.out_amenity_area       = None
-
-        self.pv_percent             = None
-        self.pv_gross               = None
-        self.pv_net                 = None
-
-        self.green_percent          = None
-        self.green_area             = None
-
         self.percentage_check()
+
+        self.site_area              = site_area
+        self.out_amenity_percent    = out_amenity_percent
+        self.out_amenity_area       = site_area * out_amenity_percent
+
+        self.pv_percent             = pv_percent
+        self.pv_gross               = site_area * pv_percent
+        self.pv_net                 = .9 * self.pv_gross
+
+        self.green_percent          = green_percent
+        self.green_area             = site_area * green_percent
+
+        self.occupants              = {}
 
     def __str__(self):
         return TPL.format(self.__name__,self.retail_area,self.office_area, self.residential_area)
@@ -52,3 +66,9 @@ class Building(object):
             raise NameError('The percentages too high')
         elif tot_percent < 1.:
             raise NameError('The percentages are too low')
+    
+    def compute_occupancy(self, city):
+        self.occupants['office'] = math.ceil(self.office_area / float(city.ocupants['office']))
+
+    def energy_demand(self, city):
+        pass
