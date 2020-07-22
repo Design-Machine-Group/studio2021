@@ -13,6 +13,8 @@ from studio2021.datastructures import Seattle
 
 for i in range(60): print()
 
+seattle = Seattle()
+
 b = Building(gsf=50e3,
             retail_percent=.2,
             office_percent=.4,
@@ -20,9 +22,8 @@ b = Building(gsf=50e3,
             site_area=10e3,
             out_amenity_percent=.05,
             pv_percent=1.2,
-            green_percent=.05)
-c = Seattle()
+            green_percent=.05,
+            city=seattle)
 
-b.compute_occupancy(c)
 print(b)
 print(b.occupants)
