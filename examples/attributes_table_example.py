@@ -14,23 +14,25 @@ import studio2021
 from studio2021.datastructures import Building
 from studio2021.datastructures import Seattle
 
-
+import random
 
 for i in range(60): print()
 
 seattle = Seattle()
+for i in range(100):
+    x1 = random.random() + .1
+    x2 = random.random() + .1
+    # print(x2, (1 - x2) / 2.)
+    b = Building(gsf= x1 * 100000,
+                retail_percent= x2,
+                office_percent= (1 - x2) / 2.,
+                residential_percent= (1 - x2) / 2.,
+                site_area= x1 * 10000,
+                out_amenity_percent=.05,
+                pv_percent=1.2,
+                green_percent=.05,
+                city=seattle)
 
-b = Building(gsf=50e3,
-             retail_percent=.2,
-             office_percent=.4,
-             residential_percent=.4,
-             site_area=10e3,
-             out_amenity_percent=.05,
-             pv_percent=1.2,
-             green_percent=.05,
-             city=seattle)
 
-print(b.data)
-
-filepath = os.path.join(studio2021.TEMP, 'seattle_{}.json'.format(datetime.now()))
-b.to_json(filepath)
+    filepath = os.path.join(studio2021.TEMP, 'seattle_{}.json'.format(datetime.now()))
+    b.to_json(filepath)

@@ -64,7 +64,7 @@ class Building(object):
     def to_json(self, filepath):
         with open(filepath, 'w+') as f:
             json.dump(self.data, f)
-            
+
     def from_json(self):
         pass
     
@@ -78,9 +78,18 @@ class Building(object):
                 'out_amenity_percent': self.out_amenity_percent,
                 'pv_percent': self.pv_percent,
                 'green_percent': self.green_percent,
-                'city': self.city.__repr__()
-
-        }
+                'city': self.city.__repr__(),
+                'office_area': self.office_area,
+                'retail_area': self.retail_area,
+                'residential_area': self.residential_area,
+                'out_amenity_area': self.out_amenity_area,
+                'pv_gross': self.pv_gross,
+                'pv_net': self.pv_net,
+                'green_area': self.green_area,
+                'occupants': self.occupants,
+                'energy_demand': self.energy_demand,
+                'energy_supply': self.energy_supply,
+                }
         return data
 
     @property
@@ -110,13 +119,6 @@ class Building(object):
     @property
     def green_area(self):
         return self.site_area * self.green_percent  
-
-    def percentage_check(self):
-        tot_percent =  self.retail_percent + self.office_percent + self.residential_percent
-        if tot_percent > 1.:
-            raise NameError('The percentages too high')
-        elif tot_percent < 1.:
-            raise NameError('The percentages are too low')
     
     @property
     def occupants(self):
@@ -144,3 +146,10 @@ class Building(object):
         supply['required'] = supply['total'] / self.gsf
         supply['requred_pv'] = ed['total'] / self.city.solar_production['kbtu']
         return supply
+    
+    def percentage_check(self):
+        tot_percent =  self.retail_percent + self.office_percent + self.residential_percent
+        if tot_percent > 1.:
+            raise NameError('The percentages too high')
+        elif tot_percent < 1.:
+            raise NameError('The percentages are too low')
