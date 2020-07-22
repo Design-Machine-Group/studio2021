@@ -60,6 +60,12 @@ class Building(object):
                           self.energy_demand['office'],
                           self.energy_demand['residential'])
     
+    def to_json(self):
+        pass
+
+    def from_json(self):
+        pass
+
     @property
     def office_area(self):
         return self.gsf * self.retail_percent  
@@ -107,8 +113,18 @@ class Building(object):
     @property
     def energy_demand(self):
         energy = {}
-        energy['office'] = self.office_area * self.city.energy['office']['50']
-        energy['residential'] = self.office_area * self.city.energy['residential']['50']
-        energy['retail'] = self.office_area * self.city.energy['retail']['50']
+        energy['office'] = self.office_area * self.city.energy['office']['2015_TPP']
+        energy['residential'] = self.office_area * self.city.energy['residential']['2015_TPP']
+        energy['retail'] = self.office_area * self.city.energy['retail']['2015_TPP']
         energy['total'] = energy['office'] + energy['residential'] + energy['retail']
         return energy
+
+    @property
+    def energy_supply(self):
+        ed = self.energy_demand
+
+        supply = {}
+        supply['total'] = self.pv_net * self.city.solar_production['kbtu']
+        supply['required'] = supply['total'] / self.gsf
+        supply['requred_pv'] = ed['total'] / self.city.solar_production['kbtu']
+        return supply

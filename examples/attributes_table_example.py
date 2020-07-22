@@ -25,4 +25,4 @@ b = Building(gsf=50e3,
              green_percent=.05,
              city=seattle)
 
-print(b)
+print(b.energy_supply)
