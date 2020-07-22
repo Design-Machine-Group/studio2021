@@ -6,6 +6,11 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+import os
+import time
+from datetime import datetime
+
+import studio2021
 from studio2021.datastructures import Building
 from studio2021.datastructures import Seattle
 
@@ -25,4 +30,7 @@ b = Building(gsf=50e3,
              green_percent=.05,
              city=seattle)
 
-print(b.energy_supply)
+print(b.data)
+
+filepath = os.path.join(studio2021.TEMP, 'seattle_{}.json'.format(datetime.now()))
+b.to_json(filepath)

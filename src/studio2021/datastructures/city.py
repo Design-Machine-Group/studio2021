@@ -23,6 +23,10 @@ class City(object):
     
     def __str__(self):
         return TPL.format(self.__name__)
+    
+    def __repr__(self):
+        return '{}()'.format(self.__name__)
+
 
     def compute_demand(self):
         self.energy['office']['25'] = self.energy['office']['2015_TPP'] * .75

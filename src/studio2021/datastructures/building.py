@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import math
+import json
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -60,11 +61,27 @@ class Building(object):
                           self.energy_demand['office'],
                           self.energy_demand['residential'])
     
-    def to_json(self):
-        pass
-
+    def to_json(self, filepath):
+        with open(filepath, 'w+') as f:
+            json.dump(self.data, f)
+            
     def from_json(self):
         pass
+    
+    @property
+    def data(self):
+        data = {'gsf':self.gsf,
+                'retail_percent':self.retail_percent,
+                'office_percent': self.office_percent,
+                'residential_percent': self.residential_percent,
+                'site_area': self.site_area,
+                'out_amenity_percent': self.out_amenity_percent,
+                'pv_percent': self.pv_percent,
+                'green_percent': self.green_percent,
+                'city': self.city.__repr__()
+
+        }
+        return data
 
     @property
     def office_area(self):
@@ -122,7 +139,6 @@ class Building(object):
     @property
     def energy_supply(self):
         ed = self.energy_demand
-
         supply = {}
         supply['total'] = self.pv_net * self.city.solar_production['kbtu']
         supply['required'] = supply['total'] / self.gsf
