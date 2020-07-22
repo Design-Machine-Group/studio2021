@@ -20,9 +20,8 @@ for i in range(60): print()
 
 seattle = Seattle()
 for i in range(100):
-    x1 = random.random() + .1
-    x2 = random.random() + .1
-    # print(x2, (1 - x2) / 2.)
+    x1 = random.random()
+    x2 = random.random()
     b = Building(gsf= x1 * 100000,
                 retail_percent= x2,
                 office_percent= (1 - x2) / 2.,
@@ -33,6 +32,6 @@ for i in range(100):
                 green_percent=.05,
                 city=seattle)
 
-
-    filepath = os.path.join(studio2021.TEMP, 'seattle_{}.json'.format(datetime.now()))
-    b.to_json(filepath)
+    path = studio2021.TEMP
+    filename = 'seattle_{}.json'.format(datetime.now())
+    b.to_json(path, filename)

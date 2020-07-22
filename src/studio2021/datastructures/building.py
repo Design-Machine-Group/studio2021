@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import math
 import json
 
@@ -61,9 +62,12 @@ class Building(object):
                           self.energy_demand['office'],
                           self.energy_demand['residential'])
     
-    def to_json(self, filepath):
+    def to_json(self, path, filename):
+        data = self.data
+        data['filename'] = filename
+        filepath = os.path.join(path, filename)
         with open(filepath, 'w+') as f:
-            json.dump(self.data, f)
+            json.dump(data, f)
 
     def from_json(self):
         pass
