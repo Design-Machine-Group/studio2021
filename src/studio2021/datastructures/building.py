@@ -9,16 +9,21 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 TPL = """
-################################################################################
+#########################################
 Building data structure: {}
-################################################################################
+#########################################
 
 Areas
 -----
-Retail surface area {} sqft
-Office surface area {} sqft
-Residential surface area {} sqft
+Retail surface area {} (sqft)
+Office surface area {} (sqft)
+Residential surface area {} (sqft)
 
+Energy Demand
+-------------
+Retail energy demand {} (kBTU/yr)
+Office energy demand {} (kBTU/yr)
+Residential energy demand {} (kBTU/yr)
 """
 
 class Building(object):
@@ -47,7 +52,13 @@ class Building(object):
         self.percentage_check()
 
     def __str__(self):
-        return TPL.format(self.__name__,self.retail_area,self.office_area, self.residential_area)
+        return TPL.format(self.__name__,
+                          self.retail_area,
+                          self.office_area,
+                          self.residential_area,
+                          self.energy_demand['retail'],
+                          self.energy_demand['office'],
+                          self.energy_demand['residential'])
     
     @property
     def office_area(self):
@@ -93,5 +104,11 @@ class Building(object):
         occupants['total'] = occupants['retail'] + occupants['residential'] + occupants['office']
         return occupants
 
+    @property
     def energy_demand(self):
-        pass
+        energy = {}
+        energy['office'] = self.office_area * self.city.energy['office']['50']
+        energy['residential'] = self.office_area * self.city.energy['residential']['50']
+        energy['retail'] = self.office_area * self.city.energy['retail']['50']
+        energy['total'] = energy['office'] + energy['residential'] + energy['retail']
+        return energy
