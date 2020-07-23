@@ -58,7 +58,8 @@ def plot_all_buildings(path, f1, f2):
                 )
     xaxis = go.layout.XAxis(title='{}'.format(f1))
     yaxis = go.layout.YAxis(title='{}'.format(f2))
-    fig.update_layout(xaxis=xaxis,
+    fig.update_layout(title={'text': 'Design Technology Studio 2021 - Pareto Front'},
+                      xaxis=xaxis,
                       yaxis=yaxis,
                       hovermode='closest')
     fig.show()
