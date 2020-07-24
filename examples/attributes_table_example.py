@@ -13,25 +13,51 @@ from datetime import datetime
 import studio2021
 from studio2021.datastructures import Building
 from studio2021.datastructures import Seattle
+from studio2021.plotters import plot_all_buildings
 
 import random
 
 for i in range(60): print()
 
+path = studio2021.TEMP  
+filename = 'seattle_{}.json'.format(datetime.now())
+
 seattle = Seattle()
-for i in range(100):
-    x1 = random.random()
-    x2 = random.random()
-    b = Building(gsf= x1 * 100000,
-                retail_percent= x2,
-                office_percent= (1 - x2) / 2.,
-                residential_percent= (1 - x2) / 2.,
-                site_area= x1 * 10000,
-                out_amenity_percent=.05,
-                pv_percent=1.2,
-                green_percent=.05,
+
+x1 = random.random()
+x2 = random.random()
+b = Building(gsf= x1 * 100000,
+            retail_percent= x2,
+            office_percent= (1 - x2) / 2.,
+            residential_percent= (1 - x2) / 2.,
+            site_area= x1 * 10000,
+            out_amenity_percent=.05,
+            pv_percent=1.2,
+            green_percent=.05,
                 city=seattle)
 
-    path = studio2021.TEMP
-    filename = 'seattle_{}.json'.format(datetime.now())
-    b.to_json(path, filename)
+filename = 'seattle_{}.json'.format(datetime.now())
+b.to_json(path, filename)
+
+#     path = studio2021.TEMP
+#     filename = 'seattle_{}.json'.format(datetime.now())
+#     b.to_json(path, filename)
+# for i in range(100):
+#     x1 = random.random()
+#     x2 = random.random()
+#     b = Building(gsf= x1 * 100000,
+#                 retail_percent= x2,
+#                 office_percent= (1 - x2) / 2.,
+#                 residential_percent= (1 - x2) / 2.,
+#                 site_area= x1 * 10000,
+#                 out_amenity_percent=.05,
+#                 pv_percent=1.2,
+#                 green_percent=.05,
+#                 city=seattle)
+
+#     path = studio2021.TEMP
+#     filename = 'seattle_{}.json'.format(datetime.now())
+#     b.to_json(path, filename)
+
+
+plot_all_buildings(path, 'retail_area', ('energy_supply', 'total'))
