@@ -24,9 +24,9 @@ filename = 'seattle_{}.json'.format(datetime.now())
 
 seattle = Seattle()
 
-x1 = random.random()
-x2 = random.random()
-b = Building(gsf= x1 * 100000,
+x1 = 100000
+x2 = .4
+b = Building(gsf= x1,
             retail_percent= x2,
             office_percent= (1 - x2) / 2.,
             residential_percent= (1 - x2) / 2.,
@@ -39,9 +39,7 @@ b = Building(gsf= x1 * 100000,
 filename = 'seattle_{}.json'.format(datetime.now())
 b.to_json(path, filename)
 
-#     path = studio2021.TEMP
-#     filename = 'seattle_{}.json'.format(datetime.now())
-#     b.to_json(path, filename)
+
 # for i in range(100):
 #     x1 = random.random()
 #     x2 = random.random()
