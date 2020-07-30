@@ -36,6 +36,11 @@ class City(object):
                                        'retail':{},
                                        'irrigation':{}}
 
+        self.economy                = {'office':{}, 
+                                       'residential':{}, 
+                                       'retail':{}}
+
+
     def __str__(self):
         return TPL.format(self.__name__)
     
@@ -77,6 +82,15 @@ class Seattle(City):
                                           'flush':2.91, 'flush_high':2.}
         self.water['retail']           = {'wui':5, 'wui_high':None}
         self.water['irrigation']       = {'wui':9.8, 'wui_high':None}
+
+        self.economy['residential']    = {'income': 5 * 12,  # $/ft2/yr
+                                          'cost':285}        # $/ft2
+
+        self.economy['office']         = {'income': 50,  # $/ft2/yr
+                                          'cost':375}        # $/ft2
+
+        self.economy['retail']         = {'income': 50,  # $/ft2/yr   COPIED FROM OFFICE, not correct
+                                          'cost':375}        # $/ft2
 
         self.compute_demand()
         self.compute_solar()

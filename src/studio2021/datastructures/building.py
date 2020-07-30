@@ -16,26 +16,33 @@ Building data structure: {}
 #########################################
 
 
-Area  {} (sqft)
+Area  {:.2f} (sqft)
 -----------------------------------------
-Retail surface area {} (sqft)
-Office surface area {} (sqft)
-Residential surface area {} (sqft)
+Retail surface area {:.2f} (sqft)
+Office surface area {:.2f} (sqft)
+Residential surface area {:.2f} (sqft)
 
 
-Energy Demand {} (kBTU/yr)
+Energy Demand {:.2f} (kBTU/yr)
 -----------------------------------------
-Retail energy demand {} (kBTU/yr)
-Office energy demand {} (kBTU/yr)
-Residential energy demand {} (kBTU/yr)
+Retail energy demand {:.2f} (kBTU/yr)
+Office energy demand {:.2f} (kBTU/yr)
+Residential energy demand {:.2f} (kBTU/yr)
 
 
-Water Demand {} (kgl/yr)
+Water Demand {:.2f} (kgl/yr)
 -----------------------------------------
-Retail water demand {} (kgl/yr)
-Office water demand {} (kgl/yr)
-Residential water demand {} (kgl/yr)
-Irrigation water demand {} (kgl/yr)
+Retail water demand {:.2f} (kgl/yr)
+Office water demand {:.2f} (kgl/yr)
+Residential water demand {:.2f} (kgl/yr)
+Irrigation water demand {:.2f} (kgl/yr)
+
+Economy
+-----------------------------------------
+Net income {:.2f} ($/yr)
+Net income per sqft {:.2f} ($/sqft/yr)
+Building cost {:.2f} (kgl/yr)
+
 """
 
 class Building(object):
@@ -77,7 +84,10 @@ class Building(object):
                           self.water_demand['retail'],
                           self.water_demand['office'],
                           self.water_demand['residential'],
-                          self.water_demand['irrigation'])
+                          self.water_demand['irrigation'],
+                          self.economy['net_revenue'],
+                          self.economy['net_revenue_f2'],
+                          self.economy['cost'])
 
     def to_json(self, path, filename):
         data = self.data
@@ -111,6 +121,7 @@ class Building(object):
                 'energy_demand': self.energy_demand,
                 'energy_supply': self.energy_supply,
                 'water_demand': self.water_demand,
+                'economy': self.economy,
                 }
         return data
 
@@ -178,6 +189,22 @@ class Building(object):
         wd['irrigation'] = self.green_area * self.city.water['irrigation']['wui'] / 1e3#  kgl / yr
         wd['total'] = wd['irrigation'] + wd['residential'] + wd['office'] + wd['retail']
         return wd
+
+    @property
+    def economy(self):
+        res_rev = self.residential_area * self.city.economy['residential']['income']
+        ret_rev = self.retail_area * self.city.economy['retail']['income']
+        off_rev = self.office_area * self.city.economy['office']['income']
+
+        res_cost = self.residential_area * self.city.economy['residential']['cost']
+        ret_cost = self.retail_area * self.city.economy['retail']['cost']
+        off_cost = self.office_area * self.city.economy['office']['cost']        
+
+        e = {}
+        e['net_revenue'] = res_rev + off_rev + ret_rev  # $ / yr
+        e['net_revenue_f2'] = e['net_revenue'] / self.gsf * .85 # $ / ft2 / yr
+        e['cost'] = res_cost + ret_cost + off_cost
+        return e
 
     def percentage_check(self):
         tot_percent =  self.retail_percent + self.office_percent + self.residential_percent

@@ -24,37 +24,37 @@ filename = 'seattle_{}.json'.format(datetime.now())
 
 seattle = Seattle()
 
-b = Building(gsf= 50000,
-            retail_percent= .2,
-            office_percent= .6,
-            residential_percent= .2,
-            site_area= 10000,
-            out_amenity_percent=.05,
-            pv_percent=1.2,
-            green_percent=.05,
-                city=seattle)
-
-filename = 'seattle_{}.json'.format(datetime.now())
-b.to_json(path, filename)
-
-print(b)
-
-# for i in range(100):
-#     x1 = random.random()
-#     x2 = random.random()
-#     b = Building(gsf= x1 * 100000,
-#                 retail_percent= x2,
-#                 office_percent= (1 - x2) / 2.,
-#                 residential_percent= (1 - x2) / 2.,
-#                 site_area= x1 * 10000,
-#                 out_amenity_percent=.05,
-#                 pv_percent=1.2,
-#                 green_percent=.05,
+# b = Building(gsf= 60000,
+#             retail_percent= .2,
+#             office_percent= .6,
+#             residential_percent= .2,
+#             site_area= 10000,
+#             out_amenity_percent=.05,
+#             pv_percent=1.2,
+#             green_percent=.05,
 #                 city=seattle)
 
-#     path = studio2021.TEMP
-#     filename = 'seattle_{}.json'.format(datetime.now())
-#     b.to_json(path, filename)
+# filename = 'seattle_{}.json'.format(datetime.now())
+# b.to_json(path, filename)
+# print(b)
 
+for i in range(100):
+    x1 = random.random() + 1
+    x2 = random.random()
+    # x2 = (1 / 100.) * i
+    b = Building(gsf= 50000,
+                retail_percent= (1 - x2) / 2.,
+                office_percent= x2,
+                residential_percent= (1 - x2) / 2.,
+                site_area= 10000,
+                out_amenity_percent=.05,
+                pv_percent=1.2,
+                green_percent=.05,
+                city=seattle)
 
-# plot_all_buildings(path, 'retail_area', ('energy_supply', 'total'))
+    path = studio2021.TEMP
+    filename = 'seattle_{}.json'.format(datetime.now())
+    b.to_json(path, filename)
+
+print(b)
+plot_all_buildings(path, ('energy_demand', 'total'), ('economy', 'cost'))
