@@ -15,17 +15,27 @@ TPL = """
 Building data structure: {}
 #########################################
 
-Areas
------
+
+Area  {} (sqft)
+-----------------------------------------
 Retail surface area {} (sqft)
 Office surface area {} (sqft)
 Residential surface area {} (sqft)
 
-Energy Demand
--------------
+
+Energy Demand {} (kBTU/yr)
+-----------------------------------------
 Retail energy demand {} (kBTU/yr)
 Office energy demand {} (kBTU/yr)
 Residential energy demand {} (kBTU/yr)
+
+
+Water Demand {} (kgl/yr)
+-----------------------------------------
+Retail water demand {} (kgl/yr)
+Office water demand {} (kgl/yr)
+Residential water demand {} (kgl/yr)
+Irrigation water demand {} (kgl/yr)
 """
 
 class Building(object):
@@ -55,13 +65,20 @@ class Building(object):
 
     def __str__(self):
         return TPL.format(self.__name__,
+                          self.gsf,
                           self.retail_area,
                           self.office_area,
                           self.residential_area,
+                          self.energy_demand['total'],
                           self.energy_demand['retail'],
                           self.energy_demand['office'],
-                          self.energy_demand['residential'])
-    
+                          self.energy_demand['residential'],
+                          self.water_demand['total'],
+                          self.water_demand['retail'],
+                          self.water_demand['office'],
+                          self.water_demand['residential'],
+                          self.water_demand['irrigation'])
+
     def to_json(self, path, filename):
         data = self.data
         data['filename'] = filename
@@ -93,6 +110,7 @@ class Building(object):
                 'occupants': self.occupants,
                 'energy_demand': self.energy_demand,
                 'energy_supply': self.energy_supply,
+                'water_demand': self.water_demand,
                 }
         return data
 
@@ -151,6 +169,16 @@ class Building(object):
         supply['requred_pv'] = ed['total'] / self.city.solar_production['kbtu']
         return supply
     
+    @property
+    def water_demand(self):
+        wd = {}
+        wd['retail'] = self.retail_area * self.city.water['retail']['wui'] / 1e3 #  kgl / yr
+        wd['office'] = self.office_area * self.city.water['office']['wui'] / 1e3#  kgl / yr
+        wd['residential'] = self.residential_area * self.city.water['residential']['wui'] / 1e3#  kgl / yr
+        wd['irrigation'] = self.green_area * self.city.water['irrigation']['wui'] / 1e3#  kgl / yr
+        wd['total'] = wd['irrigation'] + wd['residential'] + wd['office'] + wd['retail']
+        return wd
+
     def percentage_check(self):
         tot_percent =  self.retail_percent + self.office_percent + self.residential_percent
         if tot_percent > 1.:

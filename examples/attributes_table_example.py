@@ -24,13 +24,11 @@ filename = 'seattle_{}.json'.format(datetime.now())
 
 seattle = Seattle()
 
-x1 = 100000
-x2 = .4
-b = Building(gsf= x1,
-            retail_percent= x2,
-            office_percent= (1 - x2) / 2.,
-            residential_percent= (1 - x2) / 2.,
-            site_area= x1 * 10000,
+b = Building(gsf= 50000,
+            retail_percent= .2,
+            office_percent= .6,
+            residential_percent= .2,
+            site_area= 10000,
             out_amenity_percent=.05,
             pv_percent=1.2,
             green_percent=.05,
@@ -39,6 +37,7 @@ b = Building(gsf= x1,
 filename = 'seattle_{}.json'.format(datetime.now())
 b.to_json(path, filename)
 
+print(b)
 
 # for i in range(100):
 #     x1 = random.random()
@@ -58,4 +57,4 @@ b.to_json(path, filename)
 #     b.to_json(path, filename)
 
 
-plot_all_buildings(path, 'retail_area', ('energy_supply', 'total'))
+# plot_all_buildings(path, 'retail_area', ('energy_supply', 'total'))
