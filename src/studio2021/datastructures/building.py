@@ -10,6 +10,11 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+#TODO: The Building object has all the data to compute embodied and store operational data
+# Write embodied using structure, envelope custom objects
+# Write pareto plotting
+
+
 TPL = """
 #########################################
 Building data structure: {}
