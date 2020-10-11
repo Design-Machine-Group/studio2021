@@ -32,4 +32,3 @@ if __name__ == "__main__":
     window = None
 
     e = Envelope(wwr, wall, window)
-    print(e)
