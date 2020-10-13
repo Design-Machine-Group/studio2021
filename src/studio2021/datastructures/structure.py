@@ -17,15 +17,19 @@ span:   {}
 """
 
 class Structure(object):
-    def __init__(self, span):
+    def __init__(self, area, span):
         self.name = 'Structure testing'
+        self.area = area
         self.span = span
     
     def __str__(self):
         return TPL.format(self.name, self.span)
 
+    def embodied(self):
+        return 30
 
 if __name__ == "__main__":
     span = 10
-    s = Structure(span)
+    area = 20
+    s = Structure(area, span)
     print(s)
