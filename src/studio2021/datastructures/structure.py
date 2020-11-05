@@ -99,3 +99,4 @@ if __name__ == "__main__":
     beam_length = span * num_beam
     s = Structure(area, span, col_length, beam_length)
     print(s)
+    print('tomas')
