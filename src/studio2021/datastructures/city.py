@@ -65,7 +65,7 @@ class City(object):
 
 class Seattle(City):
     def __init__(self):
-        super().__init__()
+        super(Seattle, self).__init__()
         self.__name__                   = 'Seattle'
         self.ocupants                   = {'office':140,
                                            'residential':500, 

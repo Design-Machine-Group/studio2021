@@ -8,3 +8,5 @@ __version__ = "0.1.0"
 
 from .building import *
 from .city import *
+from .envelope import *
+from .structure import *
