@@ -28,3 +28,5 @@ if __name__ == "__main__":
     for key in colors:
         for rgb in colors[key]:
             print(key, colors[key][rgb])
+
+            #test
