@@ -17,6 +17,7 @@ def read_colors(fileapth):
         colors[color] = {'r':r, 'g':g, 'b':b}
     return colors
 
+
 if __name__ == "__main__":
     for i in range(50):print()
     folder = studio2021.DATA
