@@ -7,3 +7,4 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 from .material_reader import *
+from .glazing_reader import *

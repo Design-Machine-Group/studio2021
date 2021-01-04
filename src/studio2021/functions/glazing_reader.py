@@ -10,13 +10,14 @@ def read_glazing(glazing_name):
     del(lines[0])
     glazing = {}
     for line in lines:
-        name, frame_type, glass_type, u_value, t_vis, embodied_carbon_metric, embodied_carbon_imperial = line.split('.')
-        glazing[name] = {'frame_type': frame_type, 'u_value': u_value, 't_vis': t_vis,
+        name, frame_type, glass_type, u_value, t_vis, embodied_carbon_metric, embodied_carbon_imperial = line.split(',')
+        glazing[name] = {'frame_type': frame_type, 'glass_type': glass_type, 'u_value': u_value, 't_vis': t_vis,
                          'embodied_carbon_metric': embodied_carbon_metric, 'embodied_carbon_imperial': embodied_carbon_imperial}
     return glazing[glazing_name]
 
-    if __name__ == '__main__':
-        for i in range(50):
-            print()
-        glazing = read_glazing('Wood Double')
-        print(glazing)
+
+if __name__ == '__main__':
+    for i in range(50):
+        print()
+    glazing = read_glazing('Aluminum Double')
+    print(glazing)
