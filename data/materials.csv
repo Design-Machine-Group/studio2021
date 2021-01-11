@@ -4,14 +4,14 @@ Interior wall air film,Air,0.68,None,None,None,None,None,None,None
 "Air space (1/2"" up to 4"")",Air,1,None,None,None,None,None,None,None
 Gyp,Interior Finish,0.45,0.9,0.5,0.0127,0.16,800,109,273
 Plywood,Exterior Sheathing,1.25,1.25,1,0.0254,0.115,540,1210,186
-Rigid,Insulation,4,4,1,None,0.036,40,1210,6.42
-Fiberglass,Insulation,3.5,3.5,1,None,0.041,100,960,0.0557
+Rigid,Insulation,4,4,1,0.0254,0.036,40,1210,6.42
+Fiberglass,Insulation,3.5,3.5,1,0.0254,0.041,100,960,0.0557
 Brick,Façade Cladding,0.8,0.18,4,0.1016,0.824,1920,790,0.314
 Fiber Cement,Façade Cladding,0.6,0.6,1,0.0254,0.24,1300,840,0.538
-Metal Panel,Façade Cladding,None,None,0.03,0.0006,70,2700,870,10.46
+Steel Panel,Façade Cladding,None,None,0.03,0.0006,70,2700,870,10.46
 Wood,Façade Cladding,0.93,1.24,0.75,0.0191,0.116,540,1210,-1.35
 Stone,Façade Cladding,0.08,0.08,1,0.0254,1.802,1920,190,0.0136
 2x4 Metal Studs,Exterior Wall Framing,5.5,1.38,4,0.1016,0.105,None,None,0.975
 CLT,Exterior Wall Framing,6.63,1.47,4.5,0.1143,0.098,470,1600,105
-Concrete,Exterior Wall Framing,0.08,0.08,1,None,1.802,2255,750,400
-2x4 Wood Studs,Exterior Wall Framing,12.44,3.55,3.5,0.0889,0.041,None,None,44.3
+Concrete,Exterior Wall Framing,0.08,0.08,1,0.0254,1.802,2255,750,400
+2x4 Wood Studs,Exterior Wall Framing,14.68,3.55,3.5,0.0889,0.041,141.25,None,44.3
