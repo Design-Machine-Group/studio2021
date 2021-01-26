@@ -1,0 +1,7 @@
+ 1 - To build opaque / transparent construction:
+    - Per material we need:
+        - name
+        - all of the inputs from excell sheet
+
+2 - TO build rooms:
+    - 
