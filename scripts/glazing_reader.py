@@ -14,9 +14,10 @@ def read_glazing(filepath):
                          'embodied_carbon_metric': embodied_carbon_metric, 'embodied_carbon_imperial': embodied_carbon_imperial}
     return glazing
 
-    if __name__ == '__main__':
-        for i in range(50):
-            print()
-        folder = studio2021.DATA
-        filepath = os.path.join(folder, 'glazing.csv')
-        glazing = read_glazing(filepath)
+
+if __name__ == '__main__':
+    for i in range(50):
+        print()
+    folder = studio2021.DATA
+    filepath = os.path.join(folder, 'glazing.csv')
+    glazing = read_glazing(filepath)
