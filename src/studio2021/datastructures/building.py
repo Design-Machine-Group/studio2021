@@ -4,15 +4,13 @@ import os
 import math
 import json
 
+from studio2021.functions import area_polygon
+
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
 __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
-
-#TODO: The Building object has all the data to compute embodied and store operational data
-# Write embodied using structure, envelope custom objects
-# Write pareto plotting
 
 
 TPL = """
@@ -24,20 +22,20 @@ Building data structure: {}
 class Building(object):
 
     def __init__(self):
-        self.__name__   = 'Studio2021_Building'
-        self.orient_dict = {0:'n', 1:'s', 2:'e', 3:'w'}
-        self.zones      = {}
-        self.ceil       = {}
-        self.floor      = {}
-        self.zone_fa    = {}
-        self.adia_w     = {}
-        self.fa         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.wa         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.oa         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.wwr        = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.shgc       = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.shd        = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.ew         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.__name__       = 'Studio2021_Building'
+        self.orient_dict    = {0:'n', 1:'s', 2:'e', 3:'w'}
+        self.zones          = {}
+        self.ceil           = {}
+        self.floor          = {}
+        self.zone_fa        = {}
+        self.adia_w         = {}
+        self.facade_areas   = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.wa             = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.oa             = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.wwr            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shgc           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shd            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.exterior_walls = {'n':{}, 's':{}, 'e':{}, 'w':{}}
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -61,23 +59,23 @@ class Building(object):
     def from_gh_data(cls, data):
         import rhinoscriptsyntax as rs
 
-        znames      = data['znames']
-        ceilings    = data['ceilings']
-        ew_n        = data['ew_n']
-        ew_s        = data['ew_s']
-        ew_e        = data['ew_e']
-        ew_w        = data['ew_w']
-        aw          = data['aw']
-        fs          = data['fs']
-        fan         = data['fan']
-        fas         = data['fas']
-        fae         = data['fae']
-        faw         = data['faw']
-        wa          = data['wa']
-        oa          = data['oa']
-        wwr         = data['wwr']
-        shgc        = data['shgc']
-        shd         = data['shd']
+        znames              = data['znames']
+        ceilings            = data['ceilings']
+        exterior_walls_n    = data['exterior_walls_n']
+        exterior_walls_s    = data['exterior_walls_s']
+        exterior_walls_e    = data['exterior_walls_e']
+        exterior_walls_w    = data['exterior_walls_w']
+        aw                  = data['aw']
+        fs                  = data['fs']
+        # fan               = data['fan']
+        # fas               = data['fas']
+        # fae               = data['fae']
+        # faw               = data['faw']
+        wa                  = data['wa']
+        oa                  = data['oa']
+        wwr                 = data['wwr']
+        shgc                = data['shgc']
+        shd                 = data['shd']
 
         b = cls()
 
@@ -94,36 +92,36 @@ class Building(object):
 
         # exterior walls - - -
         # north - 
-        for i in range(ew_n.BranchCount):
-            srf = ew_n.Branch(i)
+        for i in range(exterior_walls_n.BranchCount):
+            srf = exterior_walls_n.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.ew['n'][b.zones[i]] = p
+                b.exterior_walls['n'][b.zones[i]] = p
 
         # south - 
-        for i in range(ew_s.BranchCount):
-            srf = ew_s.Branch(i)
+        for i in range(exterior_walls_s.BranchCount):
+            srf = exterior_walls_s.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.ew['s'][b.zones[i]] = p
+                b.exterior_walls['s'][b.zones[i]] = p
 
         # east - 
-        for i in range(ew_e.BranchCount):
-            srf = ew_e.Branch(i)
+        for i in range(exterior_walls_e.BranchCount):
+            srf = exterior_walls_e.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.ew['e'][b.zones[i]] = p
+                b.exterior_walls['e'][b.zones[i]] = p
 
         # west - 
-        for i in range(ew_w.BranchCount):
-            srf = ew_w.Branch(i)
+        for i in range(exterior_walls_w.BranchCount):
+            srf = exterior_walls_w.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.ew['w'][b.zones[i]] = p
+                b.exterior_walls['w'][b.zones[i]] = p
 
         # adiabatic walls - - -
         for i in range(aw.BranchCount):
@@ -140,31 +138,7 @@ class Building(object):
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
                 b.floor[b.zones[i]] = p
-
-        # facade areas north - - - 
-        for i in range(fan.BranchCount):
-            fa = fan.Branch(i)
-            if fa:
-                b.fa['n'][b.zones[i]] = fa[0]
-
-        # facade areas south - - - 
-        for i in range(fas.BranchCount):
-            fa = fas.Branch(i)
-            if fa:
-                b.fa['s'][b.zones[i]] = fa[0]
-
-        # facade areas east - - - 
-        for i in range(fae.BranchCount):
-            fa = fae.Branch(i)
-            if fa:
-                b.fa['e'][b.zones[i]] = fa[0]        
-
-        # facade areas west - - - 
-        for i in range(faw.BranchCount):
-            fa = faw.Branch(i)
-            if fa:
-                b.fa['w'][b.zones[i]] = fa[0]
-                
+    
         # window areas - - -
         for i in range(wa.BranchCount):
             wa_ = (wa.Branch(i))
@@ -209,8 +183,41 @@ class Building(object):
             shd_ = shd.Branch(i)
             if shgc_:
                 b.shd[b.orient_dict[i]] = shd_[0]
-        
+
+
+        # facade areas - - -
+        b.compute_areas()
+
+        # for i in range(fan.BranchCount):
+        #     fa = fan.Branch(i)
+        #     if fa:
+        #         b.fa['n'][b.zones[i]] = fa[0]
+
+        # # facade areas south - - - 
+        # for i in range(fas.BranchCount):
+        #     fa = fas.Branch(i)
+        #     if fa:
+        #         b.fa['s'][b.zones[i]] = fa[0]
+
+        # # facade areas east - - - 
+        # for i in range(fae.BranchCount):
+        #     fa = fae.Branch(i)
+        #     if fa:
+        #         b.fa['e'][b.zones[i]] = fa[0]        
+
+        # # facade areas west - - - 
+        # for i in range(faw.BranchCount):
+        #     fa = faw.Branch(i)
+        #     if fa:
+        #         b.fa['w'][b.zones[i]] = fa[0]
+
         return b
+
+    def compute_areas(self):
+        for okey in self.exterior_walls:
+            for zkey in self.exterior_walls[okey]:
+                pts = self.exterior_walls[okey][zkey]
+                self.facade_areas[okey][zkey] = area_polygon(pts)
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
@@ -225,57 +232,44 @@ class Building(object):
         zones_ = [[zone] for zone in zones]
         data['zones'] = th.list_to_tree(zones_, source=[])
 
-        # fa - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # fcade areas - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        data['facade_areas'] = {}
+        for okey in self.facade_areas:
+            areas = [self.facade_areas[okey][zkey] for zkey in self.facade_areas[okey]]
+            data['facade_areas'][okey] = th.list_to_tree(areas, source=[])
 
-        fan = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.fa['n']:
-                fan[i].append(self.fa['n'][zone])
-        data['fan'] = th.list_to_tree(fan, source=[])
+        # exterior walls - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        data['exterior_walls'] = {}
+        for okey in self.exterior_walls:
+            walls = []
+            for zkey in self.exterior_walls[okey]:
+                walls.append(rs.AddSrfPt(self.exterior_walls[okey][zkey]))
+            data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
-        fas = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.fa['s']:
-                fas[i].append(self.fa['s'][zone])
-        data['fas'] = th.list_to_tree(fas, source=[])
 
-        fae = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.fa['e']:
-                fae[i].append(self.fa['e'][zone])
-        data['fae'] = th.list_to_tree(fae, source=[])
+        # ew_n = [[] for _ in range(len(zones))]
+        # for i, zone in enumerate(zones):
+        #     if zone in self.ew['n']:
+        #         ew_n[i].append(rs.AddSrfPt(self.ew['n'][zone]))
+        # data['ew_n'] = th.list_to_tree(ew_n, source=[])
 
-        faw = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.fa['w']:
-                faw[i].append(self.fa['w'][zone])
-        data['faw'] = th.list_to_tree(faw, source=[])
+        # ew_s = [[] for _ in range(len(zones))]
+        # for i, zone in enumerate(zones):
+        #     if zone in self.ew['s']:
+        #         ew_s[i].append(rs.AddSrfPt(self.ew['s'][zone]))
+        # data['ew_s'] = th.list_to_tree(ew_s, source=[])
 
-        # ew - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # ew_e = [[] for _ in range(len(zones))]
+        # for i, zone in enumerate(zones):
+        #     if zone in self.ew['e']:
+        #         ew_e[i].append(rs.AddSrfPt(self.ew['e'][zone]))
+        # data['ew_e'] = th.list_to_tree(ew_e, source=[])
 
-        ew_n = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.ew['n']:
-                ew_n[i].append(rs.AddSrfPt(self.ew['n'][zone]))
-        data['ew_n'] = th.list_to_tree(ew_n, source=[])
-
-        ew_s = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.ew['s']:
-                ew_s[i].append(rs.AddSrfPt(self.ew['s'][zone]))
-        data['ew_s'] = th.list_to_tree(ew_s, source=[])
-
-        ew_e = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.ew['e']:
-                ew_e[i].append(rs.AddSrfPt(self.ew['e'][zone]))
-        data['ew_e'] = th.list_to_tree(ew_e, source=[])
-
-        ew_w = [[] for _ in range(len(zones))]
-        for i, zone in enumerate(zones):
-            if zone in self.ew['w']:
-                ew_w[i].append(rs.AddSrfPt(self.ew['w'][zone]))
-        data['ew_w'] = th.list_to_tree(ew_w, source=[])
+        # ew_w = [[] for _ in range(len(zones))]
+        # for i, zone in enumerate(zones):
+        #     if zone in self.ew['w']:
+        #         ew_w[i].append(rs.AddSrfPt(self.ew['w'][zone]))
+        # data['ew_w'] = th.list_to_tree(ew_w, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
