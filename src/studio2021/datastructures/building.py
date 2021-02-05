@@ -22,7 +22,7 @@ Building data structure: {}
 class Building(object):
 
     def __init__(self):
-        self.__name__               = simulation_name
+        self.__name__               = 'Studio 2021 Building'
         self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
         self.zones                  = {}
         self.ceiling_surfaces       = {}
@@ -47,6 +47,13 @@ class Building(object):
         self.sql_path               = None
         self.simulation_folder      = None
         self.run_simulation         = False  
+        self.simulation_name        = None
+        self.zone_program           = None
+        self.weather_file           = None
+        self.sql_path               = None
+        self.simulation_folder      = None
+        self.run_simulation         = None
+
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -87,6 +94,13 @@ class Building(object):
         ewall_framing           = data['ewall_framing']
         int_finish              = data['int_finish']
         glazing_system          = data['glazing_system']
+        simulation_name         = data['simulation_name']
+        zone_program            = data['zone_program']
+        weather_file            = data['weather_file']
+        sql_path                = data['sql_path']
+        simulation_folder       = data['simulation_folder']
+        run_simulation          = data['run_simulation'] 
+
 
         b = cls()
 
@@ -179,6 +193,13 @@ class Building(object):
         b.ewall_framing         = ewall_framing
         b.int_finish            = int_finish
         b.glazing_system        = glazing_system
+        b.simulation_name       = simulation_name
+        b.zone_program          = zone_program
+        b.weather_file          = weather_file
+        b.sql_path              = sql_path
+        b.simulation_folder     = simulation_folder
+        b.run_simulation        = run_simulation
+
         return b
 
     def compute_areas(self):
@@ -293,8 +314,13 @@ class Building(object):
         data['facade_cladding']         = self.facade_cladding
         data['external_insulation']     = self.external_insulation
         data['insulation_thickness']    = self.insulation_thickness
-
         data['ewall_framing']           = self.ewall_framing
         data['int_finish']              = self.int_finish
         data['glazing_system']          = self.glazing_system
+        data['simulation_name']         = self.simulation_name
+        data['zone_program']            = self.zone_program
+        data['weather_file']            = self.weather_file
+        data['sql_path']                = self.sql_path
+        data['simulation_folder']       = self.simulation_folder
+        data['run_simulation']          = self.run_simulation
         return data
