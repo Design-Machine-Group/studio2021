@@ -22,20 +22,31 @@ Building data structure: {}
 class Building(object):
 
     def __init__(self):
-        self.__name__       = 'Studio2021_Building'
-        self.orient_dict    = {0:'n', 1:'s', 2:'e', 3:'w'}
-        self.zones          = {}
-        self.ceil           = {}
-        self.floor          = {}
-        self.zone_fa        = {}
-        self.adia_w         = {}
-        self.facade_areas   = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.wa             = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.oa             = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.wwr            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.shgc           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.shd            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.exterior_walls = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.__name__               = simulation_name
+        self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
+        self.zones                  = {}
+        self.ceiling_surfaces       = {}
+        self.floor_surfaces         = {}
+        self.zone_fa                = {}
+        self.adiabatic_walls        = {}
+        self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.wwr                    = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shade_gc               = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shade_depth            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.exterior_walls         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.facade_cladding        = None
+        self.external_insulation    = None
+        self.insulation_thickness   = None
+        self.ewall_framing          = None
+        self.int_finish             = None
+        self.glazing_system         = None
+        self.zone_program           = None
+        self.weather_file           = None
+        self.sql_path               = None
+        self.simulation_folder      = None
+        self.run_simulation         = False  
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -59,23 +70,23 @@ class Building(object):
     def from_gh_data(cls, data):
         import rhinoscriptsyntax as rs
 
-        znames              = data['znames']
-        ceilings            = data['ceilings']
-        exterior_walls_n    = data['exterior_walls_n']
-        exterior_walls_s    = data['exterior_walls_s']
-        exterior_walls_e    = data['exterior_walls_e']
-        exterior_walls_w    = data['exterior_walls_w']
-        aw                  = data['aw']
-        fs                  = data['fs']
-        # fan               = data['fan']
-        # fas               = data['fas']
-        # fae               = data['fae']
-        # faw               = data['faw']
-        wa                  = data['wa']
-        oa                  = data['oa']
-        wwr                 = data['wwr']
-        shgc                = data['shgc']
-        shd                 = data['shd']
+        znames                  = data['znames']
+        ceiling_surfaces        = data['ceiling_surfaces']
+        exterior_walls_n        = data['exterior_walls_n']
+        exterior_walls_s        = data['exterior_walls_s']
+        exterior_walls_e        = data['exterior_walls_e']
+        exterior_walls_w        = data['exterior_walls_w']
+        adiabatic_walls         = data['adiabatic_walls']
+        floor_surfaces          = data['floor_surfaces']
+        wwr                     = data['wwr']
+        shade_gc                = data['shade_gc']
+        shade_depth             = data['shade_depth']
+        facade_cladding         = data['facade_cladding']
+        external_insulation     = data['external_insulation']
+        insulation_thickness    = data['insulation_thickness']
+        ewall_framing           = data['ewall_framing']
+        int_finish              = data['int_finish']
+        glazing_system          = data['glazing_system']
 
         b = cls()
 
@@ -83,12 +94,12 @@ class Building(object):
         b.zones = {i: znames.Branch(i)[0] for i in range(num_zones)}
 
         # ceiling - - -
-        for i in range(ceilings.BranchCount):
-            srf = ceilings.Branch(i)
+        for i in range(ceiling_surfaces.BranchCount):
+            srf = ceiling_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.ceil[b.zones[i]] = p
+                b.ceiling_surfaces[b.zones[i]] = p
 
         # exterior walls - - -
         # north - 
@@ -124,46 +135,20 @@ class Building(object):
                 b.exterior_walls['w'][b.zones[i]] = p
 
         # adiabatic walls - - -
-        for i in range(aw.BranchCount):
-            srf = aw.Branch(i)
+        for i in range(adiabatic_walls.BranchCount):
+            srf = adiabatic_walls.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.adia_w[b.zones[i]] = p
+                b.adiabatic_walls[b.zones[i]] = p
 
         # floor surfaces - - -
-        for i in range(fs.BranchCount):
-            srf = fs.Branch(i)
+        for i in range(floor_surfaces.BranchCount):
+            srf = floor_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
                 p = [p[0], p[2], p[3], p[1]]
-                b.floor[b.zones[i]] = p
-    
-        # window areas - - -
-        for i in range(wa.BranchCount):
-            wa_ = (wa.Branch(i))
-            if wa:
-                if i == 0:
-                    b.wa['n'] = wa_[0]
-                if i == 1:
-                    b.wa['s'] = wa_[0]
-                if i == 2:
-                    b.wa['e'] = wa_[0]
-                if i == 3:
-                    b.wa['w'] = wa_[0]
-
-        # opaque areas - - -
-        for i in range(oa.BranchCount):
-            oa_ = (oa.Branch(i))
-            if oa:
-                if i == 0:
-                    b.oa['n'] = oa_[0]
-                if i == 1:
-                    b.oa['s'] = oa_[0]
-                if i == 2:
-                    b.oa['e'] = oa_[0]
-                if i == 3:
-                    b.oa['w'] = oa_[0]
+                b.floor_surfaces[b.zones[i]] = p
 
         # wwr - - -
         for i in range(wwr.BranchCount):
@@ -172,52 +157,38 @@ class Building(object):
                 b.wwr[b.orient_dict[i]] = wwr_[0]
 
         # shgc - - -
-        for i in range(shgc.BranchCount):
-            shgc_ = shgc.Branch(i)
-            if shgc_:
-                b.shgc[b.orient_dict[i]] = shgc_[0]
+        for i in range(shade_gc.BranchCount):
+            shade_gc_ = shade_gc.Branch(i)
+            if shade_gc_:
+                b.shade_gc[b.orient_dict[i]] = shade_gc_[0]
             
 
         # shade depth - - -
-        for i in range(shd.BranchCount):
-            shd_ = shd.Branch(i)
-            if shgc_:
-                b.shd[b.orient_dict[i]] = shd_[0]
-
+        for i in range(shade_depth.BranchCount):
+            shade_depth_ = shade_depth.Branch(i)
+            if shade_depth_:
+                b.shade_depth[b.orient_dict[i]] = shade_depth_[0]
 
         # facade areas - - -
         b.compute_areas()
 
-        # for i in range(fan.BranchCount):
-        #     fa = fan.Branch(i)
-        #     if fa:
-        #         b.fa['n'][b.zones[i]] = fa[0]
-
-        # # facade areas south - - - 
-        # for i in range(fas.BranchCount):
-        #     fa = fas.Branch(i)
-        #     if fa:
-        #         b.fa['s'][b.zones[i]] = fa[0]
-
-        # # facade areas east - - - 
-        # for i in range(fae.BranchCount):
-        #     fa = fae.Branch(i)
-        #     if fa:
-        #         b.fa['e'][b.zones[i]] = fa[0]        
-
-        # # facade areas west - - - 
-        # for i in range(faw.BranchCount):
-        #     fa = faw.Branch(i)
-        #     if fa:
-        #         b.fa['w'][b.zones[i]] = fa[0]
-
+        # facade data - - -
+        b.facade_cladding       = facade_cladding
+        b.external_insulation   = external_insulation
+        b.insulation_thickness  = insulation_thickness
+        b.ewall_framing         = ewall_framing
+        b.int_finish            = int_finish
+        b.glazing_system        = glazing_system
         return b
 
     def compute_areas(self):
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
                 pts = self.exterior_walls[okey][zkey]
-                self.facade_areas[okey][zkey] = area_polygon(pts)
+                area = area_polygon(pts)
+                self.facade_areas[okey][zkey] = area
+                self.window_areas[okey][zkey] = area * self.wwr[okey]
+                self.opaque_areas[okey][zkey] = area * (1 - self.wwr[okey])
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
@@ -234,101 +205,96 @@ class Building(object):
 
         # fcade areas - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['facade_areas'] = {}
-        for okey in self.facade_areas:
+        for i in range(4):
+            okey = self.orient_dict[i]
             areas = [self.facade_areas[okey][zkey] for zkey in self.facade_areas[okey]]
             data['facade_areas'][okey] = th.list_to_tree(areas, source=[])
 
         # exterior walls - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['exterior_walls'] = {}
-        for okey in self.exterior_walls:
+        for i in range(4):
+            okey = self.orient_dict[i]
             walls = []
             for zkey in self.exterior_walls[okey]:
                 walls.append(rs.AddSrfPt(self.exterior_walls[okey][zkey]))
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
-
-        # ew_n = [[] for _ in range(len(zones))]
-        # for i, zone in enumerate(zones):
-        #     if zone in self.ew['n']:
-        #         ew_n[i].append(rs.AddSrfPt(self.ew['n'][zone]))
-        # data['ew_n'] = th.list_to_tree(ew_n, source=[])
-
-        # ew_s = [[] for _ in range(len(zones))]
-        # for i, zone in enumerate(zones):
-        #     if zone in self.ew['s']:
-        #         ew_s[i].append(rs.AddSrfPt(self.ew['s'][zone]))
-        # data['ew_s'] = th.list_to_tree(ew_s, source=[])
-
-        # ew_e = [[] for _ in range(len(zones))]
-        # for i, zone in enumerate(zones):
-        #     if zone in self.ew['e']:
-        #         ew_e[i].append(rs.AddSrfPt(self.ew['e'][zone]))
-        # data['ew_e'] = th.list_to_tree(ew_e, source=[])
-
-        # ew_w = [[] for _ in range(len(zones))]
-        # for i, zone in enumerate(zones):
-        #     if zone in self.ew['w']:
-        #         ew_w[i].append(rs.AddSrfPt(self.ew['w'][zone]))
-        # data['ew_w'] = th.list_to_tree(ew_w, source=[])
-
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        ceil = [[] for _ in range(len(zones))]
+        ceiling_surfaces = [[] for _ in range(len(zones))]
         for i, zone in enumerate(zones):
-            if zone in self.ceil:
-                ceil[i].append(rs.AddSrfPt(self.ceil[zone]))
-        data['ceil'] = th.list_to_tree(ceil, source=[])
+            if zone in self.ceiling_surfaces:
+                ceiling_surfaces[i].append(rs.AddSrfPt(self.ceiling_surfaces[zone]))
+        data['ceiling_surfaces'] = th.list_to_tree(ceiling_surfaces, source=[])
 
-        # fs - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # floor_surfaces - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        fs = [[] for _ in range(len(zones))]
+        floor_surfaces = [[] for _ in range(len(zones))]
         for i, zone in enumerate(zones):
-            if zone in self.floor:
-                fs[i].append(rs.AddSrfPt(self.floor[zone]))
-        data['fs'] = th.list_to_tree(fs, source=[])
+            if zone in self.floor_surfaces:
+                floor_surfaces[i].append(rs.AddSrfPt(self.floor_surfaces[zone]))
+        data['floor_surfaces'] = th.list_to_tree(floor_surfaces, source=[])
 
-        # aw - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # adiabatic_walls - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        aw = [[] for _ in range(len(zones))]
+        adiabatic_walls = [[] for _ in range(len(zones))]
         for i, zone in enumerate(zones):
-            if zone in self.adia_w:
-                aw[i].append(rs.AddSrfPt(self.adia_w[zone]))
-        data['aw'] = th.list_to_tree(aw, source=[])
+            if zone in self.adiabatic_walls:
+                adiabatic_walls[i].append(rs.AddSrfPt(self.adiabatic_walls[zone]))
+        data['adiabatic_walls'] = th.list_to_tree(adiabatic_walls, source=[])
 
         # wwr - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         wwr = [[] for _ in range(len(self.wwr))]
-        for i, o in enumerate(self.wwr):
+        for i in range(4):
+            o = self.orient_dict[i]
             wwr[i].append(self.wwr[o])
         data['wwr'] = th.list_to_tree(wwr, source=[])
 
 
         # shgc - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        shgc = [[] for _ in range(len(self.shgc))]
-        for i, o in enumerate(self.shgc):
-            shgc[i].append(self.shgc[o])
-        data['shgc'] = th.list_to_tree(shgc, source=[])
+        shade_gc = [[] for _ in range(len(self.shade_gc))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            shade_gc[i].append(self.shade_gc[o])
+        data['shade_gc'] = th.list_to_tree(shade_gc, source=[])
 
         # shd - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        shd = [[] for _ in range(len(self.shd))]
-        for i, o in enumerate(self.shd):
-            shd[i].append(self.shd[o])
-        data['shd'] = th.list_to_tree(shd, source=[])
+        shade_depth = [[] for _ in range(len(self.shade_depth))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            shade_depth[i].append(self.shade_depth[o])
+        data['shade_depth'] = th.list_to_tree(shade_depth, source=[])
 
-        # oa - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # opaque_areas - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        oa = [[] for _ in range(len(self.oa))]
-        for i, o in enumerate(self.oa):
-            oa[i].append(self.oa[o])
-        data['oa'] = th.list_to_tree(oa, source=[])
+        opaque_areas = [[] for _ in range(len(self.opaque_areas))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            for zkey in zones:
+                if zkey in self.opaque_areas[o]:
+                    opaque_areas[i].append(self.opaque_areas[o][zkey])
+        data['opaque_areas'] = th.list_to_tree(opaque_areas, source=[])
 
-        # wa - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        wa = [[] for _ in range(len(self.wa))]
-        for i, o in enumerate(self.wa):
-            wa[i].append(self.wa[o])
-        data['wa'] = th.list_to_tree(wa, source=[])
+        # window_areas - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+        window_areas = [[] for _ in range(len(self.window_areas))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            for zkey in zones:
+                if zkey in self.window_areas[o]:
+                    window_areas[i].append(self.window_areas[o][zkey])
+        data['window_areas'] = th.list_to_tree(window_areas, source=[])
+
+        # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        data['facade_cladding']         = self.facade_cladding
+        data['external_insulation']     = self.external_insulation
+        data['insulation_thickness']    = self.insulation_thickness
+
+        data['ewall_framing']           = self.ewall_framing
+        data['int_finish']              = self.int_finish
+        data['glazing_system']          = self.glazing_system
         return data
