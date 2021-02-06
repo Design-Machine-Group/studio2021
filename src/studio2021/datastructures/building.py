@@ -5,6 +5,9 @@ import math
 import json
 
 from studio2021.functions import area_polygon
+from studio2021.functions import intersection_segment_plane
+from studio2021.functions import normal_polygon
+from studio2021.functions import centroid_points
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -117,36 +120,40 @@ class Building(object):
 
         # exterior walls - - -
         # north - 
-        for i in range(exterior_walls_n.BranchCount):
-            srf = exterior_walls_n.Branch(i)
-            if len(srf) > 0:
-                p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
-                b.exterior_walls['n'][b.zones[i]] = p
+        for i in b.zones:
+            if i < exterior_walls_n.BranchCount:
+                srf = exterior_walls_n.Branch(i)
+                if len(srf) > 0:
+                    p = rs.SurfacePoints(srf[0])
+                    p = [p[0], p[2], p[3], p[1]]
+                    b.exterior_walls['n'][b.zones[i]] = p
 
         # south - 
-        for i in range(exterior_walls_s.BranchCount):
-            srf = exterior_walls_s.Branch(i)
-            if len(srf) > 0:
-                p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
-                b.exterior_walls['s'][b.zones[i]] = p
+        for i in b.zones:
+            if i < exterior_walls_s.BranchCount:
+                srf = exterior_walls_s.Branch(i)
+                if len(srf) > 0:
+                    p = rs.SurfacePoints(srf[0])
+                    p = [p[0], p[2], p[3], p[1]]
+                    b.exterior_walls['s'][b.zones[i]] = p
 
         # east - 
-        for i in range(exterior_walls_e.BranchCount):
-            srf = exterior_walls_e.Branch(i)
-            if len(srf) > 0:
-                p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
-                b.exterior_walls['e'][b.zones[i]] = p
+        for i in b.zones:
+            if i < exterior_walls_e.BranchCount:
+                srf = exterior_walls_e.Branch(i)
+                if len(srf) > 0:
+                    p = rs.SurfacePoints(srf[0])
+                    p = [p[0], p[2], p[3], p[1]]
+                    b.exterior_walls['e'][b.zones[i]] = p
 
         # west - 
-        for i in range(exterior_walls_w.BranchCount):
-            srf = exterior_walls_w.Branch(i)
-            if len(srf) > 0:
-                p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
-                b.exterior_walls['w'][b.zones[i]] = p
+        for i in b.zones:
+            if i < exterior_walls_w.BranchCount:
+                srf = exterior_walls_w.Branch(i)
+                if len(srf) > 0:
+                    p = rs.SurfacePoints(srf[0])
+                    p = [p[0], p[2], p[3], p[1]]
+                    b.exterior_walls['w'][b.zones[i]] = p
 
         # adiabatic walls - - -
         for i in range(adiabatic_walls.BranchCount):
@@ -186,6 +193,9 @@ class Building(object):
         # facade areas - - -
         b.compute_areas()
 
+        # fix normals - - - 
+        b.fix_normals()
+
         # facade data - - -
         b.facade_cladding       = facade_cladding
         b.external_insulation   = external_insulation
@@ -211,6 +221,53 @@ class Building(object):
                 self.window_areas[okey][zkey] = area * self.wwr[okey]
                 self.opaque_areas[okey][zkey] = area * (1 - self.wwr[okey])
 
+    def fix_normals(self):
+        import rhinoscriptsyntax as rs
+
+        # srf = self.exterior_walls['s']['ZONE1']
+
+        self.out = {}
+        for zkey in self.zones:
+            srfs = []
+            zkey = self.zones[zkey]
+            if zkey in self.adiabatic_walls:
+                srfs.append(self.adiabatic_walls[zkey])
+            if zkey in self.ceiling_surfaces:
+                srfs.append(self.ceiling_surfaces[zkey])
+            if zkey in self.floor_surfaces:
+                srfs.append(self.floor_surfaces[zkey])
+            for okey in self.exterior_walls:
+                # print(zkey, okey, self.exterior_walls[okey])
+                # print('')
+                if zkey in self.exterior_walls[okey]:
+                    srf = self.exterior_walls[okey][zkey]
+                    if srf:
+                        srfs.append(srf)
+            
+            self.out[zkey] = srfs
+
+            # planes = []
+            # for srf in srfs:
+            #     n = normal_polygon(srf, unitized=True)
+            #     # n = rs.SurfaceNormal(srf, (1,1))
+            #     # cpt = rs.SurfaceAreaCentroid(srf)[0]
+            #     cpt = centroid_points(srf)
+            #     planes.append((cpt, n))
+            # print(zkey, len(planes))
+            # for srf in srfs:
+            #     for i, srf_ in enumerate(srfs):
+            #         if srf != srf_:
+            #             n = rs.VectorScale(rs.SurfaceNormal(srf, (1,1)), 1000000)
+            #             cpt = rs.SurfaceAreaCentroid(srf)[0]
+            #             segment = cpt, rs.VectorAdd(cpt, n)
+            #             x = intersection_segment_plane(segment, planes[i])
+                        
+            #             if x:
+            #                 if (rs.FlipSurface(srf, False)):
+            #                     pass
+            #                 else:
+            #                     rs.FlipSurface(srf, True)
+
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
         import ghpythonlib.treehelpers as th
@@ -224,20 +281,22 @@ class Building(object):
         zones_ = [[zone] for zone in zones]
         data['zones'] = th.list_to_tree(zones_, source=[])
 
-        # fcade areas - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # facade areas - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['facade_areas'] = {}
         for i in range(4):
             okey = self.orient_dict[i]
-            areas = [self.facade_areas[okey][zkey] for zkey in self.facade_areas[okey]]
+            areas = [[] for _ in range(len(self.facade_areas[okey]))]
+            for i, zkey in enumerate(self.facade_areas[okey]):
+                areas[i] = [self.facade_areas[okey][zkey]]
             data['facade_areas'][okey] = th.list_to_tree(areas, source=[])
 
         # exterior walls - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['exterior_walls'] = {}
         for i in range(4):
             okey = self.orient_dict[i]
-            walls = []
-            for zkey in self.exterior_walls[okey]:
-                walls.append(rs.AddSrfPt(self.exterior_walls[okey][zkey]))
+            walls = [[] for _ in range(len(self.exterior_walls[okey]))]
+            for i, zkey in enumerate(self.exterior_walls[okey]):
+                walls[i] = [rs.AddSrfPt(self.exterior_walls[okey][zkey])]
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -291,24 +350,25 @@ class Building(object):
 
         # opaque_areas - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        opaque_areas = [[] for _ in range(len(self.opaque_areas))]
+        data['opaque_areas'] = {}
         for i in range(4):
-            o = self.orient_dict[i]
-            for zkey in zones:
-                if zkey in self.opaque_areas[o]:
-                    opaque_areas[i].append(self.opaque_areas[o][zkey])
-        data['opaque_areas'] = th.list_to_tree(opaque_areas, source=[])
+            okey = self.orient_dict[i]
+            areas = [[] for _ in range(len(self.opaque_areas[okey]))]
+            for i, zkey in enumerate(self.opaque_areas[okey]):
+                areas[i] = [self.opaque_areas[okey][zkey]]
+            data['opaque_areas'][okey] = th.list_to_tree(areas, source=[])
 
 
         # window_areas - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        window_areas = [[] for _ in range(len(self.window_areas))]
+        data['window_areas'] = {}
         for i in range(4):
-            o = self.orient_dict[i]
-            for zkey in zones:
-                if zkey in self.window_areas[o]:
-                    window_areas[i].append(self.window_areas[o][zkey])
-        data['window_areas'] = th.list_to_tree(window_areas, source=[])
+            okey = self.orient_dict[i]
+            areas = [[] for _ in range(len(self.window_areas[okey]))]
+            for i, zkey in enumerate(self.window_areas[okey]):
+                areas[i] = [self.window_areas[okey][zkey]]
+            data['window_areas'][okey] = th.list_to_tree(areas, source=[])
+
 
         # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['facade_cladding']         = self.facade_cladding

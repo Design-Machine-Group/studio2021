@@ -355,3 +355,79 @@ def intersection_segment_plane(segment, plane, tol=1e-6):
         return add_vectors(a, ab)
 
     return None
+
+
+def normalize_vector(vector):
+    """Normalise a given vector.
+
+    Parameters
+    ----------
+    vector : list, tuple
+        XYZ components of the vector.
+
+    Returns
+    -------
+    list
+        The normalized vector.
+
+    Examples
+    --------
+    >>>
+
+    """
+    length = length_vector(vector)
+    if not length:
+        return vector
+    return [vector[0] / length, vector[1] / length, vector[2] / length]
+    
+
+def normal_polygon(polygon, unitized=True):
+    """Compute the normal of a polygon defined by a sequence of points.
+
+    Parameters
+    ----------
+    polygon : list of list
+        A list of polygon point coordinates.
+
+    Returns
+    -------
+    list
+        The normal vector.
+
+    Raises
+    ------
+    ValueError
+        If less than three points are provided.
+
+    Notes
+    -----
+    The points in the list should be unique. For example, the first and last
+    point in the list should not be the same.
+
+    """
+    p = len(polygon)
+
+    assert p > 2, "At least three points required"
+
+    nx = 0
+    ny = 0
+    nz = 0
+
+    o = centroid_points(polygon)
+    a = polygon[-1]
+    oa = subtract_vectors(a, o)
+
+    for i in range(p):
+        b = polygon[i]
+        ob = subtract_vectors(b, o)
+        n = cross_vectors(oa, ob)
+        oa = ob
+
+        nx += n[0]
+        ny += n[1]
+        nz += n[2]
+
+    if not unitized:
+        return nx, ny, nz
+
+    return normalize_vector([nx, ny, nz])
