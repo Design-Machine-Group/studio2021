@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from math import fabs
 from math import sqrt
 
 __author__ = ["Tomas Mendez Echenagucia"]
@@ -35,6 +36,7 @@ def centroid_points(points):
     x, y, z = zip(*points)
     return [sum(x) / p, sum(y) / p, sum(z) / p]
 
+
 def subtract_vectors(u, v):
     """Subtract one vector from another.
 
@@ -56,6 +58,7 @@ def subtract_vectors(u, v):
 
     """
     return [a - b for (a, b) in zip(u, v)]
+
 
 def cross_vectors(u, v):
     r"""Compute the cross product of two vectors.
@@ -110,6 +113,7 @@ def cross_vectors(u, v):
             u[2] * v[0] - u[0] * v[2],
             u[0] * v[1] - u[1] * v[0]]
 
+
 def length_vector(vector):
     """Calculate the length of the vector.
 
@@ -134,6 +138,7 @@ def length_vector(vector):
     """
     return sqrt(length_vector_sqrd(vector))
 
+
 def length_vector_sqrd(vector):
     """Compute the squared length of a vector.
 
@@ -154,6 +159,7 @@ def length_vector_sqrd(vector):
 
     """
     return vector[0] ** 2 + vector[1] ** 2 + vector[2] ** 2
+
 
 def dot_vectors(u, v):
     """Compute the dot product of two vectors.
@@ -177,6 +183,7 @@ def dot_vectors(u, v):
 
     """
     return sum(a * b for a, b in zip(u, v))
+
 
 def area_polygon(polygon):
     """Compute the area of a polygon.
@@ -215,3 +222,136 @@ def area_polygon(polygon):
         else:
             area -= 0.5 * length_vector(n)
     return area
+
+
+def add_vectors(u, v):
+    """Add two vectors.
+
+    Parameters
+    ----------
+    u : sequence of float
+        XYZ components of the first vector.
+    v : sequence of float
+        XYZ components of the second vector.
+
+    Returns
+    -------
+    list
+        The resulting vector.
+
+    """
+    return [a + b for (a, b) in zip(u, v)]
+
+
+def scale_vector(vector, factor):
+    """Scale a vector by a given factor.
+
+    Parameters
+    ----------
+    vector : list, tuple
+        XYZ components of the vector.
+    factor : float
+        The scaling factor.
+
+    Returns
+    -------
+    list
+        The scaled vector.
+
+    Examples
+    --------
+    >>> scale_vector([1.0, 2.0, 3.0], 2.0)
+    [2.0, 4.0, 6.0]
+
+    >>> v = [2.0, 0.0, 0.0]
+    >>> scale_vector(v, 1 / length_vector(v))
+    [1.0, 0.0, 0.0]
+
+    """
+    return [axis * factor for axis in vector]
+
+
+def intersection_line_plane(line, plane, tol=1e-6):
+    """Computes the intersection point of a line and a plane
+
+    Parameters
+    ----------
+    line : tuple
+        Two points defining the line.
+    plane : tuple
+        The base point and normal defining the plane.
+    tol : float, optional
+        A tolerance for membership verification.
+        Default is ``1e-6``.
+
+    Returns
+    -------
+    point or None
+
+    """
+    a, b = line
+    o, n = plane
+
+    ab = subtract_vectors(b, a)
+    cosa = dot_vectors(n, ab)
+
+    if fabs(cosa) <= tol:
+        # if the dot product (cosine of the angle between segment and plane)
+        # is close to zero the line and the normal are almost perpendicular
+        # hence there is no intersection
+        return None
+
+    # based on the ratio = -dot_vectors(n, ab) / dot_vectors(n, oa)
+    # there are three scenarios
+    # 1) 0.0 < ratio < 1.0: the intersection is between a and b
+    # 2) ratio < 0.0: the intersection is on the other side of a
+    # 3) ratio > 1.0: the intersection is on the other side of b
+    oa = subtract_vectors(a, o)
+    ratio = - dot_vectors(n, oa) / cosa
+    ab = scale_vector(ab, ratio)
+    return add_vectors(a, ab)
+
+
+def intersection_segment_plane(segment, plane, tol=1e-6):
+    """Computes the intersection point of a line segment and a plane
+
+    Parameters
+    ----------
+    segment : tuple
+        Two points defining the line segment.
+    plane : tuple
+        The base point and normal defining the plane.
+    tol : float, optional
+        A tolerance for membership verification.
+        Default is ``1e-6``.
+
+    Returns
+    -------
+    point or None
+
+    """
+    a, b = segment
+    o, n = plane
+
+    ab = subtract_vectors(b, a)
+    cosa = dot_vectors(n, ab)
+
+    if fabs(cosa) <= tol:
+        # if the dot product (cosine of the angle between segment and plane)
+        # is close to zero the line and the normal are almost perpendicular
+        # hence there is no intersection
+        return None
+
+    # based on the ratio = -dot_vectors(n, ab) / dot_vectors(n, oa)
+    # there are three scenarios
+    # 1) 0.0 < ratio < 1.0: the intersection is between a and b
+    # 2) ratio < 0.0: the intersection is on the other side of a
+    # 3) ratio > 1.0: the intersection is on the other side of b
+    oa = subtract_vectors(a, o)
+    ratio = - dot_vectors(n, oa) / cosa
+
+    if 0.0 <= ratio and ratio <= 1.0:
+        ab = scale_vector(ab, ratio)
+        return add_vectors(a, ab)
+
+    return None
