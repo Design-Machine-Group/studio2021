@@ -4,10 +4,14 @@ import os
 import math
 import json
 
+from copy import deepcopy
+
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
 from studio2021.functions import normal_polygon
 from studio2021.functions import centroid_points
+from studio2021.functions import scale_vector
+from studio2021.functions import add_vectors
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -224,9 +228,6 @@ class Building(object):
     def fix_normals(self):
         import rhinoscriptsyntax as rs
 
-        # srf = self.exterior_walls['s']['ZONE1']
-
-        self.out = {}
         for zkey in self.zones:
             srfs = []
             zkey = self.zones[zkey]
@@ -237,36 +238,62 @@ class Building(object):
             if zkey in self.floor_surfaces:
                 srfs.append(self.floor_surfaces[zkey])
             for okey in self.exterior_walls:
-                # print(zkey, okey, self.exterior_walls[okey])
-                # print('')
                 if zkey in self.exterior_walls[okey]:
                     srf = self.exterior_walls[okey][zkey]
                     if srf:
                         srfs.append(srf)
-            
-            self.out[zkey] = srfs
 
-            # planes = []
-            # for srf in srfs:
-            #     n = normal_polygon(srf, unitized=True)
-            #     # n = rs.SurfaceNormal(srf, (1,1))
-            #     # cpt = rs.SurfaceAreaCentroid(srf)[0]
-            #     cpt = centroid_points(srf)
-            #     planes.append((cpt, n))
-            # print(zkey, len(planes))
-            # for srf in srfs:
+            planes = []
+            for srf in srfs:
+                n = normal_polygon(srf, unitized=True)
+                cpt = centroid_points(srf)
+                planes.append((cpt, n))
+            
+            for srf in srfs:
+                for i, srf_ in enumerate(srfs):
+                    if srf != srf_:
+                        n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
+                        cpt = centroid_points(srf)
+                        segment = cpt, add_vectors(cpt, n)
+                        x = intersection_segment_plane(segment, planes[i])
+                        if x:
+                            temp = deepcopy(srf[1])
+                            srf[1] = srf[-1]
+                            srf[3] = temp
+
+            # for okey in self.exterior_walls:
+            #     if zkey in self.exterior_walls[okey]:
+            #         srf = self.exterior_walls[okey][zkey]
+            #         for i, srf_ in enumerate(srfs):
+            #             if srf != srf_:
+            #                 n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
+            #                 cpt = centroid_points(srf)
+            #                 segment = cpt, add_vectors(cpt, n)
+            #                 x = intersection_segment_plane(segment, planes[i])
+            #                 if x:
+            #                     self.exterior_walls[okey][zkey] = reversed(srf)
+
+            # if zkey in self.ceiling_surfaces:
+            #     srf = self.ceiling_surfaces[zkey]
             #     for i, srf_ in enumerate(srfs):
             #         if srf != srf_:
-            #             n = rs.VectorScale(rs.SurfaceNormal(srf, (1,1)), 1000000)
-            #             cpt = rs.SurfaceAreaCentroid(srf)[0]
-            #             segment = cpt, rs.VectorAdd(cpt, n)
+            #             n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
+            #             cpt = centroid_points(srf)
+            #             segment = cpt, add_vectors(cpt, n)
             #             x = intersection_segment_plane(segment, planes[i])
-                        
             #             if x:
-            #                 if (rs.FlipSurface(srf, False)):
-            #                     pass
-            #                 else:
-            #                     rs.FlipSurface(srf, True)
+            #                 self.ceiling_surfaces[zkey] = reversed(srf)
+
+            # if zkey in self.floor_surfaces:
+            #     srf = self.floor_surfaces[zkey]
+            #     for i, srf_ in enumerate(srfs):
+            #         if srf != srf_:
+            #             n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
+            #             cpt = centroid_points(srf)
+            #             segment = cpt, add_vectors(cpt, n)
+            #             x = intersection_segment_plane(segment, planes[i])
+            #             if x:
+            #                 self.floor_surfaces[zkey] = reversed(srf)
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
