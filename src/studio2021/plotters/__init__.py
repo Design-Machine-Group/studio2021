@@ -1,2 +1,2 @@
 from .pareto_plotter import *
-from .plotly_testing import *
+from .plotly_viz import *

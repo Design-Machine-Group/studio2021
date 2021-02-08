@@ -29,6 +29,6 @@ if __name__ == "__main__":
     path = os.path.join(folder, 'test_data.csv')
     # path = os.path.join('/Users/preston/Documents/GitHub/studio2021/data/5zone_run1.csv')
     df = import_data(path)
-    plot_data(df, x_axis='Zones',
-              y_axis='Total EUI (kBTU/sf/year)',
-              color=pd.Series('Cooling EUI (kBTU/sf/year)', 'Heating EUI (kBTU/sf/year)', 'Lighting EUI (kBTU/sf/year)', 'Equip EUI (kBTU/sf/year)'))
+    plot_data(df, x_axis='Zones', y_axis='Total EUI (kBTU/sf/year)',
+              color=pd.Series('Cooling EUI (kBTU/sf/year)', 'Heating EUI (kBTU/sf/year)',
+                              'Lighting EUI (kBTU/sf/year)', 'Equip EUI (kBTU/sf/year)'))
