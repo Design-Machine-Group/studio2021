@@ -61,7 +61,6 @@ class Building(object):
         self.simulation_folder      = None
         self.run_simulation         = None
 
-
     def __str__(self):
         return TPL.format(self.__name__)
 
@@ -161,11 +160,12 @@ class Building(object):
 
         # adiabatic walls - - -
         for i in range(adiabatic_walls.BranchCount):
-            srf = adiabatic_walls.Branch(i)
-            if len(srf) > 0:
-                p = rs.SurfacePoints(srf[0])
+            srfs = adiabatic_walls.Branch(i)
+            b.adiabatic_walls[b.zones[i]] = []
+            for srf in srfs:
+                p = rs.SurfacePoints(srf)
                 p = [p[0], p[2], p[3], p[1]]
-                b.adiabatic_walls[b.zones[i]] = p
+                b.adiabatic_walls[b.zones[i]].append(p)
 
         # floor surfaces - - -
         for i in range(floor_surfaces.BranchCount):
@@ -232,7 +232,9 @@ class Building(object):
             srfs = []
             zkey = self.zones[zkey]
             if zkey in self.adiabatic_walls:
-                srfs.append(self.adiabatic_walls[zkey])
+                adiabatic = self.adiabatic_walls[zkey]
+                for srf in adiabatic:
+                    srfs.append(srf)
             if zkey in self.ceiling_surfaces:
                 srfs.append(self.ceiling_surfaces[zkey])
             if zkey in self.floor_surfaces:
@@ -260,40 +262,6 @@ class Building(object):
                             temp = deepcopy(srf[1])
                             srf[1] = srf[-1]
                             srf[3] = temp
-
-            # for okey in self.exterior_walls:
-            #     if zkey in self.exterior_walls[okey]:
-            #         srf = self.exterior_walls[okey][zkey]
-            #         for i, srf_ in enumerate(srfs):
-            #             if srf != srf_:
-            #                 n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
-            #                 cpt = centroid_points(srf)
-            #                 segment = cpt, add_vectors(cpt, n)
-            #                 x = intersection_segment_plane(segment, planes[i])
-            #                 if x:
-            #                     self.exterior_walls[okey][zkey] = reversed(srf)
-
-            # if zkey in self.ceiling_surfaces:
-            #     srf = self.ceiling_surfaces[zkey]
-            #     for i, srf_ in enumerate(srfs):
-            #         if srf != srf_:
-            #             n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
-            #             cpt = centroid_points(srf)
-            #             segment = cpt, add_vectors(cpt, n)
-            #             x = intersection_segment_plane(segment, planes[i])
-            #             if x:
-            #                 self.ceiling_surfaces[zkey] = reversed(srf)
-
-            # if zkey in self.floor_surfaces:
-            #     srf = self.floor_surfaces[zkey]
-            #     for i, srf_ in enumerate(srfs):
-            #         if srf != srf_:
-            #             n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
-            #             cpt = centroid_points(srf)
-            #             segment = cpt, add_vectors(cpt, n)
-            #             x = intersection_segment_plane(segment, planes[i])
-            #             if x:
-            #                 self.floor_surfaces[zkey] = reversed(srf)
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
@@ -347,7 +315,10 @@ class Building(object):
         adiabatic_walls = [[] for _ in range(len(zones))]
         for i, zone in enumerate(zones):
             if zone in self.adiabatic_walls:
-                adiabatic_walls[i].append(rs.AddSrfPt(self.adiabatic_walls[zone]))
+                srfs = self.adiabatic_walls[zone]
+                for srf in srfs:
+                    print(srf)
+                    adiabatic_walls[i].append(rs.AddSrfPt(srf))
         data['adiabatic_walls'] = th.list_to_tree(adiabatic_walls, source=[])
 
         # wwr - - - - - - - - - - - - - - - - - - - - - - - - - - -
