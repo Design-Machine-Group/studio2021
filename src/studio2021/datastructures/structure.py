@@ -20,6 +20,7 @@ embodied: {}
 #TODO: Check all nbumbers, sizing, just made these up for now. 
 
 class Structure(object):
+
     def __init__(self, area, span, col_length, beam_length):
         self.name = 'Structure'
         self.area = area
@@ -34,6 +35,10 @@ class Structure(object):
     
     def __str__(self):
         return TPL.format(self.name, self.span, self.embodied)
+
+    @property
+    def data(self):
+        return {}
 
     @property
     def embodied(self):

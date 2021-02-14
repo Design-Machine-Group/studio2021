@@ -4,7 +4,10 @@ import os
 import math
 import json
 
+from ast import literal_eval
 from copy import deepcopy
+
+import studio2021
 
 from studio2021.datastructures.structure import Structure
 
@@ -31,17 +34,12 @@ Building data structure: {}
 class Building(object):
 
     def __init__(self):
-        self.__name__               = 'Studio 2021 Building'
+        self.__name__               = 'Studio2021Building'
         self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
         self.zones                  = {}
         self.ceiling_surfaces       = {}
         self.floor_surfaces         = {}
-        self.zone_fa                = {}
         self.adiabatic_walls        = {}
-        self.floor_area             = 0.
-        self.span                   = None
-        self.beam_length            = None
-        self.col_length             = None
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -49,6 +47,10 @@ class Building(object):
         self.shade_gc               = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.shade_depth            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.exterior_walls         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.floor_area             = 0.
+        self.span                   = None
+        self.beam_length            = None
+        self.col_length             = None
         self.facade_cladding        = None
         self.external_insulation    = None
         self.insulation_thickness   = None
@@ -71,16 +73,19 @@ class Building(object):
     def __str__(self):
         return TPL.format(self.__name__)
 
-    def to_json(self, path, filename):
-        data = self.data
-        data['filename'] = filename
-        filepath = os.path.join(path, filename)
-        with open(filepath, 'w+') as f:
-            json.dump(data, f)
+    def to_json(self):
+        filepath = os.path.join(studio2021.TEMP, '{}.json'.format(self.__name__))
+        with open(filepath, 'w+') as fp:
+            json.dump(self.data, fp)
 
-    def from_json(self):
-        pass
-    
+    @classmethod
+    def from_json(cls, filepath):
+        with open(filepath, 'r') as fp:
+            data = json.load(fp)
+        building = cls()
+        building.data = data
+        return building
+
     def compute_embodied(self):
         area = self.floor_area
         span = self.span
@@ -91,8 +96,152 @@ class Building(object):
 
     @property
     def data(self):
-        data = {}
+        data = {
+        'name'                   : self.__name__,
+        'orient_dict'            : {0:'n', 1:'s', 2:'e', 3:'w'},
+        'zones'                  : {},
+        'ceiling_surfaces'       : {},
+        'floor_surfaces'         : {},
+        'adiabatic_walls'        : {},
+        'facade_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'window_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'opaque_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'wwr'                    : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'shade_gc'               : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'shade_depth'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'exterior_walls'         : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+        'floor_area'             : self.floor_area,
+        'span'                   : self.span,
+        'beam_length'            : self.beam_length,
+        'col_length'             : self.col_length,
+        'facade_cladding'        : self.facade_cladding,
+        'external_insulation'    : self.external_insulation,
+        'insulation_thickness'   : self.insulation_thickness,
+        'ewall_framing'          : self.ewall_framing,
+        'int_finish'             : self.int_finish,
+        'glazing_system'         : self.glazing_system,
+        'simulation_name'        : self.simulation_name,
+        'zone_program'           : self.zone_program,
+        'weather_file'           : self.weather_file,
+        'sql_path'               : self.sql_path,
+        'simulation_folder'      : self.simulation_folder,
+        'run_simulation'         : self.run_simulation,
+        'structure'              : self.structure.data,
+        }
+
+
+        for key in self.orient_dict:
+            data['orient_dict'][repr(key)] = self.orient_dict[key]
+
+        for key in self.zones:
+            data['zones'][repr(key)] = self.zones[key]
+
+        for key in self.ceiling_surfaces:
+            data['ceiling_surfaces'][repr(key)] = self.ceiling_surfaces[key]
+
+        for key in self.floor_surfaces:
+            data['floor_surfaces'][repr(key)] = self.floor_surfaces[key]
+
+        for key in self.adiabatic_walls:
+            data['adiabatic_walls'][repr(key)] = self.adiabatic_walls[key]
+
+        for okey in self.facade_areas:
+            for zkey in self.facade_areas[okey]:
+                data['facade_areas'][repr(okey)][repr(zkey)] = self.facade_areas[okey][zkey]
+
+        for okey in self.window_areas:
+            for zkey in self.window_areas[okey]:
+                data['window_areas'][repr(okey)][repr(zkey)] = self.window_areas[okey][zkey]
+
+        for okey in self.opaque_areas:
+            for zkey in self.opaque_areas[okey]:
+                data['opaque_areas'][repr(okey)][repr(zkey)] = self.opaque_areas[okey][zkey]
+
+        for okey in self.wwr:
+            data['wwr'][repr(okey)] = self.wwr[okey]
+
+        for okey in self.shade_gc:
+            data['shade_gc'][repr(okey)] = self.shade_gc[okey]
+
+        for okey in self.shade_depth:
+            data['shade_depth'][repr(okey)] = self.shade_depth[okey]
+
+        for okey in self.exterior_walls:
+            for zkey in self.exterior_walls[okey]:
+                data['exterior_walls'][repr(okey)][repr(zkey)] = self.exterior_walls[okey][zkey]
+
         return data
+
+    @data.setter
+    def data(self, data):
+        ceiling_surfaces = data.get('ceiling_surfaces') or {}
+        floor_surfaces = data.get('floor_surfaces') or {}
+        adiabatic_walls = data.get('adiabatic_walls') or {}
+        facade_areas = data.get('facade_areas') or {}
+        window_areas = data.get('window_areas') or {}
+        opaque_areas = data.get('opaque_areas') or {}
+        wwr = data.get('wwr') or {}
+        shade_gc = data.get('shade_gc') or {}
+        shade_depth = data.get('shade_depth') or {}
+        exterior_walls = data.get('exterior_walls') or {}
+
+        for key in ceiling_surfaces:
+            self.ceiling_surfaces[literal_eval(key)] = ceiling_surfaces[key]
+
+        for key in floor_surfaces:
+            self.floor_surfaces[literal_eval(key)] = floor_surfaces[key]
+
+        for key in adiabatic_walls:
+            self.adiabatic_walls[literal_eval(key)] = adiabatic_walls[key]
+
+        for okey in facade_areas:
+            for zkey in facade_areas[okey]:
+                self.facade_areas[literal_eval(okey)][literal_eval(zkey)] = facade_areas[okey][zkey]
+
+        for okey in window_areas:
+            for zkey in window_areas[okey]:
+                self.window_areas[literal_eval(okey)][literal_eval(zkey)] = window_areas[okey][zkey]
+
+        for okey in opaque_areas:
+            for zkey in opaque_areas[okey]:
+                self.opaque_areas[literal_eval(okey)][literal_eval(zkey)] = opaque_areas[okey][zkey]
+
+        for okey in wwr:
+            self.wwr[literal_eval(okey)] = wwr[okey]
+
+        for okey in shade_gc:
+            self.shade_gc[literal_eval(okey)] = shade_gc[okey]
+
+        for okey in shade_depth:
+            self.shade_depth[literal_eval(okey)] = shade_depth[okey]
+
+        for okey in exterior_walls:
+            for zkey in exterior_walls[okey]:
+                self.exterior_walls[literal_eval(okey)][literal_eval(zkey)] = exterior_walls[okey][zkey]
+
+        self.__name__               = data.get('name') or {}
+        self.floor_area             = data.get('floor_area') or {}
+        self.span                   = data.get('span') or {}
+        self.beam_length            = data.get('beam_length') or {}
+        self.col_length             = data.get('col_length') or {}
+        self.facade_cladding        = data.get('facade_cladding') or {}
+        self.external_insulation    = data.get('external_insulation') or {}
+        self.insulation_thickness   = data.get('insulation_thickness') or {}
+        self.ewall_framing          = data.get('ewall_framing') or {}
+        self.int_finish             = data.get('int_finish') or {}
+        self.glazing_system         = data.get('glazing_system') or {}
+        self.zone_program           = data.get('zone_program') or {}
+        self.weather_file           = data.get('weather_file') or {}
+        self.sql_path               = data.get('sql_path') or {}
+        self.simulation_folder      = data.get('simulation_folder') or {}
+        self.run_simulation         = data.get('run_simulation') or {}  
+        self.simulation_name        = data.get('simulation_name') or {}
+        self.zone_program           = data.get('zone_program') or {}
+        self.weather_file           = data.get('weather_file') or {}
+        self.sql_path               = data.get('sql_path') or {}
+        self.simulation_folder      = data.get('simulation_folder') or {}
+        self.run_simulation         = data.get('run_simulation') or {}
+        self.structure              = data.get('structure') or {}
 
     @classmethod
     def from_gh_data(cls, data):
@@ -133,7 +282,8 @@ class Building(object):
             srf = ceiling_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
+                # p = [p[0], p[2], p[3], p[1]]
+                p = [list(p[j]) for j in [0, 2, 3, 1]]
                 b.ceiling_surfaces[b.zones[i]] = p
 
         # exterior walls - - -
@@ -143,7 +293,8 @@ class Building(object):
                 srf = exterior_walls_n.Branch(i)
                 if len(srf) > 0:
                     p = rs.SurfacePoints(srf[0])
-                    p = [p[0], p[2], p[3], p[1]]
+                    # p = [p[0], p[2], p[3], p[1]]
+                    p = [list(p[j]) for j in [0, 2, 3, 1]]
                     b.exterior_walls['n'][b.zones[i]] = p
 
         # south - 
@@ -152,7 +303,8 @@ class Building(object):
                 srf = exterior_walls_s.Branch(i)
                 if len(srf) > 0:
                     p = rs.SurfacePoints(srf[0])
-                    p = [p[0], p[2], p[3], p[1]]
+                    # p = [p[0], p[2], p[3], p[1]]
+                    p = [list(p[j]) for j in [0, 2, 3, 1]]
                     b.exterior_walls['s'][b.zones[i]] = p
 
         # east - 
@@ -161,7 +313,8 @@ class Building(object):
                 srf = exterior_walls_e.Branch(i)
                 if len(srf) > 0:
                     p = rs.SurfacePoints(srf[0])
-                    p = [p[0], p[2], p[3], p[1]]
+                    # p = [p[0], p[2], p[3], p[1]]
+                    p = [list(p[j]) for j in [0, 2, 3, 1]]
                     b.exterior_walls['e'][b.zones[i]] = p
 
         # west - 
@@ -170,7 +323,8 @@ class Building(object):
                 srf = exterior_walls_w.Branch(i)
                 if len(srf) > 0:
                     p = rs.SurfacePoints(srf[0])
-                    p = [p[0], p[2], p[3], p[1]]
+                    # p = [p[0], p[2], p[3], p[1]]
+                    p = [list(p[j]) for j in [0, 2, 3, 1]]
                     b.exterior_walls['w'][b.zones[i]] = p
 
         # adiabatic walls - - -
@@ -179,7 +333,8 @@ class Building(object):
             b.adiabatic_walls[b.zones[i]] = []
             for srf in srfs:
                 p = rs.SurfacePoints(srf)
-                p = [p[0], p[2], p[3], p[1]]
+                # p = [p[0], p[2], p[3], p[1]]
+                p = [list(p[j]) for j in [0, 2, 3, 1]]
                 b.adiabatic_walls[b.zones[i]].append(p)
 
         # floor surfaces - - -
@@ -187,7 +342,8 @@ class Building(object):
             srf = floor_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.SurfacePoints(srf[0])
-                p = [p[0], p[2], p[3], p[1]]
+                # p = [p[0], p[2], p[3], p[1]]
+                p = [list(p[j]) for j in [0, 2, 3, 1]]
                 b.floor_surfaces[b.zones[i]] = p
 
         # wwr - - -
@@ -233,7 +389,6 @@ class Building(object):
         b.span                   = data['span']
         b.beam_length            = data['beam_length']
         b.col_length             = data['col_length']
-
         return b
 
     def compute_areas(self):
@@ -341,7 +496,6 @@ class Building(object):
             if zone in self.adiabatic_walls:
                 srfs = self.adiabatic_walls[zone]
                 for srf in srfs:
-                    print(srf)
                     adiabatic_walls[i].append(rs.AddSrfPt(srf))
         data['adiabatic_walls'] = th.list_to_tree(adiabatic_walls, source=[])
 
@@ -406,3 +560,10 @@ class Building(object):
         data['simulation_folder']       = self.simulation_folder
         data['run_simulation']          = self.run_simulation
         return data
+
+if __name__ == '__main__':
+    for i in range(50): print('')
+    filepath = os.path.join(studio2021.TEMP, 'Studio2021Building.json')
+    print(filepath)
+    b = Building.from_json(filepath)
+    print(b.floor_area)
