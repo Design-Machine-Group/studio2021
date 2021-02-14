@@ -6,6 +6,8 @@ import json
 
 from copy import deepcopy
 
+from studio2021.datastructures.structure import Structure
+
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
 from studio2021.functions import normal_polygon
@@ -36,6 +38,10 @@ class Building(object):
         self.floor_surfaces         = {}
         self.zone_fa                = {}
         self.adiabatic_walls        = {}
+        self.floor_area             = 0.
+        self.span                   = None
+        self.beam_length            = None
+        self.col_length             = None
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -60,6 +66,7 @@ class Building(object):
         self.sql_path               = None
         self.simulation_folder      = None
         self.run_simulation         = None
+        self.structure              = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -74,6 +81,14 @@ class Building(object):
     def from_json(self):
         pass
     
+    def compute_embodied(self):
+        area = self.floor_area
+        span = self.span
+        col_length = self.col_length
+        beam_length = self.beam_length
+        self.structure = Structure(area, span, col_length, beam_length)
+        self.embodied = self.structure.embodied
+
     @property
     def data(self):
         data = {}
@@ -214,6 +229,11 @@ class Building(object):
         b.simulation_folder     = simulation_folder
         b.run_simulation        = run_simulation
 
+        # embodied - - -
+        b.span                   = data['span']
+        b.beam_length            = data['beam_length']
+        b.col_length             = data['col_length']
+
         return b
 
     def compute_areas(self):
@@ -224,6 +244,10 @@ class Building(object):
                 self.facade_areas[okey][zkey] = area
                 self.window_areas[okey][zkey] = area * self.wwr[okey]
                 self.opaque_areas[okey][zkey] = area * (1 - self.wwr[okey])
+        
+        for zkey in self.floor_surfaces:
+            srf = self.floor_surfaces[zkey]
+            self.floor_area += area_polygon(srf)
 
     def fix_normals(self):
         import rhinoscriptsyntax as rs

@@ -17,17 +17,19 @@ embodied: {}
 
 """
 
+#TODO: Check all nbumbers, sizing, just made these up for now. 
+
 class Structure(object):
     def __init__(self, area, span, col_length, beam_length):
-        self.name = 'Structure testing'
+        self.name = 'Structure'
         self.area = area
         self.span = span
         self.col_length = col_length
         self.beam_length = beam_length
 
-        self.glulam_kgco2_ft3 = 1.1 # temporary numbers
-        self.clt_kgco2_f3 = 1. # temporary numbers
-        self.conc_kgco2_ft3 = 2. # temporary numbers
+        self.glulam_kgco2_ft3 = 10.1 # temporary numbers
+        self.clt_kgco2_f3 = 10. # temporary numbers
+        self.conc_kgco2_ft3 = 20. # temporary numbers
         self.conc_thick = .166667 # 2 inches in feet
     
     def __str__(self):
@@ -98,5 +100,3 @@ if __name__ == "__main__":
     col_length = 9 * num_col
     beam_length = span * num_beam
     s = Structure(area, span, col_length, beam_length)
-    print(s)
-    print('tomas')
