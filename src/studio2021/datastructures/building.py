@@ -86,13 +86,14 @@ class Building(object):
         building.data = data
         return building
 
-    def compute_embodied(self):
+    @property
+    def embodied(self):
         area = self.floor_area
         span = self.span
         col_length = self.col_length
         beam_length = self.beam_length
         self.structure = Structure(area, span, col_length, beam_length)
-        self.embodied = self.structure.embodied
+        return self.structure.embodied + self.compute_envelope_embodied()
 
     @property
     def data(self):
@@ -561,9 +562,41 @@ class Building(object):
         data['run_simulation']          = self.run_simulation
         return data
 
+    def compute_envelope_embodied(self):
+        from studio2021.functions import read_materials
+        from studio2021.functions import read_glazing
+
+        tot_opaque = 0.  # this should be in feet?
+        tot_win = 0.     # this should be in feet?
+        for okey in self.opaque_areas:
+            for zkey in self.opaque_areas[okey]:
+                tot_opaque += self.opaque_areas[okey][zkey]
+                tot_win += self.window_areas[okey][zkey]
+
+        ins_mat = self.external_insulation
+        ins_thick = float(self.insulation_thickness) / 12. # currently in inches
+        ins_emb = float(read_materials(ins_mat)['embodied_carbon']) * 27.  # currently (kgCO2/yd3)
+        ins_emb = tot_opaque * ins_thick * ins_emb 
+
+        fac_mat = self.facade_cladding
+        fac_thick = float(read_materials(fac_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
+        fac_emb = float(read_materials(fac_mat)['embodied_carbon']) * 27. # currently (kgCO2/yd3)
+        fac_emb = tot_opaque * fac_thick * fac_emb 
+
+        int_mat = self.facade_cladding
+        int_thick = float(read_materials(int_mat)['thickness_in']) # currently (kgCO2/yd3)
+        int_emb = float(read_materials(int_mat)['embodied_carbon']) # currently (kgCO2/yd3)
+        int_emb = tot_opaque * int_thick * int_emb 
+        
+        win_sys = self.glazing_system
+        win_emb = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
+        win_emb = tot_win * win_emb
+
+        return win_emb + int_emb + fac_emb + int_emb
+        
+
 if __name__ == '__main__':
     for i in range(50): print('')
     filepath = os.path.join(studio2021.TEMP, 'Studio2021Building.json')
-    print(filepath)
     b = Building.from_json(filepath)
-    print(b.floor_area)
+    print(b.embodied)
