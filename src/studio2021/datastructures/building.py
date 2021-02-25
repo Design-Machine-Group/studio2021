@@ -457,6 +457,7 @@ class Building(object):
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
             for i, zkey in enumerate(self.exterior_walls[okey]):
+                print(i, okey, zkey)
                 pl = rs.AddPolyline(self.exterior_walls[okey][zkey])
                 walls[i] = [rs.AddPlanarSrf(pl)[0]]
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
