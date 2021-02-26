@@ -447,8 +447,8 @@ class Building(object):
         for i in range(4):
             okey = self.orient_dict[i]
             areas = [[] for _ in range(len(self.facade_areas[okey]))]
-            for i, zkey in enumerate(self.facade_areas[okey]):
-                areas[i] = [self.facade_areas[okey][zkey]]
+            for j, zkey in enumerate(self.facade_areas[okey]):
+                areas[j] = [self.facade_areas[okey][zkey]]
             data['facade_areas'][okey] = th.list_to_tree(areas, source=[])
 
         # exterior walls - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -456,10 +456,10 @@ class Building(object):
         for i in range(4):
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
-            for i, zkey in enumerate(self.exterior_walls[okey]):
+            for j, zkey in enumerate(self.exterior_walls[okey]):
                 print(i, okey, zkey)
                 pl = rs.AddPolyline(self.exterior_walls[okey][zkey])
-                walls[i] = [rs.AddPlanarSrf(pl)[0]]
+                walls[j] = [rs.AddPlanarSrf(pl)[0]]
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -522,8 +522,8 @@ class Building(object):
         for i in range(4):
             okey = self.orient_dict[i]
             areas = [[] for _ in range(len(self.opaque_areas[okey]))]
-            for i, zkey in enumerate(self.opaque_areas[okey]):
-                areas[i] = [self.opaque_areas[okey][zkey]]
+            for j, zkey in enumerate(self.opaque_areas[okey]):
+                areas[j] = [self.opaque_areas[okey][zkey]]
             data['opaque_areas'][okey] = th.list_to_tree(areas, source=[])
 
 
@@ -533,8 +533,8 @@ class Building(object):
         for i in range(4):
             okey = self.orient_dict[i]
             areas = [[] for _ in range(len(self.window_areas[okey]))]
-            for i, zkey in enumerate(self.window_areas[okey]):
-                areas[i] = [self.window_areas[okey][zkey]]
+            for j, zkey in enumerate(self.window_areas[okey]):
+                areas[j] = [self.window_areas[okey][zkey]]
             data['window_areas'][okey] = th.list_to_tree(areas, source=[])
 
 
