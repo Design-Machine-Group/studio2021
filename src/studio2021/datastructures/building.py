@@ -280,36 +280,77 @@ class Building(object):
 
         # exterior walls - - -
         # north - 
-        for i in b.zones:
-            if i < exterior_walls_n.BranchCount:
-                pls = exterior_walls_n.Branch(i)
-                for pl in pls:
-                    p = rs.PolylineVertices(pl)
-                    b.exterior_walls['n'][b.zones[i]] = p
+        # for i in b.zones:
+        #     if i < exterior_walls_n.BranchCount:
+        #         pls = exterior_walls_n.Branch(i)
+        #         for pl in pls:
+        #             # p = rs.PolylineVertices(pl)
+        #             p = [rs.PolylineVertices(s) for s in srf]
+        #             b.exterior_walls['n'][b.zones[i]] = p
+
+        # for i in b.zones:
+        #     if i < exterior_walls_s.BranchCount:
+        #         srf = exterior_walls_n.Branch(i)
+        #         if len(srf) > 0:
+        #             # p = rs.PolylineVertices(srf[0])
+        #             p = [rs.PolylineVertices(s) for s in srf]
+        #             b.exterior_walls['n'][b.zones[i]] = p
+
+        for k in range(exterior_walls_n.BranchCount):
+            walls = exterior_walls_n.Branch(k)
+            b.exterior_walls['n'][b.zones[k]] = []
+            for wall in walls:
+                p = rs.PolylineVertices(wall)
+                b.exterior_walls['n'][b.zones[k]].append(p)
 
         # south - 
-        for i in b.zones:
-            if i < exterior_walls_s.BranchCount:
-                srf = exterior_walls_s.Branch(i)
-                if len(srf) > 0:
-                    p = rs.PolylineVertices(srf[0])
-                    b.exterior_walls['s'][b.zones[i]] = p
+        # for i in b.zones:
+        #     if i < exterior_walls_s.BranchCount:
+        #         srf = exterior_walls_s.Branch(i)
+        #         if len(srf) > 0:
+        #             # p = rs.PolylineVertices(srf[0])
+        #             p = [rs.PolylineVertices(s) for s in srf]
+        #             b.exterior_walls['s'][b.zones[i]] = p
+
+        for k in range(exterior_walls_s.BranchCount):
+            walls = exterior_walls_s.Branch(k)
+            b.exterior_walls['s'][b.zones[k]] = []
+            for wall in walls:
+                p = rs.PolylineVertices(wall)
+                b.exterior_walls['s'][b.zones[k]].append(p)
 
         # east - 
-        for i in b.zones:
-            if i < exterior_walls_e.BranchCount:
-                srf = exterior_walls_e.Branch(i)
-                if len(srf) > 0:
-                    p = rs.PolylineVertices(srf[0])
-                    b.exterior_walls['e'][b.zones[i]] = p
+        # for i in b.zones:
+        #     if i < exterior_walls_e.BranchCount:
+        #         srf = exterior_walls_e.Branch(i)
+        #         if len(srf) > 0:
+        #             # p = rs.PolylineVertices(srf[0])
+        #             p = [rs.PolylineVertices(s) for s in srf]
+        #             b.exterior_walls['e'][b.zones[i]] = p
+
+        for k in range(exterior_walls_e.BranchCount):
+            walls = exterior_walls_e.Branch(k)
+            b.exterior_walls['e'][b.zones[k]] = []
+            for wall in walls:
+                p = rs.PolylineVertices(wall)
+                b.exterior_walls['e'][b.zones[k]].append(p)
 
         # west - 
-        for i in b.zones:
-            if i < exterior_walls_w.BranchCount:
-                srf = exterior_walls_w.Branch(i)
-                if len(srf) > 0:
-                    p = rs.PolylineVertices(srf[0])
-                    b.exterior_walls['w'][b.zones[i]] = p
+        # for i in b.zones:
+        #     if i < exterior_walls_w.BranchCount:
+        #         srf = exterior_walls_w.Branch(i)
+        #         if len(srf) > 0:
+        #             # p = rs.PolylineVertices(srf[0])
+        #             p = [rs.PolylineVertices(s) for s in srf]
+        #             b.exterior_walls['w'][b.zones[i]] = p
+
+        for k in range(exterior_walls_w.BranchCount):
+            walls = exterior_walls_w.Branch(k)
+            b.exterior_walls['w'][b.zones[k]] = []
+            for wall in walls:
+                p = rs.PolylineVertices(wall)
+                b.exterior_walls['w'][b.zones[k]].append(p)
+
 
         # adiabatic walls - - -
         for k in range(adiabatic_walls.BranchCount):
@@ -381,8 +422,11 @@ class Building(object):
     def compute_areas(self):
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
-                pts = self.exterior_walls[okey][zkey]
-                area = area_polygon(pts[:-1])
+                srfs = self.exterior_walls[okey][zkey]
+                area = 0
+                for srf in srfs:
+                    area += area_polygon(srf[:-1])
+                # area = area_polygon(pts[:-1])
                 self.facade_areas[okey][zkey] = area
                 self.window_areas[okey][zkey] = area * self.wwr[okey]
                 self.opaque_areas[okey][zkey] = area * (1 - self.wwr[okey])
@@ -395,26 +439,29 @@ class Building(object):
         import rhinoscriptsyntax as rs
 
         for zkey in self.zones:
-            print('zone', zkey)
             srfs = []
             zkey = self.zones[zkey]
             if zkey in self.adiabatic_walls:
                 adiabatic = self.adiabatic_walls[zkey]
                 for srf in adiabatic:
                     srfs.append(srf)
+
             if zkey in self.ceiling_surfaces:
                 srfs.append(self.ceiling_surfaces[zkey])
+            
             if zkey in self.floor_surfaces:
                 srfs.append(self.floor_surfaces[zkey])
+            
             for okey in self.exterior_walls:
                 if zkey in self.exterior_walls[okey]:
-                    srf = self.exterior_walls[okey][zkey]
-                    if srf:
+                    srfs_ = self.exterior_walls[okey][zkey]
+                    for srf in srfs_:
                         srfs.append(srf)
+                    # if srf:
+                    #     srfs.append(srf)
 
             if srfs:
                 cpts = [centroid_points(srf[:-1]) for srf in srfs]
-                print(cpts)
                 zone_cpt = centroid_points(cpts)
 
                 for i, srf in enumerate(srfs):
@@ -455,8 +502,11 @@ class Building(object):
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
             for j, zkey in enumerate(self.exterior_walls[okey]):
-                pl = rs.AddPolyline(self.exterior_walls[okey][zkey])
-                walls[j] = [rs.AddPlanarSrf(pl)[0]]
+                pls = self.exterior_walls[okey][zkey]
+                walls[j] = []
+                for pl in pls:
+                    pl = rs.AddPolyline(pl)
+                    walls[j].append(rs.AddPlanarSrf(pl)[0])
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
