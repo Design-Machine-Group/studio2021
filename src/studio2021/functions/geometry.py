@@ -10,6 +10,34 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 
+def distance_point_point(a, b):
+    """Compute the distance bewteen a and b.
+
+    Parameters
+    ----------
+    a : sequence of float
+        XYZ coordinates of point a.
+    b : sequence of float
+        XYZ coordinates of point b.
+
+    Returns
+    -------
+    float
+        Distance bewteen a and b.
+
+    Examples
+    --------
+    >>> distance_point_point([0.0, 0.0, 0.0], [2.0, 0.0, 0.0])
+    2.0
+
+    See Also
+    --------
+    distance_point_point_xy
+
+    """
+    ab = subtract_vectors(b, a)
+    return length_vector(ab)
+
 def centroid_points(points):
     """Compute the centroid of a set of points.
 

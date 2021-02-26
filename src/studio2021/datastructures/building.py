@@ -17,6 +17,7 @@ from studio2021.functions import normal_polygon
 from studio2021.functions import centroid_points
 from studio2021.functions import scale_vector
 from studio2021.functions import add_vectors
+from studio2021.functions import distance_point_point
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -355,7 +356,7 @@ class Building(object):
         b.compute_areas()
 
         # fix normals - - - 
-        # b.fix_normals()
+        b.fix_normals()
 
         # facade data - - -
         b.facade_cladding       = facade_cladding
@@ -394,14 +395,15 @@ class Building(object):
         import rhinoscriptsyntax as rs
 
         for zkey in self.zones:
+            print('zone', zkey)
             srfs = []
             zkey = self.zones[zkey]
             if zkey in self.adiabatic_walls:
                 adiabatic = self.adiabatic_walls[zkey]
                 for srf in adiabatic:
                     srfs.append(srf)
-            # if zkey in self.ceiling_surfaces:
-            #     srfs.append(self.ceiling_surfaces[zkey])
+            if zkey in self.ceiling_surfaces:
+                srfs.append(self.ceiling_surfaces[zkey])
             if zkey in self.floor_surfaces:
                 srfs.append(self.floor_surfaces[zkey])
             for okey in self.exterior_walls:
@@ -410,23 +412,37 @@ class Building(object):
                     if srf:
                         srfs.append(srf)
 
-            planes = []
-            for srf in srfs:
-                n = normal_polygon(srf[:-1], unitized=True)
-                cpt = centroid_points(srf[:-1])
-                planes.append((cpt, n))
-            
-            for srf in srfs:
-                for i, srf_ in enumerate(srfs):
-                    if srf != srf_:
-                        n = scale_vector(normal_polygon(srf[:-1], unitized=True), 1000000)
-                        cpt = centroid_points(srf[:-1])
-                        segment = cpt, add_vectors(cpt, n)
-                        x = intersection_segment_plane(segment, planes[i])
-                        if x:
-                            temp = deepcopy(srf[1])
-                            srf[1] = srf[-1]
-                            srf[3] = temp
+            # planes = []
+            # for srf in srfs:
+            #     n = normal_polygon(srf[:-1], unitized=True)
+            #     cpt = centroid_points(srf[:-1])
+            #     planes.append((cpt, n))
+            if srfs:
+                cpts = [centroid_points(srf[:-1]) for srf in srfs]
+                print(cpts)
+                zone_cpt = centroid_points(cpts)
+
+                for i, srf in enumerate(srfs):
+                    cpt = cpts[i]
+                    n = normal_polygon(srf[:-1], unitized=True)
+                    n_ = scale_vector(normal_polygon(srf[:-1], unitized=True), -1)
+                    d = distance_point_point(add_vectors(cpt, n), zone_cpt)
+                    d_ = distance_point_point(add_vectors(cpt, n_), zone_cpt)
+                    if d < d_:
+                        srf = srf[::-1]
+
+            # for srf in srfs:
+            #     for i, srf_ in enumerate(srfs):
+            #         if srf != srf_:
+            #             n = scale_vector(normal_polygon(srf[:-1], unitized=True), 1)
+            #             cpt = centroid_points(srf[:-1])
+            #             segment = cpt, add_vectors(cpt, n)
+                        
+            #             x = intersection_segment_plane(segment, planes[i])
+            #             if x:
+            #                 temp = deepcopy(srf[1])
+            #                 srf[1] = srf[-1]
+            #                 srf[3] = temp
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
