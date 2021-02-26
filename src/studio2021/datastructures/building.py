@@ -247,7 +247,6 @@ class Building(object):
     @classmethod
     def from_gh_data(cls, data):
         import rhinoscriptsyntax as rs
-
         znames                  = data['znames']
         exterior_walls_n        = data['exterior_walls_n']
         exterior_walls_s        = data['exterior_walls_s']
@@ -282,9 +281,9 @@ class Building(object):
         # north - 
         for i in b.zones:
             if i < exterior_walls_n.BranchCount:
-                srf = exterior_walls_n.Branch(i)
-                if len(srf) > 0:
-                    p = rs.PolylineVertices(srf[0])
+                pls = exterior_walls_n.Branch(i)
+                for pl in pls:
+                    p = rs.PolylineVertices(pl)
                     b.exterior_walls['n'][b.zones[i]] = p
 
         # south - 
@@ -356,7 +355,7 @@ class Building(object):
         b.compute_areas()
 
         # fix normals - - - 
-        b.fix_normals()
+        # b.fix_normals()
 
         # facade data - - -
         b.facade_cladding       = facade_cladding
@@ -382,7 +381,7 @@ class Building(object):
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
                 pts = self.exterior_walls[okey][zkey]
-                area = area_polygon(pts)
+                area = area_polygon(pts[:-1])
                 self.facade_areas[okey][zkey] = area
                 self.window_areas[okey][zkey] = area * self.wwr[okey]
                 self.opaque_areas[okey][zkey] = area * (1 - self.wwr[okey])
@@ -413,15 +412,15 @@ class Building(object):
 
             planes = []
             for srf in srfs:
-                n = normal_polygon(srf, unitized=True)
-                cpt = centroid_points(srf)
+                n = normal_polygon(srf[:-1], unitized=True)
+                cpt = centroid_points(srf[:-1])
                 planes.append((cpt, n))
             
             for srf in srfs:
                 for i, srf_ in enumerate(srfs):
                     if srf != srf_:
-                        n = scale_vector(normal_polygon(srf, unitized=True), 1000000)
-                        cpt = centroid_points(srf)
+                        n = scale_vector(normal_polygon(srf[:-1], unitized=True), 1000000)
+                        cpt = centroid_points(srf[:-1])
                         segment = cpt, add_vectors(cpt, n)
                         x = intersection_segment_plane(segment, planes[i])
                         if x:
@@ -457,7 +456,6 @@ class Building(object):
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
             for j, zkey in enumerate(self.exterior_walls[okey]):
-                print(i, okey, zkey)
                 pl = rs.AddPolyline(self.exterior_walls[okey][zkey])
                 walls[j] = [rs.AddPlanarSrf(pl)[0]]
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
