@@ -412,11 +412,6 @@ class Building(object):
                     if srf:
                         srfs.append(srf)
 
-            # planes = []
-            # for srf in srfs:
-            #     n = normal_polygon(srf[:-1], unitized=True)
-            #     cpt = centroid_points(srf[:-1])
-            #     planes.append((cpt, n))
             if srfs:
                 cpts = [centroid_points(srf[:-1]) for srf in srfs]
                 print(cpts)
@@ -429,20 +424,8 @@ class Building(object):
                     d = distance_point_point(add_vectors(cpt, n), zone_cpt)
                     d_ = distance_point_point(add_vectors(cpt, n_), zone_cpt)
                     if d < d_:
-                        srf = srf[::-1]
+                        srf.reverse()
 
-            # for srf in srfs:
-            #     for i, srf_ in enumerate(srfs):
-            #         if srf != srf_:
-            #             n = scale_vector(normal_polygon(srf[:-1], unitized=True), 1)
-            #             cpt = centroid_points(srf[:-1])
-            #             segment = cpt, add_vectors(cpt, n)
-                        
-            #             x = intersection_segment_plane(segment, planes[i])
-            #             if x:
-            #                 temp = deepcopy(srf[1])
-            #                 srf[1] = srf[-1]
-            #                 srf[3] = temp
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
