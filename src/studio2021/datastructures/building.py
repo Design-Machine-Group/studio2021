@@ -94,7 +94,7 @@ class Building(object):
         col_length = self.col_length
         beam_length = self.beam_length
         self.structure = Structure(area, span, col_length, beam_length)
-        return self.structure.embodied + self.compute_envelope_embodied()
+        return self.structure.embodied, self.compute_envelope_embodied()
 
     @property
     def data(self):
@@ -472,7 +472,6 @@ class Building(object):
                     d_ = distance_point_point(add_vectors(cpt, n_), zone_cpt)
                     if d < d_:
                         srf.reverse()
-
 
     def to_gh_data(self):
         import rhinoscriptsyntax as rs
