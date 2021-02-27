@@ -32,6 +32,11 @@ class Structure(object):
         self.clt_kgco2_f3 = 10. # temporary numbers
         self.conc_kgco2_ft3 = 20. # temporary numbers
         self.conc_thick = .166667 # 2 inches in feet
+
+        self.slab_embodied = None
+        self.beam_embodied = None
+        self.column_embodied = None
+
     
     def __str__(self):
         return TPL.format(self.name, self.span, self.embodied)
@@ -40,15 +45,14 @@ class Structure(object):
     def data(self):
         return {}
 
-    @property
-    def embodied(self):
-        slab = self.slab_embodied
-        col = self.column_embodied
-        beam = self.beam_embodied
-        return slab + col + beam
+    def compute_embodied(self):
+        self.compute_slab_embodied
+        self.compute_column_embodied
+        self.compute_beam_embodied
+        
 
     @property
-    def slab_embodied(self):
+    def compute_slab_embodied(self):
         """These values are taken from Strobel (2016), using composte values
         and 2.0" concrete section. Spans should be in feet, thicknesses in inches. 
         """
@@ -65,10 +69,10 @@ class Structure(object):
         
         timber =  self.area * self.clt_kgco2_f3 * thick
         concrete = self.area * self.conc_kgco2_ft3 * self.conc_thick
-        return timber + concrete
+        self.slab_embodied = timber + concrete
 
     @property
-    def beam_embodied(self):
+    def compute_beam_embodied(self):
         # these numbers are all incorrect, just temp
         if self.span < 20:
             sec = 5.9 
@@ -80,10 +84,10 @@ class Structure(object):
             sec = 14.2
         else:
             raise(NameError('Span is too large for Glulam beams'))
-        return sec * self.beam_length * self.glulam_kgco2_ft3
+        self.beam_embodied = sec * self.beam_length * self.glulam_kgco2_ft3
     
     @property
-    def column_embodied(self):
+    def compute_column_embodied(self):
         # these numbers are all incorrect, just temp
         if self.span < 20:
             sec = 5.9 
@@ -95,7 +99,7 @@ class Structure(object):
             sec = 14.2
         else:
             raise(NameError('Span is too large for Glulam columns'))
-        return sec * self.col_length * self.glulam_kgco2_ft3
+        self.column_embodied = sec * self.col_length * self.glulam_kgco2_ft3
 
 if __name__ == "__main__":
     span = 30

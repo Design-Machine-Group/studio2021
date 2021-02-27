@@ -8,7 +8,9 @@ from ast import literal_eval
 from copy import deepcopy
 
 import studio2021
-
+from studio2021.datastructures import structure
+reload(structure)
+from studio2021.datastructures.building import Building
 from studio2021.datastructures.structure import Structure
 
 from studio2021.functions import area_polygon
@@ -91,14 +93,14 @@ class Building(object):
         building.data = data
         return building
 
-    @property
-    def embodied(self):
+    def compute_embodied(self):
         area = self.floor_area
         span = self.span
         col_length = self.col_length
         beam_length = self.beam_length
         self.structure = Structure(area, span, col_length, beam_length)
-        return self.structure.embodied, self.compute_envelope_embodied()
+        self.structure.compute_embodied()
+        self.compute_envelope_embodied()
 
     @property
     def data(self):
@@ -592,7 +594,7 @@ class Building(object):
         win_emb = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
         win_emb = tot_win * win_emb
 
-        return win_emb + int_emb + fac_emb + int_emb
+        self.envelope_embodied =  win_emb + int_emb + fac_emb + int_emb
         
 
 if __name__ == '__main__':
