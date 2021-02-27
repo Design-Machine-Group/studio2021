@@ -49,7 +49,8 @@ class Building(object):
         self.shade_depth            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.exterior_walls         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.floor_area             = 0.
-        self.span                   = None
+        self.span_x                 = None
+        self.span_y                 = None
         self.beam_length            = None
         self.col_length             = None
         self.facade_cladding        = None
@@ -70,6 +71,9 @@ class Building(object):
         self.simulation_folder      = None
         self.run_simulation         = None
         self.structure              = None
+        self.building_type          = None
+        self.num_floors_above       = None
+
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -278,39 +282,12 @@ class Building(object):
         num_zones = znames.BranchCount
         b.zones = {i: znames.Branch(i)[0] for i in range(num_zones)}
 
-        # exterior walls - - -
-        # north - 
-        # for i in b.zones:
-        #     if i < exterior_walls_n.BranchCount:
-        #         pls = exterior_walls_n.Branch(i)
-        #         for pl in pls:
-        #             # p = rs.PolylineVertices(pl)
-        #             p = [rs.PolylineVertices(s) for s in srf]
-        #             b.exterior_walls['n'][b.zones[i]] = p
-
-        # for i in b.zones:
-        #     if i < exterior_walls_s.BranchCount:
-        #         srf = exterior_walls_n.Branch(i)
-        #         if len(srf) > 0:
-        #             # p = rs.PolylineVertices(srf[0])
-        #             p = [rs.PolylineVertices(s) for s in srf]
-        #             b.exterior_walls['n'][b.zones[i]] = p
-
         for k in range(exterior_walls_n.BranchCount):
             walls = exterior_walls_n.Branch(k)
             b.exterior_walls['n'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
                 b.exterior_walls['n'][b.zones[k]].append(p)
-
-        # south - 
-        # for i in b.zones:
-        #     if i < exterior_walls_s.BranchCount:
-        #         srf = exterior_walls_s.Branch(i)
-        #         if len(srf) > 0:
-        #             # p = rs.PolylineVertices(srf[0])
-        #             p = [rs.PolylineVertices(s) for s in srf]
-        #             b.exterior_walls['s'][b.zones[i]] = p
 
         for k in range(exterior_walls_s.BranchCount):
             walls = exterior_walls_s.Branch(k)
@@ -319,30 +296,12 @@ class Building(object):
                 p = rs.PolylineVertices(wall)
                 b.exterior_walls['s'][b.zones[k]].append(p)
 
-        # east - 
-        # for i in b.zones:
-        #     if i < exterior_walls_e.BranchCount:
-        #         srf = exterior_walls_e.Branch(i)
-        #         if len(srf) > 0:
-        #             # p = rs.PolylineVertices(srf[0])
-        #             p = [rs.PolylineVertices(s) for s in srf]
-        #             b.exterior_walls['e'][b.zones[i]] = p
-
         for k in range(exterior_walls_e.BranchCount):
             walls = exterior_walls_e.Branch(k)
             b.exterior_walls['e'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
                 b.exterior_walls['e'][b.zones[k]].append(p)
-
-        # west - 
-        # for i in b.zones:
-        #     if i < exterior_walls_w.BranchCount:
-        #         srf = exterior_walls_w.Branch(i)
-        #         if len(srf) > 0:
-        #             # p = rs.PolylineVertices(srf[0])
-        #             p = [rs.PolylineVertices(s) for s in srf]
-        #             b.exterior_walls['w'][b.zones[i]] = p
 
         for k in range(exterior_walls_w.BranchCount):
             walls = exterior_walls_w.Branch(k)
@@ -414,9 +373,13 @@ class Building(object):
         b.run_simulation        = run_simulation
 
         # embodied - - -
-        b.span                   = data['span']
-        b.beam_length            = data['beam_length']
-        b.col_length             = data['col_length']
+        b.span_x                = data['span_x']
+        b.span_y                = data['span_y']
+        b.span                  = max(data['span_x'], data['span_y'])
+        b.beam_length           = data['beam_length']
+        b.col_length            = data['col_length']
+        b.building_type         = data['building_type']
+        b.num_floors_above      = data['num_floors_above']
         return b
 
     def compute_areas(self):
