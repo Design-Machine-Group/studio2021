@@ -76,7 +76,6 @@ class Building(object):
         self.building_type          = None
         self.num_floors_above       = None
 
-
     def __str__(self):
         return TPL.format(self.__name__)
 
@@ -92,15 +91,6 @@ class Building(object):
         building = cls()
         building.data = data
         return building
-
-    def compute_embodied(self):
-        area = self.floor_area
-        span = self.span
-        col_length = self.col_length
-        beam_length = self.beam_length
-        self.structure = Structure(area, span, col_length, beam_length)
-        self.structure.compute_embodied()
-        self.compute_envelope_embodied()
 
     @property
     def data(self):
@@ -377,11 +367,12 @@ class Building(object):
         # embodied - - -
         b.span_x                = data['span_x']
         b.span_y                = data['span_y']
-        b.span                  = max(data['span_x'], data['span_y'])
+        b.span                  = min(data['span_x'], data['span_y'])
         b.beam_length           = data['beam_length']
         b.col_length            = data['col_length']
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
+        b.composite_slab        = data['composite_slab']
         return b
 
     def compute_areas(self):
@@ -390,7 +381,7 @@ class Building(object):
                 srfs = self.exterior_walls[okey][zkey]
                 area = 0
                 for srf in srfs:
-                    area += area_polygon(srf[:-1])
+                    area += abs(area_polygon(srf[:-1]))
                 # area = area_polygon(pts[:-1])
                 self.facade_areas[okey][zkey] = area
                 self.window_areas[okey][zkey] = area * self.wwr[okey]
@@ -398,7 +389,7 @@ class Building(object):
         
         for zkey in self.floor_surfaces:
             srf = self.floor_surfaces[zkey]
-            self.floor_area += area_polygon(srf)
+            self.floor_area += abs(area_polygon(srf))
 
     def fix_normals(self):
         import rhinoscriptsyntax as rs
@@ -564,6 +555,17 @@ class Building(object):
         data['run_simulation']          = self.run_simulation
         return data
 
+    def compute_structure_embodied(self):
+        area = self.floor_area
+        span = self.span
+        col_length = self.col_length
+        beam_length = self.beam_length
+        composite = self.composite_slab
+        btype = self.building_type
+        self.structure = Structure(area, span, col_length, beam_length, composite, btype)
+        self.structure.compute_embodied()
+        self.compute_envelope_embodied()
+
     def compute_envelope_embodied(self):
         from studio2021.functions import read_materials
         from studio2021.functions import read_glazing
@@ -596,6 +598,23 @@ class Building(object):
 
         self.envelope_embodied =  win_emb + int_emb + fac_emb + int_emb
         
+    def draw_structure(self):
+        import rhinoscriptsyntax as rs
+
+        c_th = self.structure.conc_thick 
+        t_th = self.structure.timber_thick
+        pls = [self.ceiling_surfaces[zkey] for zkey in self.ceiling_surfaces]
+        slabs = []
+        for pl in pls:
+            pl = rs.AddPolyline(pl)
+            srf = rs.ExtrudeCurveStraight(pl, [0, 0, 0], [0, 0, -c_th])
+            rs.CapPlanarHoles(srf)
+            slabs.append(srf)
+            rs.MoveObject(pl, [0, 0, -c_th])
+            srf = rs.ExtrudeCurveStraight(pl, [0, 0, -c_th], [0, 0, - c_th -t_th])
+            rs.CapPlanarHoles(srf)
+            slabs.append(srf)
+        return slabs
 
 if __name__ == '__main__':
     for i in range(50): print('')
