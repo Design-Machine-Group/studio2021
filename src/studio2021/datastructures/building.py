@@ -10,7 +10,6 @@ from copy import deepcopy
 import studio2021
 from studio2021.datastructures import structure
 reload(structure)
-from studio2021.datastructures.building import Building
 from studio2021.datastructures.structure import Structure
 
 from studio2021.functions import area_polygon
@@ -557,12 +556,13 @@ class Building(object):
 
     def compute_structure_embodied(self):
         area = self.floor_area
-        span = self.span
+        span_x = self.span_x
+        span_y = self.span_y
         col_length = self.col_length
         beam_length = self.beam_length
         composite = self.composite_slab
         btype = self.building_type
-        self.structure = Structure(area, span, col_length, beam_length, composite, btype)
+        self.structure = Structure(area, span_x, span_y, col_length, beam_length, composite, btype)
         self.structure.compute_embodied()
         self.compute_envelope_embodied()
 
@@ -620,4 +620,3 @@ if __name__ == '__main__':
     for i in range(50): print('')
     filepath = os.path.join(studio2021.TEMP, 'Studio2021Building.json')
     b = Building.from_json(filepath)
-    print(b.embodied)

@@ -10,6 +10,8 @@ from studio2021.functions import material_reader
 reload(material_reader)
 from studio2021.functions.material_reader import read_materials
 
+from math import sqrt
+
 TPL = """
 ################################################################################
 Structure datastructure: {}
@@ -24,10 +26,12 @@ embodied: {}
 
 class Structure(object):
 
-    def __init__(self, area, span, col_length, beam_length, composite, btype):
+    def __init__(self, area, span_x, span_y, col_length, beam_length, composite, btype):
         self.name = 'Structure'
         self.area = area
-        self.span = span
+        self.span_x = span_x
+        self.span_y = span_y
+        self.span = min(span_x, span_y)
         self.col_length = col_length
         self.beam_length = beam_length
         self.composite = composite
@@ -40,6 +44,8 @@ class Structure(object):
         self.slab_embodied = None
         self.beam_embodied = None
         self.column_embodied = None
+
+        self.gl_allowable = 3480.91 # GL24h in psi
 
         self.clt_kgco2_yd3 = read_materials('CLT')['embodied_carbon']
         self.glulam_kgco2_yd3 = read_materials('Glulam')['embodied_carbon']
@@ -122,18 +128,28 @@ class Structure(object):
     
     @property
     def compute_column_embodied(self):
-        # these numbers are all incorrect, just temp
-        if self.span < 20:
-            sec = 5.9 
-        elif self.span < 25:
-            sec = 8.7 
-        elif self.span < 30:
-            sec = 11.4
-        elif self.span < 32:
-            sec = 14.2
-        else:
-            raise(NameError('Span is too large for Glulam columns'))
-        self.column_embodied = sec * self.col_length * self.glulam_kgco2_yd3
+        
+        trib = self.span_x * self.span_y
+        concrete_dl = self.conc_thick * trib * 149.8271 # concrete density lbs / ft3
+        timber_dl = self.timber_thick * trib * 34 # CLT density lbs / ft3
+        ll = trib * 40  # live load in lbs / ft3
+        load = concrete_dl + timber_dl + ll
+        self.col_area = load / self.gl_allowable
+        self.col_side = sqrt(self.col_area)
+
+
+
+        # if self.span < 20:
+        #     sec = 5.9 
+        # elif self.span < 25:
+        #     sec = 8.7 
+        # elif self.span < 30:
+        #     sec = 11.4
+        # elif self.span < 32:
+        #     sec = 14.2
+        # else:
+        #     raise(NameError('Span is too large for Glulam columns'))
+        # self.column_embodied = sec * self.col_length * self.glulam_kgco2_yd3
 
 
 
@@ -145,4 +161,5 @@ if __name__ == "__main__":
     col_length = 9 * num_col
     beam_length = span * num_beam
     composite = True
-    s = Structure(area, span, col_length, beam_length, composite)
+    btype = 'Type 4A'
+    s = Structure(area, span, col_length, beam_length, composite, btype)
