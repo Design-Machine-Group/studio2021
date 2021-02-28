@@ -10,15 +10,21 @@ def read_materials(material_name):
     del(lines[0])
     materials = {}
     for line in lines:
-        material, type, r_value, r_per_in, thickness_in, thickness_m, conductivity, density, sp_heat, embodied_carbon = line.split(
-            ',')
-        for i in r_value, r_per_in, thickness_in, thickness_m, conductivity, density, sp_heat, embodied_carbon:
-            if i == 'None\n' or 'None':
-                i = None
-            else:
-                i = float(i)
-        materials[material] = {'type': type, 'r_value': r_value, 'r_per_in': r_per_in, 'thickness_in': thickness_in,
-                               'thickness_m': thickness_m, 'conductivity': conductivity, 'density': density, 'sp_heat': sp_heat, 'embodied_carbon': embodied_carbon}
+        data = line.split(',')
+        for i in range(len(data)):
+            try:
+                data[i] = float(data[i])
+            except:
+                continue
+        materials[data[0]]   = {'mtype': data[1],
+                                'r_value': data[2],
+                                'r_per_in': data[3],
+                                'thickness_in': data[4],
+                                'thickness_m': data[5], 
+                                'conductivity': data[6], 
+                                'density': data[7],
+                                'sp_heat': data[8],
+                                'embodied_carbon': data[9]}
     return materials[material_name]
 
 
