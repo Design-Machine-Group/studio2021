@@ -97,9 +97,9 @@ class Structure(object):
         if self.btype in ['Type 3', 'Type 4C', 'Type 5']:
             gypsum = 0
         elif self.btype == 'Type 4B':
-            gypsum = (self.area * .8 * self.gypsum_thick) / 27.
+            gypsum = ((self.area * .8 * self.gypsum_thick) / 27.) * self.gyp_kgco2_yd3
         elif self.btype == 'Type 4A':
-            gypsum = (self.area * 1. * self.gypsum_thick) / 27.
+            gypsum = ((self.area * 1. * self.gypsum_thick) / 27.) * self.gyp_kgco2_yd3
         else:
             raise(NameError('Bulinding type is wrong'))
         
