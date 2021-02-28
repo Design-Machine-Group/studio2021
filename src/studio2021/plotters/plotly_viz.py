@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import os
 import studio2021
 
@@ -32,11 +33,11 @@ def plot_data_by_EUI_type(dataset):
     for zone in dataset['zonenames']:
         data.append(go.Bar(name=zone, x=EUI_list, y=[dataset['zonedata'][zone]['cooling'], dataset['zonedata'][zone]['heating'],
                                                      dataset['zonedata'][zone]['lighting'], dataset['zonedata'][zone]['equipment'], dataset['zonedata'][zone]['total']]))
-    fig = go.Figure(data=data)
+    # fig = go.Figure(data=data)
     # Change the bar mode
-    fig.update_layout(barmode='group')
-    fig.show()
-    return fig
+    # fig.update_layout(barmode='group')
+    # fig.show()
+    return data
 
 
 def plot_data_by_zone(dataset):
@@ -52,15 +53,20 @@ def plot_data_by_zone(dataset):
         for zone in dataset['zonenames']:
             temp.append(dataset['zonedata'][zone][eui])
         data.append(go.Bar(name=eui, x=EUI_types, y=temp))
-    fig = go.Figure(data=data)
+    # fig = go.Figure(data=data)
     # Change the bar mode
-    fig.update_layout(barmode='group')
-    fig.show()
-    return fig
+    # fig.update_layout(barmode='group')
+    # fig.show()
+    return data
 
 
 if __name__ == "__main__":
     dataset = read_data('test_data.csv')
-    plot_data_by_EUI_type(dataset)
-    plot_data_by_zone(dataset)
+    fig = make_subplots(rows=1, cols=2)
+    data1 = plot_data_by_EUI_type(dataset)
+    data2 = plot_data_by_zone(dataset)
+    fig.append_trace(go.Figure(data=data1), row=1, col=1)
+    fig.append_trace(go.Figure(data=data2), row=1, col=2)
+    fig.update_layout(height=2000, width=2000, title_text="EUI Visualizations")
+    fig.show()
     # print(dataset)
