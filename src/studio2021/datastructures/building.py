@@ -562,7 +562,8 @@ class Building(object):
         beam_length = self.beam_length
         composite = self.composite_slab
         btype = self.building_type
-        self.structure = Structure(area, span_x, span_y, col_length, beam_length, composite, btype)
+        numf = self.num_floors_above
+        self.structure = Structure(area, span_x, span_y, col_length, beam_length, composite, btype, numf)
         self.structure.compute_embodied()
         self.compute_envelope_embodied()
 

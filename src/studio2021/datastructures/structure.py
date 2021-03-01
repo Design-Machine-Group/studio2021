@@ -26,7 +26,7 @@ embodied: {}
 
 class Structure(object):
 
-    def __init__(self, area, span_x, span_y, col_length, beam_length, composite, btype):
+    def __init__(self, area, span_x, span_y, col_length, beam_length, composite, btype, numf):
         self.name = 'Structure'
         self.area = area
         self.span_x = span_x
@@ -36,6 +36,7 @@ class Structure(object):
         self.beam_length = beam_length
         self.composite = composite
         self.btype = btype
+        self.num_floors_above = numf
 
         self.conc_thick = 2. / 12. # 2 inches in feet
         self.timber_thick = None
@@ -45,7 +46,7 @@ class Structure(object):
         self.beam_embodied = None
         self.column_embodied = None
 
-        self.gl_allowable = 3480.91 # GL24h in psi
+        self.gl_allowable = 3480.91 * 144. * .6 # GL24h in psi to psf .6 safety
 
         self.clt_kgco2_yd3 = read_materials('CLT')['embodied_carbon']
         self.glulam_kgco2_yd3 = read_materials('Glulam')['embodied_carbon']
@@ -131,25 +132,31 @@ class Structure(object):
         
         trib = self.span_x * self.span_y
         concrete_dl = self.conc_thick * trib * 149.8271 # concrete density lbs / ft3
-        timber_dl = self.timber_thick * trib * 34 # CLT density lbs / ft3
-        ll = trib * 40  # live load in lbs / ft3
-        load = concrete_dl + timber_dl + ll
+        timber_dl = self.timber_thick * trib * 36 # CLT density lbs / ft3
+        ll = trib * 80  # live load in lbs / ft3
+        load = (concrete_dl + timber_dl + ll) * self.num_floors_above
+
         self.col_area = load / self.gl_allowable
         self.col_side = sqrt(self.col_area)
 
+        if self.col_side < 1:
+            self.col_side = 1.
 
+        if self.btype in ['Type 3', 'Type 5']:
+            self.col_side += 1,8 / 12.
+        elif self.btype in ['Type 4B', 'Type 4C']:
+            self.col_side += 3.6 / 12.
+        elif self.btype == 'Type 4A':
+            self.col_side += 5.4 / 12.
+        else:
+            raise(NameError('Bulinding type is wrong'))
 
-        # if self.span < 20:
-        #     sec = 5.9 
-        # elif self.span < 25:
-        #     sec = 8.7 
-        # elif self.span < 30:
-        #     sec = 11.4
-        # elif self.span < 32:
-        #     sec = 14.2
-        # else:
-        #     raise(NameError('Span is too large for Glulam columns'))
-        # self.column_embodied = sec * self.col_length * self.glulam_kgco2_yd3
+        print('trib', trib)
+        print('load', load)
+        print('timber', timber_dl / trib)
+        print('concrete', concrete_dl / trib)
+        print('col area', self.col_area)
+        print('col side', self.col_side)
 
 
 
