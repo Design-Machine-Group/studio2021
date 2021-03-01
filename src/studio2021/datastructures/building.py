@@ -613,7 +613,60 @@ class Building(object):
             srf = rs.ExtrudeCurveStraight(pl, [0, 0, -c_th], [0, 0, - c_th -t_th])
             rs.CapPlanarHoles(srf)
             slabs.append(srf)
-        return slabs
+
+        side = self.structure.col_side
+
+        sh = self.structure.timber_thick + self.structure.conc_thick
+
+        columns = []
+        for sp, ep in self.columns:
+            sp_ = rs.VectorAdd(sp, [-side/2., -side/2.,0])
+            b = rs.VectorAdd(sp_, [1,0,0])
+            c = rs.VectorAdd(sp_, [0,1,0])
+            ep_ = ep[0], ep[1], ep[2] - sh
+
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, side, side)
+            col = rs.AddLine(sp, ep_)
+            columns.append(rs.ExtrudeCurve(sec, col))
+
+        bw = self.structure.beam_width
+        bh = self.structure.beam_height
+
+
+        beams = []
+        for sp, ep in self.structure.main_beams:
+            x = rs.VectorCreate(ep, sp)
+            z = [0,0,1]
+            y = rs.VectorCrossProduct(x, z)
+            y_ = rs.VectorScale(rs.VectorUnitize(y), bw / -2.)
+            
+            sp_ = rs.VectorAdd(sp, y_)
+            sp_ = rs.VectorAdd(sp_, [0,0,-bh -sh])    
+            b = rs.VectorAdd(sp_, y)
+            c = rs.VectorAdd(sp_, z)
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, bw, bh)
+            beam = rs.AddLine(sp, ep)
+            beams.append(rs.ExtrudeCurve(sec, beam))
+
+        bh_ = bh *.5
+        for sp, ep in self.structure.second_beams:
+            x = rs.VectorCreate(ep, sp)
+            z = [0,0,1]
+            y = rs.VectorCrossProduct(x, z)
+            y_ = rs.VectorScale(rs.VectorUnitize(y), bw / -2.)
+            
+            sp_ = rs.VectorAdd(sp, y_)
+            sp_ = rs.VectorAdd(sp_, [0,0,-bh_ -sh])    
+            b = rs.VectorAdd(sp_, y)
+            c = rs.VectorAdd(sp_, z)
+            plane = rs.PlaneFromPoints(sp_, b, c)
+            sec = rs.AddRectangle(plane, bw, bh_)
+            beam = rs.AddLine(sp, ep)
+            beams.append(rs.ExtrudeCurve(sec, beam))
+
+        return slabs, columns, beams
 
 if __name__ == '__main__':
     for i in range(50): print('')

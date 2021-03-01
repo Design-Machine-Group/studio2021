@@ -23,7 +23,8 @@ embodied: {}
 
 """
 
-#TODO: Check all nbumbers, sizing, just made these up for now. 
+# TODO: Add gypsum to beams and columns
+# TODO: Multiply embodied by number of floors
 
 class Structure(object):
 
@@ -54,16 +55,13 @@ class Structure(object):
 
         self.span_x = 0
         self.span_y = 0
-        self.beam_length = 0
         for a, b in bx:
             d = distance_point_point(a, b)
-            self.beam_length += d
             if d > self.span_x:
                 self.span_x = d
 
         for a, b in by:
             d = distance_point_point(a, b)
-            self.beam_length += d
             if d > self.span_y:
                 self.span_y = d      
 
@@ -77,6 +75,17 @@ class Structure(object):
         self.height = max(temp)
         self.columns = columns
         self.n_columns = len(columns)
+
+        if self.span_x > self.span_y:
+            self.main_beams = bx
+            self.second_beams = by
+            self.main_span = self.span_x
+            self.second_span = self.span_y
+        else:
+            self.main_beams = by
+            self.second_beams = bx
+            self.main_span = self.span_y
+            self.second_span = self.span_x
 
     def __str__(self):
         return TPL.format(self.name)
@@ -95,7 +104,7 @@ class Structure(object):
         values. Two inches of concrete are added for acoustics, and two more when 
         composite action is specified. Spans should be in feet, thicknesses in feet. 
         """
-        span = min(self.span_x, self.span_y)
+        span = self.second_span
         if self.composite:
             self.conc_thick *= 2.
             if span < 20:
@@ -139,8 +148,6 @@ class Structure(object):
         
     def compute_column_embodied(self):
         
-        # TODO: Add gypsum
-
         trib = self.span_x * self.span_y
         concrete_dl = self.conc_thick * trib * self.concrete_density
         timber_dl = self.timber_thick * trib * self.clt_density 
@@ -165,13 +172,6 @@ class Structure(object):
         self.col_area = self.col_side**2
         vol = (self.col_area * self.height) / 27.  # vol in cubic yards
 
-        # print('trib', trib)
-        # print('load', load)
-        # print('timber', timber_dl / trib)
-        # print('concrete', concrete_dl / trib)
-        # print('col area', self.col_area)
-        # print('col side', self.col_side)
-
         timber = vol * self.glulam_kgco2_yd3 * self.n_columns
         self.column_embodied = timber
 
@@ -180,20 +180,33 @@ class Structure(object):
         concrete_dl = self.conc_thick * self.concrete_density
         timber_dl = self.timber_thick * self.clt_density 
         dl = concrete_dl + timber_dl
-        trib_l = max(self.span_x, self.span_y)
-        l = min(self.span_x, self.span_y)
+        trib_l = self.second_span
+        l = self.main_span
         w_load = trib_l * (dl + self.liveload)
         m_max = (w_load * l**2) / 8.
         fb = self.gl_allowable
 
-        self.beam_width = self.col_side
+        self.beam_width = self.col_side * .5
+        if self.beam_width < 1:
+            self.beam_width = 1.
         self.beam_height = sqrt((6 * m_max) / (fb * self.beam_width))
 
+        tot_len_main = 0
+        for a, b in self.main_beams:
+            d = distance_point_point(a, b)
+            tot_len_main += d
 
-        self.beam_embodied = 0.
+        tot_len_second = 0
+        for a, b in self.second_beams:
+            d = distance_point_point(a, b)
+            tot_len_second += d
 
+        vol = self.beam_width * self.beam_height * tot_len_main
+        vol += self.beam_width * (self.beam_height / 2.) * tot_len_second
+        vol /= 27.
 
-
+        timber = vol * self.glulam_kgco2_yd3
+        self.beam_embodied = timber
 
 if __name__ == "__main__":
     pass
