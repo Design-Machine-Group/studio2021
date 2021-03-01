@@ -27,7 +27,7 @@ embodied: {}
 
 class Structure(object):
 
-    def __init__(self, area, columns, beams, composite, btype, numf):
+    def __init__(self, area, columns, bx, by, composite, btype, numf):
         self.name = 'Structure'
         self.area = area
         self.composite = composite
@@ -42,75 +42,78 @@ class Structure(object):
         self.beam_embodied = None
         self.column_embodied = None
 
-        self.gl_allowable = 3480.91 * 144. * .6 # GL24h in psi to psf .6 safety
+        self.gl_allowable = 2400 * 144. * .6 # GL24f in psi to psf .6 safety
+        self.liveload = 80  # lbs / ft2 
+        self.clt_density = 36  # lbs / ft3
+        self.concrete_density = 149.8271  # lbs / ft3
 
         self.clt_kgco2_yd3 = read_materials('CLT')['embodied_carbon']
         self.glulam_kgco2_yd3 = read_materials('Glulam')['embodied_carbon']
         self.conc_kgco2_yd3 = read_materials('Concrete')['embodied_carbon']
         self.gyp_kgco2_yd3 = read_materials('GypsumX')['embodied_carbon']
-    
-        beamsx = beams[0]
-        beamsy = beams[1]
 
         self.span_x = 0
         self.span_y = 0
         self.beam_length = 0
-        for a, b in beamsx:
+        for a, b in bx:
             d = distance_point_point(a, b)
             self.beam_length += d
             if d > self.span_x:
                 self.span_x = d
 
-        for a, b in beamsy:
+        for a, b in by:
             d = distance_point_point(a, b)
             self.beam_length += d
             if d > self.span_y:
                 self.span_y = d      
 
         self.column_length = 0
+        temp = []
         for a, b in columns:
             d = distance_point_point(a, b)
             self.column_length += d
+            temp.append(d)
 
-        self.span = min(self.span_x, self.span_y)
-
+        self.height = max(temp)
+        self.columns = columns
+        self.n_columns = len(columns)
 
     def __str__(self):
-        return TPL.format(self.name, self.span)
+        return TPL.format(self.name)
 
     @property
     def data(self):
         return {}
 
     def compute_embodied(self):
-        self.compute_slab_embodied
-        self.compute_column_embodied
-        self.compute_beam_embodied
+        self.compute_slab_embodied()
+        self.compute_column_embodied()
+        self.compute_beam_embodied()
         
-    @property
     def compute_slab_embodied(self):
         """These values are taken from Strobel (2016), using composite/non composite 
         values. Two inches of concrete are added for acoustics, and two more when 
         composite action is specified. Spans should be in feet, thicknesses in feet. 
         """
+        span = min(self.span_x, self.span_y)
         if self.composite:
             self.conc_thick *= 2.
-            if self.span < 20:
+            if span < 20:
                 thick = 3.9 / 12.# feet
-            elif self.span < 25:
+            elif span < 25:
                 thick = 6.7 / 12.# feet
-            elif self.span < 30:
+            elif span < 30:
                 thick = 9.4 / 12.
-            elif self.span < 35:
+            elif span < 35:
                 thick = 12.2 / 12.
             else:
                 raise(NameError('Span is too large for composite CLT slab'))
         else:
-            if self.span < 20:
+            if span < 20:
                 thick = 6.7 / 12.# feet
-            elif self.span < 25:
+            elif span < 25:
                 thick = 8.6 / 12.# feet
-            elif self.span < 30:
+            elif span < 30:
                 thick = 10.4 / 12.
             else:
                 raise(NameError('Span is too large for composite CLT slab'))
@@ -134,28 +137,14 @@ class Structure(object):
         
         self.slab_embodied = timber + concrete + gypsum
         
-    @property
-    def compute_beam_embodied(self):
-        # these numbers are all incorrect, just temp
-        if self.span < 20:
-            sec = 5.9 
-        elif self.span < 25:
-            sec = 8.7 
-        elif self.span < 30:
-            sec = 11.4
-        elif self.span < 32:
-            sec = 14.2
-        else:
-            raise(NameError('Span is too large for Glulam beams'))
-        self.beam_embodied = sec * self.beam_length * self.glulam_kgco2_yd3
-    
-    @property
     def compute_column_embodied(self):
         
+        # TODO: Add gypsum
+
         trib = self.span_x * self.span_y
-        concrete_dl = self.conc_thick * trib * 149.8271 # concrete density lbs / ft3
-        timber_dl = self.timber_thick * trib * 36 # CLT density lbs / ft3
-        ll = trib * 80  # live load in lbs / ft3
+        concrete_dl = self.conc_thick * trib * self.concrete_density
+        timber_dl = self.timber_thick * trib * self.clt_density 
+        ll = trib * self.liveload  # live load in lbs / ft3
         load = (concrete_dl + timber_dl + ll) * self.num_floors_above
 
         self.col_area = load / self.gl_allowable
@@ -165,7 +154,7 @@ class Structure(object):
             self.col_side = 1.
 
         if self.btype in ['Type 3', 'Type 5']:
-            self.col_side += 1,8 / 12.
+            self.col_side += 1.8 / 12.
         elif self.btype in ['Type 4B', 'Type 4C']:
             self.col_side += 3.6 / 12.
         elif self.btype == 'Type 4A':
@@ -174,13 +163,35 @@ class Structure(object):
             raise(NameError('Bulinding type is wrong'))
 
         self.col_area = self.col_side**2
+        vol = (self.col_area * self.height) / 27.  # vol in cubic yards
 
-        print('trib', trib)
-        print('load', load)
-        print('timber', timber_dl / trib)
-        print('concrete', concrete_dl / trib)
-        print('col area', self.col_area)
-        print('col side', self.col_side)
+        # print('trib', trib)
+        # print('load', load)
+        # print('timber', timber_dl / trib)
+        # print('concrete', concrete_dl / trib)
+        # print('col area', self.col_area)
+        # print('col side', self.col_side)
+
+        timber = vol * self.glulam_kgco2_yd3 * self.n_columns
+        self.column_embodied = timber
+
+    def compute_beam_embodied(self):
+
+        concrete_dl = self.conc_thick * self.concrete_density
+        timber_dl = self.timber_thick * self.clt_density 
+        dl = concrete_dl + timber_dl
+        trib_l = max(self.span_x, self.span_y)
+        l = min(self.span_x, self.span_y)
+        w_load = trib_l * (dl + self.liveload)
+        m_max = (w_load * l**2) / 8.
+        fb = self.gl_allowable
+
+        self.beam_width = self.col_side
+        self.beam_height = sqrt((6 * m_max) / (fb * self.beam_width))
+
+
+        self.beam_embodied = 0.
+
 
 
 

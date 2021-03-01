@@ -365,7 +365,8 @@ class Building(object):
 
         # embodied - - -
 
-        b.beams                 = data['beams']
+        b.beams_x               = data['beams_x']
+        b.beams_y               = data['beams_y']
         b.columns               = data['columns']
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
@@ -555,11 +556,12 @@ class Building(object):
     def compute_structure_embodied(self):
         area = self.floor_area
         columns = self.columns
-        beams = self.beams
+        bx = self.beams_x
+        by = self.beams_y
         composite = self.composite_slab
         btype = self.building_type
         numf = self.num_floors_above
-        self.structure = Structure(area, columns, beams, composite, btype, numf)
+        self.structure = Structure(area, columns, bx, by, composite, btype, numf)
         self.structure.compute_embodied()
         self.compute_envelope_embodied()
 
