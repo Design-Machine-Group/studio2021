@@ -364,11 +364,9 @@ class Building(object):
         b.run_simulation        = run_simulation
 
         # embodied - - -
-        b.span_x                = data['span_x']
-        b.span_y                = data['span_y']
-        b.span                  = min(data['span_x'], data['span_y'])
-        b.beam_length           = data['beam_length']
-        b.col_length            = data['col_length']
+
+        b.beams                 = data['beams']
+        b.columns               = data['columns']
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
@@ -556,14 +554,12 @@ class Building(object):
 
     def compute_structure_embodied(self):
         area = self.floor_area
-        span_x = self.span_x
-        span_y = self.span_y
-        col_length = self.col_length
-        beam_length = self.beam_length
+        columns = self.columns
+        beams = self.beams
         composite = self.composite_slab
         btype = self.building_type
         numf = self.num_floors_above
-        self.structure = Structure(area, span_x, span_y, col_length, beam_length, composite, btype, numf)
+        self.structure = Structure(area, columns, beams, composite, btype, numf)
         self.structure.compute_embodied()
         self.compute_envelope_embodied()
 

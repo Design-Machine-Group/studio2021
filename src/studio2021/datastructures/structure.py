@@ -11,6 +11,7 @@ reload(material_reader)
 from studio2021.functions.material_reader import read_materials
 
 from math import sqrt
+from studio2021.functions import distance_point_point
 
 TPL = """
 ################################################################################
@@ -26,14 +27,9 @@ embodied: {}
 
 class Structure(object):
 
-    def __init__(self, area, span_x, span_y, col_length, beam_length, composite, btype, numf):
+    def __init__(self, area, columns, beams, composite, btype, numf):
         self.name = 'Structure'
         self.area = area
-        self.span_x = span_x
-        self.span_y = span_y
-        self.span = min(span_x, span_y)
-        self.col_length = col_length
-        self.beam_length = beam_length
         self.composite = composite
         self.btype = btype
         self.num_floors_above = numf
@@ -53,6 +49,32 @@ class Structure(object):
         self.conc_kgco2_yd3 = read_materials('Concrete')['embodied_carbon']
         self.gyp_kgco2_yd3 = read_materials('GypsumX')['embodied_carbon']
     
+        beamsx = beams[0]
+        beamsy = beams[1]
+
+        self.span_x = 0
+        self.span_y = 0
+        self.beam_length = 0
+        for a, b in beamsx:
+            d = distance_point_point(a, b)
+            self.beam_length += d
+            if d > self.span_x:
+                self.span_x = d
+
+        for a, b in beamsy:
+            d = distance_point_point(a, b)
+            self.beam_length += d
+            if d > self.span_y:
+                self.span_y = d      
+
+        self.column_length = 0
+        for a, b in columns:
+            d = distance_point_point(a, b)
+            self.column_length += d
+
+        self.span = min(self.span_x, self.span_y)
+
+
     def __str__(self):
         return TPL.format(self.name, self.span)
 
@@ -151,6 +173,8 @@ class Structure(object):
         else:
             raise(NameError('Bulinding type is wrong'))
 
+        self.col_area = self.col_side**2
+
         print('trib', trib)
         print('load', load)
         print('timber', timber_dl / trib)
@@ -161,12 +185,4 @@ class Structure(object):
 
 
 if __name__ == "__main__":
-    span = 30
-    area = 20000
-    num_col = 20
-    num_beam = 16 + 15
-    col_length = 9 * num_col
-    beam_length = span * num_beam
-    composite = True
-    btype = 'Type 4A'
-    s = Structure(area, span, col_length, beam_length, composite, btype)
+    pass
