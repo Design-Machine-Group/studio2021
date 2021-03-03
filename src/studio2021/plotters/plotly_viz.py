@@ -23,7 +23,7 @@ def read_data(filename):
     return dataset
 
 
-def plot_data_by_EUI_type(dataset):
+def data_by_EUI_type(dataset):
     """
     Plots selected data as a bar graph grouped by EUI type.
     """
@@ -33,14 +33,10 @@ def plot_data_by_EUI_type(dataset):
     for zone in dataset['zonenames']:
         data.append(go.Bar(name=zone, x=EUI_list, y=[dataset['zonedata'][zone]['cooling'], dataset['zonedata'][zone]['heating'],
                                                      dataset['zonedata'][zone]['lighting'], dataset['zonedata'][zone]['equipment'], dataset['zonedata'][zone]['total']]))
-    # fig = go.Figure(data=data)
-    # Change the bar mode
-    # fig.update_layout(barmode='group')
-    # fig.show()
     return data
 
 
-def plot_data_by_zone(dataset):
+def data_by_zone(dataset):
     """
     Plots selected data as a bar graph grouped by zone.
     """
@@ -53,20 +49,26 @@ def plot_data_by_zone(dataset):
         for zone in dataset['zonenames']:
             temp.append(dataset['zonedata'][zone][eui])
         data.append(go.Bar(name=eui, x=EUI_types, y=temp))
-    # fig = go.Figure(data=data)
-    # Change the bar mode
-    # fig.update_layout(barmode='group')
-    # fig.show()
     return data
 
 
 if __name__ == "__main__":
     dataset = read_data('test_data.csv')
-    fig = make_subplots(rows=1, cols=2)
-    data1 = plot_data_by_EUI_type(dataset)
-    data2 = plot_data_by_zone(dataset)
-    fig.append_trace(go.Figure(data=data1), row=1, col=1)
-    fig.append_trace(go.Figure(data=data2), row=1, col=2)
-    fig.update_layout(height=2000, width=2000, title_text="EUI Visualizations")
+    fig = make_subplots(rows=2, cols=5)
+    fig1 = data_by_EUI_type(dataset)
+    fig2 = data_by_zone(dataset)
+    # by_EUI_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+    fig.add_trace(fig1[0], row=1, col=1)
+    fig.add_trace(fig1[1], row=1, col=2)
+    fig.add_trace(fig1[2], row=1, col=3)
+    fig.add_trace(fig1[3], row=1, col=4)
+    fig.add_trace(fig1[4], row=1, col=5)
+    fig.add_trace(fig2[0], row=2, col=1)
+    fig.add_trace(fig2[1], row=2, col=2)
+    fig.add_trace(fig2[2], row=2, col=3)
+    fig.add_trace(fig2[3], row=2, col=4)
+    fig.add_trace(fig2[4], row=2, col=5)
+    fig.update_layout(autosize=True, title_text="EUI Visualizations")
+    # fig.update_traces(patch={layout: {barmode: 'group'}})
+    fig.update_xaxes(showgrid=False)
     fig.show()
-    # print(dataset)
