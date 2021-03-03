@@ -15,7 +15,7 @@ def read_materials(material_name):
             try:
                 data[i] = float(data[i])
             except:
-                continue
+                pass
         materials[data[0]]   = {'mtype': data[1],
                                 'r_value': data[2],
                                 'r_per_in': data[3],

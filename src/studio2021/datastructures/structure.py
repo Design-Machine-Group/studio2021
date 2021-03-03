@@ -86,6 +86,7 @@ class Structure(object):
             self.second_beams = bx
             self.main_span = self.span_y
             self.second_span = self.span_x
+        
 
     def __str__(self):
         return TPL.format(self.name)
