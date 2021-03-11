@@ -19,6 +19,8 @@ from studio2021.functions import centroid_points
 from studio2021.functions import scale_vector
 from studio2021.functions import add_vectors
 from studio2021.functions import distance_point_point
+from studio2021.functions import geometric_key
+from studio2021.functions import midpoint_point_point
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -365,13 +367,53 @@ class Building(object):
 
         # embodied - - -
 
-        b.beams_x               = data['beams_x']
-        b.beams_y               = data['beams_y']
-        b.columns               = data['columns']
+        b.add_structure(data)
+
+        # b.beams_x               = data['beams_x']
+        # b.beams_y               = data['beams_y']
+        # b.columns               = data['columns']
+
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
         return b
+
+    def add_structure(self, data):
+        columns = data['columns']
+        beams_x = data['beams_x']
+        beams_y = data['beams_y']
+
+        cmap = []
+        cols = []
+        for col in columns:
+            mpt = midpoint_point_point(col[0], col[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                cols.append(col)
+                cmap.append(gk)
+
+        cmap = []
+        bx = []
+        for b in beams_x:
+            mpt = midpoint_point_point(b[0], b[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                bx.append(b)
+                cmap.append(gk)
+
+        cmap = []
+        by = []
+        for b in beams_y:
+            mpt = midpoint_point_point(b[0], b[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                by.append(b)
+                cmap.append(gk)
+
+        self.columns = cols
+        self.beams_x = bx
+        self.beams_y = by
+
 
     def compute_areas(self):
         for okey in self.exterior_walls:
@@ -450,17 +492,32 @@ class Building(object):
             data['facade_areas'][okey] = th.list_to_tree(areas, source=[])
 
         # exterior walls - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
         data['exterior_walls'] = {}
         for i in range(4):
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
-            for j, zkey in enumerate(self.exterior_walls[okey]):
-                pls = self.exterior_walls[okey][zkey]
-                walls[j] = []
-                for pl in pls:
-                    pl = rs.AddPolyline(pl)
-                    walls[j].append(rs.AddPlanarSrf(pl)[0])
+            for j, zkey in enumerate(self.zones):
+                zkey = self.zones[zkey]
+                if zkey in self.exterior_walls[okey]:
+                    pls = self.exterior_walls[okey][zkey]
+                    walls[j] = []
+                    for pl in pls:
+                        pl = rs.AddPolyline(pl)
+                        walls[j].append(rs.AddPlanarSrf(pl)[0])
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
+
+        # data['exterior_walls'] = {}
+        # for i in range(4):
+        #     okey = self.orient_dict[i]
+        #     walls = [[] for _ in range(len(self.exterior_walls[okey]))]
+        #     for j, zkey in enumerate(self.exterior_walls[okey]):
+        #         pls = self.exterior_walls[okey][zkey]
+        #         walls[j] = []
+        #         for pl in pls:
+        #             pl = rs.AddPolyline(pl)
+        #             walls[j].append(rs.AddPlanarSrf(pl)[0])
+        #     data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

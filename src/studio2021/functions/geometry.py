@@ -10,6 +10,29 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 
+def midpoint_point_point(a, b):
+    return [0.5 * (a[0] + b[0]),
+            0.5 * (a[1] + b[1]),
+            0.5 * (a[2] + b[2])]
+
+
+def geometric_key(xyz, precision=None, sanitize=True):
+    x, y, z = xyz
+    if not precision:
+        precision = '3f'
+    if precision == 'd':
+        return '{0},{1},{2}'.format(int(x), int(y), int(z))
+    if sanitize:
+        minzero = "-{0:.{1}}".format(0.0, precision)
+        if "{0:.{1}}".format(x, precision) == minzero:
+            x = 0.0
+        if "{0:.{1}}".format(y, precision) == minzero:
+            y = 0.0
+        if "{0:.{1}}".format(z, precision) == minzero:
+            z = 0.0
+    return '{0:.{3}},{1:.{3}},{2:.{3}}'.format(x, y, z, precision)
+
+
 def distance_point_point(a, b):
     """Compute the distance bewteen a and b.
 
@@ -37,6 +60,7 @@ def distance_point_point(a, b):
     """
     ab = subtract_vectors(b, a)
     return length_vector(ab)
+
 
 def centroid_points(points):
     """Compute the centroid of a set of points.
