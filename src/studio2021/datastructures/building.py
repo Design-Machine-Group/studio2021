@@ -414,7 +414,6 @@ class Building(object):
         self.beams_x = bx
         self.beams_y = by
 
-
     def compute_areas(self):
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
