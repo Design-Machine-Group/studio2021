@@ -24,7 +24,6 @@ embodied: {}
 """
 
 # TODO: Add gypsum to beams and columns
-# TODO: Multiply embodied by number of floors
 
 class Structure(object):
 

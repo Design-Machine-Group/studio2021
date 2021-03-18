@@ -12,6 +12,10 @@ from studio2021.datastructures import structure
 reload(structure)
 from studio2021.datastructures.structure import Structure
 
+from studio2021.datastructures import envelope
+reload(envelope)
+from studio2021.datastructures.envelope import Envelope
+
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
 from studio2021.functions import normal_polygon
@@ -619,39 +623,17 @@ class Building(object):
         numf = self.num_floors_above
         self.structure = Structure(area, columns, bx, by, composite, btype, numf)
         self.structure.compute_embodied()
-        self.compute_envelope_embodied()
 
     def compute_envelope_embodied(self):
-        from studio2021.functions import read_materials
-        from studio2021.functions import read_glazing
+        self.envelope = Envelope(self.opaque_areas,
+                                 self.window_areas,
+                                 self.external_insulation,
+                                 self.insulation_thickness,
+                                 self.facade_cladding,
+                                 self.glazing_system)
 
-        tot_opaque = 0.  # this should be in feet?
-        tot_win = 0.     # this should be in feet?
-        for okey in self.opaque_areas:
-            for zkey in self.opaque_areas[okey]:
-                tot_opaque += self.opaque_areas[okey][zkey]
-                tot_win += self.window_areas[okey][zkey]
+        self.envelope.compute_embodied()
 
-        ins_mat = self.external_insulation
-        ins_thick = float(self.insulation_thickness) / 12. # currently in inches
-        ins_emb = float(read_materials(ins_mat)['embodied_carbon']) * 27.  # currently (kgCO2/yd3)
-        ins_emb = tot_opaque * ins_thick * ins_emb 
-
-        fac_mat = self.facade_cladding
-        fac_thick = float(read_materials(fac_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
-        fac_emb = float(read_materials(fac_mat)['embodied_carbon']) * 27. # currently (kgCO2/yd3)
-        fac_emb = tot_opaque * fac_thick * fac_emb 
-
-        int_mat = self.facade_cladding
-        int_thick = float(read_materials(int_mat)['thickness_in']) # currently (kgCO2/yd3)
-        int_emb = float(read_materials(int_mat)['embodied_carbon']) # currently (kgCO2/yd3)
-        int_emb = tot_opaque * int_thick * int_emb 
-        
-        win_sys = self.glazing_system
-        win_emb = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
-        win_emb = tot_win * win_emb
-
-        self.envelope_embodied =  win_emb + int_emb + fac_emb + int_emb
         
     def draw_structure(self):
         import rhinoscriptsyntax as rs

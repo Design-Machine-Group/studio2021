@@ -6,6 +6,9 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+from studio2021.functions import read_materials
+from studio2021.functions import read_glazing
+
 
 TPL = """
 ################################################################################
@@ -19,100 +22,61 @@ embodied: {}
 
 """
 
+
+
 class Envelope(object):
     
-    def __init__(self, wwr, wall, window):
-        self.name = 'Base envelope'
-        self.wwr = wwr
-        self.wall = wall
-        self.window = window
+    def __init__(self, 
+                 opaque_areas,
+                 window_areas,
+                 external_insulation,
+                 insulation_thickness,
+                 facade_cladding,
+                 glazing_system):
+        self.name                   = 'Base envelope'
+        self.opaque_areas           = opaque_areas
+        self.window_areas           = window_areas
+        self.external_insulation    = external_insulation
+        self.insulation_thickness   = insulation_thickness
+        self.facade_cladding        = facade_cladding
+        self.glazing_system         = glazing_system
+
+        self.wall_embodied = None
+        self.window_embodied = None
     
-    def __str__(self):
-        return TPL.format(self.name, self.wwr, self.window.name, self.wall.name, self.embodied)
-    
-    @property
-    def embodied(self):
-        if self.window:
-            win = self.window.embodied
-        else:
-            win = 0
-        if self.wall:
-            wall = self.wall.embodied
-        else:
-            wall = 0
-        return win + wall
 
-TPL_wall = """
-################################################################################
-Wall datastructure: {}
-################################################################################
+    def compute_embodied(self):
 
-area: {}
-embodied: {}
+        tot_opaque = 0.  # this should be in feet?
+        tot_win = 0.     # this should be in feet?
+        for okey in self.opaque_areas:
+            for zkey in self.opaque_areas[okey]:
+                tot_opaque += self.opaque_areas[okey][zkey]
+                tot_win += self.window_areas[okey][zkey]
 
-"""
+        ins_mat = self.external_insulation
+        ins_thick = float(self.insulation_thickness) / 12. # currently in inches
+        ins_emb = float(read_materials(ins_mat)['embodied_carbon']) * 27.  # currently (kgCO2/yd3)
+        ins_emb = tot_opaque * ins_thick * ins_emb 
 
-class BaseWall(object):
-    
-    def __init__(self, area):
-        self.name = 'Base wall'
-        self.area = area
-        self.layers = {}
+        fac_mat = self.facade_cladding
+        fac_thick = float(read_materials(fac_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
+        fac_emb = float(read_materials(fac_mat)['embodied_carbon']) * 27. # currently (kgCO2/yd3)
+        fac_emb = tot_opaque * fac_thick * fac_emb 
 
-    
-    def __str__(self):
-        return TPL_wall.format(self.name, self.area, self.embodied)
+        int_mat = self.facade_cladding
+        int_thick = float(read_materials(int_mat)['thickness_in']) # currently (kgCO2/yd3)
+        int_emb = float(read_materials(int_mat)['embodied_carbon']) # currently (kgCO2/yd3)
+        int_emb = tot_opaque * int_thick * int_emb 
+        
+        win_sys = self.glazing_system
+        win_emb = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
+        win_emb = tot_win * win_emb
 
-    @property
-    def embodied(self):
-        embodied = 0
-        for lay in self.layers:
-            embodied += self.layers[lay]['kgco2e_ft2']
-        return self.area * embodied
+        self.wall_embodied =  int_emb + fac_emb + int_emb
+        self.window_embodied = win_emb
 
-TPL_win = """
-################################################################################
-Window datastructure: {}
-################################################################################
-
-area: {}
-perimeter: {}
-embodied: {}
-
-"""
-
-class BaseWindow(object):
-
-    def __init__(self, area, perimeter):
-        self.name = 'Base window'
-        self.area = area
-        self.perimeter = perimeter
-        self.profile_kgco2e_ft = None
-        self.layers = {}
-
-    def __str__(self):
-        return TPL_win.format(self.name, self.area, self.perimeter, self.embodied)
-
-    @property
-    def embodied(self):
-        embodied = 0
-        for lay in self.layers:
-            embodied += self.layers[lay]['kgco2e_ft2']
-        return (self.area * embodied) + (self.perimeter * self.profile_kgco2e_ft)
 
 
 if __name__ == "__main__":
-    wwr = .8
-    wall = BaseWall(10.)
-    wall.layers = {'finish':{'kgco2e_ft2': 2.},
-                   'insulation':{'kgco2e_ft2': .3}
-                  }
-    window = BaseWindow(9., 12.)
-    window.layers = {'glass1': {'kgco2e_ft2': 3.},
-                     'glass2': {'kgco2e_ft2': 3.}}
-    window.profile_kgco2e_ft = 3.
-
-    e = Envelope(wwr, wall, window)
-    print(e)
-    print(wall)
-    print(window)
+    pass
