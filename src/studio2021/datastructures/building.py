@@ -55,6 +55,7 @@ class Building(object):
         self.shade_gc               = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.shade_depth            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.exterior_walls         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.height                 = None
         self.floor_area             = 0.
         self.span_x                 = None
         self.span_y                 = None
@@ -80,6 +81,8 @@ class Building(object):
         self.structure              = None
         self.building_type          = None
         self.num_floors_above       = None
+        self.ceiling_condition      = None
+        self.floor_condition        = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -274,6 +277,7 @@ class Building(object):
         run_simulation          = data['run_simulation'] 
 
 
+
         b = cls()
 
         num_zones = znames.BranchCount
@@ -369,13 +373,14 @@ class Building(object):
         b.simulation_folder     = simulation_folder
         b.run_simulation        = run_simulation
 
+        # floor - ceiling data - - -
+        b.height            = data['height']
+        b.ceiling_condition = data['ceiling_condition']
+        b.floor_condition   = data['floor_condition']
+
         # embodied - - -
 
         b.add_structure(data)
-
-        # b.beams_x               = data['beams_x']
-        # b.beams_y               = data['beams_y']
-        # b.columns               = data['columns']
 
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
@@ -599,6 +604,7 @@ class Building(object):
 
 
         # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        data['height']                  = self.height
         data['facade_cladding']         = self.facade_cladding
         data['external_insulation']     = self.external_insulation
         data['insulation_thickness']    = self.insulation_thickness
@@ -611,6 +617,12 @@ class Building(object):
         data['sql_path']                = self.sql_path
         data['simulation_folder']       = self.simulation_folder
         data['run_simulation']          = self.run_simulation
+
+        # floor - ceiling data - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        data['ceiling_condition']       = self.ceiling_condition
+        data['floor_condition']         = self.floor_condition
+
         return data
 
     def compute_structure_embodied(self):
@@ -633,8 +645,7 @@ class Building(object):
                                  self.glazing_system)
 
         self.envelope.compute_embodied()
-
-        
+     
     def draw_structure(self):
         import rhinoscriptsyntax as rs
 
