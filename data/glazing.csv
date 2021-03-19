@@ -1,5 +1,5 @@
 ﻿Name,Frame Type,Glass Type,U value,Tvis,Embodied Carbon (KgCO2 (1770mmX1200mm))*,Embodied Carbon (KgCO2/ft²)**
-Aluminum Double,aluminum,double,0.40,0.63,161,6.7
-Aluminum Triple,aluminum,triple,0.20,0.50,212,8.8
-Wood Double,wood,double,0.35,0.63,85,3.5
-Wood Triple,wood,triple,0.15,0.50,136,5.7
+Aluminum Double,aluminum,double,0.40,0.63,161,5.763
+Aluminum Triple,aluminum,triple,0.20,0.50,212,8.64
+Wood Double,wood,double,0.35,0.63,85, 5.763
+Wood Triple,wood,triple,0.15,0.50,136,8.64
