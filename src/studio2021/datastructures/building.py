@@ -53,7 +53,9 @@ class Building(object):
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.wwr                    = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.shade_gc               = {'n':{}, 's':{}, 'e':{}, 'w':{}}
-        self.shade_depth            = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shade_depth_h          = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shade_depth_v1         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.shade_depth_v2         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.exterior_walls         = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.height                 = None
         self.floor_area             = 0.
@@ -262,7 +264,9 @@ class Building(object):
         ceiling_surfaces        = data['ceiling_surfaces']
         wwr                     = data['wwr']
         shade_gc                = data['shade_gc']
-        shade_depth             = data['shade_depth']
+        shade_depth_h           = data['shade_depth_h']
+        shade_depth_v1          = data['shade_depth_v1']
+        shade_depth_v2          = data['shade_depth_v2']
         facade_cladding         = data['facade_cladding']
         external_insulation     = data['external_insulation']
         insulation_thickness    = data['insulation_thickness']
@@ -348,10 +352,20 @@ class Building(object):
             
 
         # shade depth - - -
-        for i in range(shade_depth.BranchCount):
-            shade_depth_ = shade_depth.Branch(i)
+        for i in range(shade_depth_h.BranchCount):
+            shade_depth_ = shade_depth_h.Branch(i)
             if shade_depth_:
-                b.shade_depth[b.orient_dict[i]] = shade_depth_[0]
+                b.shade_depth_h[b.orient_dict[i]] = shade_depth_[0]
+
+        for i in range(shade_depth_v1.BranchCount):
+            shade_depth_ = shade_depth_v1.Branch(i)
+            if shade_depth_:
+                b.shade_depth_v1[b.orient_dict[i]] = shade_depth_[0]
+
+        for i in range(shade_depth_v2.BranchCount):
+            shade_depth_ = shade_depth_v2.Branch(i)
+            if shade_depth_:
+                b.shade_depth_v2[b.orient_dict[i]] = shade_depth_[0]
 
         # facade areas - - -
         b.compute_areas()
@@ -515,18 +529,6 @@ class Building(object):
                         walls[j].append(rs.AddPlanarSrf(pl)[0])
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
-        # data['exterior_walls'] = {}
-        # for i in range(4):
-        #     okey = self.orient_dict[i]
-        #     walls = [[] for _ in range(len(self.exterior_walls[okey]))]
-        #     for j, zkey in enumerate(self.exterior_walls[okey]):
-        #         pls = self.exterior_walls[okey][zkey]
-        #         walls[j] = []
-        #         for pl in pls:
-        #             pl = rs.AddPolyline(pl)
-        #             walls[j].append(rs.AddPlanarSrf(pl)[0])
-        #     data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
-
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         ceiling_surfaces = [[] for _ in range(len(zones))]
@@ -575,11 +577,23 @@ class Building(object):
 
         # shd - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-        shade_depth = [[] for _ in range(len(self.shade_depth))]
+        shade_depth = [[] for _ in range(len(self.shade_depth_h))]
         for i in range(4):
             o = self.orient_dict[i]
-            shade_depth[i].append(self.shade_depth[o])
-        data['shade_depth'] = th.list_to_tree(shade_depth, source=[])
+            shade_depth[i].append(self.shade_depth_h[o])
+        data['shade_depth_h'] = th.list_to_tree(shade_depth, source=[])
+
+        shade_depth = [[] for _ in range(len(self.shade_depth_v1))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            shade_depth[i].append(self.shade_depth_v1[o])
+        data['shade_depth_v1'] = th.list_to_tree(shade_depth, source=[])
+
+        shade_depth = [[] for _ in range(len(self.shade_depth_v2))]
+        for i in range(4):
+            o = self.orient_dict[i]
+            shade_depth[i].append(self.shade_depth_v2[o])
+        data['shade_depth_v2'] = th.list_to_tree(shade_depth, source=[])
 
         # opaque_areas - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

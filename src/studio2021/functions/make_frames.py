@@ -2,7 +2,11 @@ import rhinoscriptsyntax as rs
 
 
 def make_spaced_frames(guid, x_dist, y_dist, height):
-    a, b, c, d, _ = rs.PolylineVertices(guid)
+    pts = rs.PolylineVertices(guid)
+    print(len(pts))
+    if len(pts) == 5:
+        del(pts[-1])
+    a, b, c, d = pts
     ab = rs.AddLine(a, b)
     dc = rs.AddLine(d, c)
 
@@ -47,10 +51,6 @@ def make_spaced_frames(guid, x_dist, y_dist, height):
             beams_y.append(rs.AddLine(a, c))
 
     return cols, beams_x, beams_y
-
-
-
-
 
 if __name__ == '__main__':
     rs.DeleteObjects(rs.ObjectsByLayer('Default'))
