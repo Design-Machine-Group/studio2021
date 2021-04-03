@@ -44,6 +44,7 @@ class Building(object):
     def __init__(self):
         self.__name__               = 'Studio2021Building'
         self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
+        self.city                   = None
         self.zones                  = {}
         self.floor_surfaces         = {}
         self.ceiling_surfaces       = {}
@@ -387,6 +388,8 @@ class Building(object):
         b.simulation_folder     = simulation_folder
         b.run_simulation        = run_simulation
 
+        b.city              = data['city']
+
         # floor - ceiling data - - -
         b.height            = data['height']
         b.ceiling_condition = data['ceiling_condition']
@@ -616,6 +619,7 @@ class Building(object):
                 areas[j] = [self.window_areas[okey][zkey]]
             data['window_areas'][okey] = th.list_to_tree(areas, source=[])
 
+        data['city']                    = self.city
 
         # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['height']                  = self.height
