@@ -1,9 +1,8 @@
 import rhinoscriptsyntax as rs
 
 
-def make_spaced_frames(guid, x_dist, y_dist, height):
+def make_spaced_frames(guid, x_dist, y_dist, height, core):
     pts = rs.PolylineVertices(guid)
-    print(len(pts))
     if len(pts) == 5:
         del(pts[-1])
     a, b, c, d = pts
@@ -18,9 +17,13 @@ def make_spaced_frames(guid, x_dist, y_dist, height):
         if dx == 0:
             l = rs.AddLine(a, d)
         else:
-            p = rs.DivideCurveLength(ab, dx)[1]
-            p_ = rs.DivideCurveLength(dc, dx)[1]
-            l = rs.AddLine(p, p_)
+            try:
+                p = rs.DivideCurveLength(ab, dx)[1]
+                p_ = rs.DivideCurveLength(dc, dx)[1]
+                l = rs.AddLine(p, p_)
+            except:
+                raise Exception('The spans are too large for this polyline')
+
         dy = 0
         temp = []
         for j in range(len(y_dist)):
@@ -34,6 +37,15 @@ def make_spaced_frames(guid, x_dist, y_dist, height):
         rs.DeleteObject(l)
         pts.append(temp)
 
+    try:
+        core = [pts[core[0]][core[1]][:],pts[core[0] + 1][core[1]][:],
+                pts[core[0]+ 1][core[1] + 1][:], pts[core[0]][core[1] + 1][:],
+                pts[core[0]][core[1]][:]]
+        for pt in core:
+            pt[2] -= height
+        core = rs.AddPolyline(core)
+    except:
+        raise Exception('The core is in the wrong place')
     rs.DeleteObjects([ab, dc])
 
     beams_x = []
@@ -50,7 +62,12 @@ def make_spaced_frames(guid, x_dist, y_dist, height):
             c = pts[i + 1][j]
             beams_y.append(rs.AddLine(a, c))
 
-    return cols, beams_x, beams_y
+    return cols, beams_x, beams_y, core
+
+def make_core():
+    pass
+
+
 
 if __name__ == '__main__':
     rs.DeleteObjects(rs.ObjectsByLayer('Default'))
