@@ -266,6 +266,7 @@ class Building(object):
     @classmethod
     def from_gh_data(cls, data):
         import rhinoscriptsyntax as rs
+
         znames                  = data['znames']
         exterior_walls_n        = data['exterior_walls_n']
         exterior_walls_s        = data['exterior_walls_s']
@@ -423,6 +424,7 @@ class Building(object):
         columns = data['columns']
         beams_x = data['beams_x']
         beams_y = data['beams_y']
+        core    = data['core']
 
         cmap = []
         cols = []
@@ -450,10 +452,11 @@ class Building(object):
             if gk not in cmap:
                 by.append(b)
                 cmap.append(gk)
-
+        
         self.columns = cols
         self.beams_x = bx
         self.beams_y = by
+        self.core    = core
 
     def compute_areas(self):
         for okey in self.exterior_walls:
@@ -665,10 +668,11 @@ class Building(object):
         columns = self.columns
         bx = self.beams_x
         by = self.beams_y
+        core = self.core
         composite = self.composite_slab
         btype = self.building_type
         numf = self.num_floors_above
-        self.structure = Structure(area, columns, bx, by, composite, btype, numf)
+        self.structure = Structure(area, columns, bx, by, composite, btype, numf, core)
         self.structure.compute_embodied()
 
     def compute_envelope_embodied(self):
@@ -750,7 +754,9 @@ class Building(object):
             beam = rs.AddLine(sp, ep)
             beams.append(rs.ExtrudeCurve(sec, beam))
 
-        return slabs, columns, beams
+        core = rs.ExtrudeCurve(rs.AddPolyline(self.core), col)
+
+        return slabs, columns, beams, core
 
     def add_eui_results(self, cool, heat, light, eq, hot):
         totals = 0
@@ -838,15 +844,16 @@ class Building(object):
         fh.write('W Shade depth v2,{}\n'.format(self.shade_depth_v2['w']))
         fh.write('\n')
 
-        fh.write(',Slab,Beams,Columns,Window,Opaque Wall,Total\n')
+        fh.write(',Slab,Beams & Columns,Core,Window,Opaque Wall,Total\n')
         s = 'Embodied (eq CO2 kg total),{0},{1},{2},{3},{4},{5}\n'
         tot = self.structure.slab_embodied + self.structure.beam_embodied 
         tot += self.structure.column_embodied + self.envelope.window_embodied 
-        tot += self.envelope.wall_embodied
+        tot += self.envelope.wall_embodied + self.structure.core_embodied
+        tot += self.structure.connections_embodied
         
         fh.write(s.format(self.structure.slab_embodied,
-                          self.structure.beam_embodied,
-                          self.structure.column_embodied,
+                          self.structure.beam_embodied + self.structure.column_embodied + self.structure.connections_embodied,
+                          self.structure.core_embodied,
                           self.envelope.window_embodied,
                           self.envelope.wall_embodied,
                           tot))

@@ -27,12 +27,13 @@ embodied: {}
 
 class Structure(object):
 
-    def __init__(self, area, columns, bx, by, composite, btype, numf):
+    def __init__(self, area, columns, bx, by, composite, btype, numf, core):
         self.name = 'Structure'
         self.area = area
         self.composite = composite
         self.btype = btype
         self.num_floors_above = numf
+        self.core = core
 
         self.conc_thick = 2. / 12. # 2 inches in feet
         self.timber_thick = None
@@ -51,6 +52,8 @@ class Structure(object):
         self.glulam_kgco2_yd3 = read_materials('Glulam')['embodied_carbon']
         self.conc_kgco2_yd3 = read_materials('Concrete')['embodied_carbon']
         self.gyp_kgco2_yd3 = read_materials('GypsumX')['embodied_carbon']
+        self.steel_kgco2_yd3 = read_materials('Steel')['embodied_carbon']
+        self.rebar_kgco2_yd3 = read_materials('Rebar')['embodied_carbon']
 
         self.span_x = 0
         self.span_y = 0
@@ -98,6 +101,7 @@ class Structure(object):
         self.compute_slab_embodied()
         self.compute_column_embodied()
         self.compute_beam_embodied()
+        self.compute_core_embodied()
         
     def compute_slab_embodied(self):
         """These values are taken from Strobel (2016), using composite/non composite 
@@ -175,6 +179,9 @@ class Structure(object):
         timber = vol * self.glulam_kgco2_yd3 * self.n_columns
         self.column_embodied = timber
 
+        steel_vol = (self.col_side * 4 * (1. / 12.)) / 27. 
+        self.connections_embodied = steel_vol * self.steel_kgco2_yd3 * self.n_columns
+
     def compute_beam_embodied(self):
 
         concrete_dl = self.conc_thick * self.concrete_density
@@ -207,6 +214,16 @@ class Structure(object):
 
         timber = vol * self.glulam_kgco2_yd3
         self.beam_embodied = timber
+
+    def compute_core_embodied(self):
+        pts = self.core
+        tdist = 0
+        for i in range(len(pts) - 1):
+            a, b = pts[i], pts[i + 1]
+            tdist += distance_point_point(a, b)
+        vol = tdist * self.height * 0.037037
+        self.core_embodied = (vol * self.conc_kgco2_yd3) + (vol * .04 * self.rebar_kgco2_yd3)
+        
 
 if __name__ == "__main__":
     pass

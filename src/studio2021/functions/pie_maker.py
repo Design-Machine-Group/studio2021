@@ -11,6 +11,9 @@ def make_pies(filename, num_years):
 
     # embodied - - - -
 
+    labels = lines[29].split(',')
+
+
     emb = lines[30].split(',')
     slab, beam, col, win, wall, tot = emb[1:7]
 
@@ -27,11 +30,11 @@ def make_pies(filename, num_years):
     win = round(100*(win / tot), 1)
     wall = round(100*(wall / tot), 1)
 
-    s = ['slab {}%'.format(slab)] * int(slab)
-    b = ['beam {}%'.format(beam)] * int(beam)
-    c = ['column {}%'.format(col)] * int(col)
-    wi = ['window {}%'.format(win)] * int(win)
-    wa = ['wall {}%'.format(wall)] * int(wall)
+    s = ['{} {}%'.format(labels[1], slab)] * int(slab)
+    b = ['{} {}%'.format(labels[2], beam)] * int(beam)
+    c = ['{} {}%'.format(labels[3], col)] * int(col)
+    wi = ['{} {}%'.format(labels[4], win)] * int(win)
+    wa = ['{} {}%'.format(labels[5], wall)] * int(wall)
 
     embodied = s + b + c + wi + wa
 
