@@ -55,6 +55,7 @@ class Building(object):
         self.floor_surfaces         = {}
         self.ceiling_surfaces       = {}
         self.adiabatic_walls        = {}
+        self.floor_areas            = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -463,7 +464,9 @@ class Building(object):
         
         for zkey in self.floor_surfaces:
             srf = self.floor_surfaces[zkey]
-            self.floor_area += abs(area_polygon(srf))
+            area = abs(area_polygon(srf))
+            self.floor_areas[zkey] = area
+            self.floor_area += area
 
     def fix_normals(self):
         import rhinoscriptsyntax as rs
@@ -744,8 +747,159 @@ class Building(object):
 
         return slabs, columns, beams
 
-    def wite_csv_result(self):
-        open('result')
+    def write_csv_result(self):
+        fh = self.simulation_name+ '.csv'
+        filepath = os.path.join(self.simulation_folder, fh)
+        fh = open(filepath, 'w')
+
+        fh.write('{}\n'.format(self.simulation_name))
+        fh.write('Program,{}\n'.format(self.zone_program))
+        fh.write('Location,{}\n'.format(self.city))
+        fh.write('\n')
+
+        fh.write('Height (ft),{}\n'.format(self.height))
+        fh.write('Wall Assembly R Value,{}\n'.format('Not yet'))
+        fh.write('U Value window,{}\n'.format('Not yet'))
+        fh.write('\n')
+
+        fh.write('N WWR,{}\n'.format(self.wwr['n']))
+        fh.write('N SHGC,{}\n'.format(self.shade_gc['n']))
+        fh.write('N Shade depth h,{}\n'.format(self.shade_depth_h['n']))
+        fh.write('N Shade depth v1,{}\n'.format(self.shade_depth_v1['n']))
+        fh.write('N Shade depth v2,{}\n'.format(self.shade_depth_v2['n']))
+
+        fh.write('S WWR,{}\n'.format(self.wwr['s']))
+        fh.write('S SHGC,{}\n'.format(self.shade_gc['s']))
+        fh.write('S Shade depth h,{}\n'.format(self.shade_depth_h['s']))
+        fh.write('S Shade depth v1,{}\n'.format(self.shade_depth_v1['s']))
+        fh.write('S Shade depth v2,{}\n'.format(self.shade_depth_v2['s']))
+
+        fh.write('E WWR,{}\n'.format(self.wwr['e']))
+        fh.write('E SHGC,{}\n'.format(self.shade_gc['e']))
+        fh.write('E Shade depth h,{}\n'.format(self.shade_depth_h['e']))
+        fh.write('E Shade depth v1,{}\n'.format(self.shade_depth_v1['e']))
+        fh.write('E Shade depth v2,{}\n'.format(self.shade_depth_v2['e']))
+
+        fh.write('W WWR,{}\n'.format(self.wwr['w']))
+        fh.write('W SHGC,{}\n'.format(self.shade_gc['w']))
+        fh.write('W Shade depth h,{}\n'.format(self.shade_depth_h['w']))
+        fh.write('W Shade depth v1,{}\n'.format(self.shade_depth_v1['w']))
+        fh.write('W Shade depth v2,{}\n'.format(self.shade_depth_v2['w']))
+        fh.write('\n')
+
+        fh.write(',Slab,Beams,Columns,Window,Opaque Wall,Total\n')
+        s = 'Embodied (eq CO2 kg total),{0},{1},{2},{3},{4},{5}\n'
+        tot = self.structure.slab_embodied + self.structure.beam_embodied 
+        tot += self.structure.column_embodied + self.envelope.window_embodied 
+        tot += self.envelope.wall_embodied
+        
+        fh.write(s.format(self.structure.slab_embodied,
+                          self.structure.beam_embodied,
+                          self.structure.column_embodied,
+                          self.envelope.window_embodied,
+                          self.envelope.wall_embodied,
+                          tot))
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        s = 'Floor Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.floor_areas:
+                areas.append(self.floor_areas[self.zones[i]])
+                tot += self.floor_areas[self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+        
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        
+        s = 'North Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['n']:
+                areas.append(self.facade_areas['n'][self.zones[i]])
+                tot += self.facade_areas['n'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'South Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['s']:
+                areas.append(self.facade_areas['s'][self.zones[i]])
+                tot += self.facade_areas['s'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'East Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['e']:
+                areas.append(self.facade_areas['e'][self.zones[i]])
+                tot += self.facade_areas['e'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'West Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['w']:
+                areas.append(self.facade_areas['w'][self.zones[i]])
+                tot += self.facade_areas['w'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write('Cooling EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        fh.write('Heating EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        fh.write('Lighting EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        fh.write('Equipment EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        fh.write('Hot Water EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        fh.write('Total EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write('Cooling EUI (kBtu/year),0,0,0,0,0,0\n')
+        fh.write('Heating EUI (kBtu/year),0,0,0,0,0,0\n')
+        fh.write('Lighting EUI (kBtu/year),0,0,0,0,0,0\n')
+        fh.write('Equipment EUI (kBtu/year),0,0,0,0,0,0\n')
+        fh.write('Hot Water EUI (kBtu/year),0,0,0,0,0,0\n')
+        fh.write('Total EUI (kBtu/year),0,0,0,0,0,0\n')
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write('Cooling EUI (kWh/year),0,0,0,0,0,0\n')
+        fh.write('Heating EUI (kWh/year),0,0,0,0,0,0\n')
+        fh.write('Lighting EUI (kWh/year),0,0,0,0,0,0\n')
+        fh.write('Equipment EUI (kWh/year),0,0,0,0,0,0\n')
+        fh.write('Hot Water EUI (kWh/year),0,0,0,0,0,0\n')
+        fh.write('Total EUI (kWh/year),0,0,0,0,0,0\n')
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write('Cooling EUI (kg CO2/year),0,0,0,0,0,0\n')
+        fh.write('Heating EUI (kg CO2/year),0,0,0,0,0,0\n')
+        fh.write('Lighting EUI (kg CO2/year),0,0,0,0,0,0\n')
+        fh.write('Equipment EUI (kg CO2/year),0,0,0,0,0,0\n')
+        fh.write('Hot Water EUI (kg CO2/year),0,0,0,0,0,0\n')
+        fh.write('Total EUI (kg CO2/year),0,0,0,0,0,0\n')
+
+        fh.write('\n')
+        fh.write(',Embodied,Operational,Total\n')
+        fh.write('Emissions Total 30 years (kg),{0},{1},{2}\n'.format(0,0,0))
+
+        fh.close()
 
 if __name__ == '__main__':
     for i in range(50): print('')
