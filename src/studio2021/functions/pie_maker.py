@@ -82,3 +82,28 @@ def make_pies(filename, num_years):
     opft = tot_ / ft2
 
     return embodied, operational, emb_v_op, embft, opft
+
+def make_emb_pie(building):
+    slab = building.structure.slab_embodied
+    beam = building.structure.beam_embodied
+    col = building.structure.column_embodied
+    conn = building.structure.connections_embodied
+    core = building.structure.core_embodied
+    win = building.envelope.window_embodied
+    wall = building.envelope.wall_embodied
+    tot = sum([slab, beam, col, core, conn, win, wall])
+
+    slab = round(100*(slab / tot), 1)
+    beam_col = round(100*((beam + col + conn) / tot), 1)
+    core = round(100*(core / tot), 1)
+    win = round(100*(win / tot), 1)
+    wall = round(100*(wall / tot), 1)
+
+    s = ['{} {}%'.format('slab', slab)] * int(slab)
+    b = ['{} {}%'.format('beams & columns', beam_col)] * int(beam_col)
+    c = ['{} {}%'.format('core', core)] * int(core)
+    wi = ['{} {}%'.format('windows', win)] * int(win)
+    wa = ['{} {}%'.format('walls', wall)] * int(wall)
+
+    return s + b + c + wi + wa, tot
+
