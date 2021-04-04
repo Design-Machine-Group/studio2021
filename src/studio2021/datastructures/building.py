@@ -16,6 +16,9 @@ from studio2021.datastructures import envelope
 reload(envelope)
 from studio2021.datastructures.envelope import Envelope
 
+from studio2021.functions import city_carbon
+reload(city_carbon)
+
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
 from studio2021.functions import normal_polygon
@@ -25,6 +28,9 @@ from studio2021.functions import add_vectors
 from studio2021.functions import distance_point_point
 from studio2021.functions import geometric_key
 from studio2021.functions import midpoint_point_point
+from studio2021.functions.city_carbon import city_EUI
+from studio2021.functions.city_carbon import weather
+
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -281,8 +287,6 @@ class Building(object):
         simulation_folder       = data['simulation_folder']
         run_simulation          = data['run_simulation'] 
 
-
-
         b = cls()
 
         num_zones = znames.BranchCount
@@ -388,7 +392,6 @@ class Building(object):
         b.simulation_folder     = simulation_folder
         b.run_simulation        = run_simulation
 
-        b.city              = data['city']
 
         # floor - ceiling data - - -
         b.height            = data['height']
@@ -402,6 +405,12 @@ class Building(object):
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
+       
+        # city - - - -
+        b.city              = data['city']
+        b.kgCo2e_kwh        = city_EUI(b.city)['kg/kWh']
+        b.weather_file      = weather(b.city)
+       
         return b
 
     def add_structure(self, data):
@@ -734,6 +743,9 @@ class Building(object):
             beams.append(rs.ExtrudeCurve(sec, beam))
 
         return slabs, columns, beams
+
+    def wite_csv_result(self):
+        open('result')
 
 if __name__ == '__main__':
     for i in range(50): print('')
