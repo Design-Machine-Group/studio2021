@@ -56,6 +56,10 @@ class Building(object):
         self.ceiling_surfaces       = {}
         self.adiabatic_walls        = {}
         self.floor_areas            = {}
+        self.eui_kwh                = {}
+        self.eui_kbtu               = {}
+        self.eui_kbtu_ft            = {}
+        self.eui_kgco2e             = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -408,6 +412,7 @@ class Building(object):
         b.composite_slab        = data['composite_slab']
        
         # city - - - -
+        b.csv               = data['csv']
         b.city              = data['city']
         b.kgCo2e_kwh        = city_EUI(b.city)['kg/kWh']
         b.weather_file      = weather(b.city)
@@ -747,9 +752,55 @@ class Building(object):
 
         return slabs, columns, beams
 
+    def add_eui_results(self, cool, heat, light, eq, hot):
+        totals = 0
+        for i in range(len(cool)):
+            c = sum(cool[i])
+            h = sum(heat[i])
+            l = sum(light[i])
+            e = sum(eq[i])
+            w = sum(hot[i])
+            tot = sum([c, h, l, e, w])
+            totals += tot
+            self.eui_kwh[self.zones[i]] = {'cooling':c,
+                                           'heating':h,
+                                           'lighting':l,
+                                           'equipment':e,
+                                           'hot_water':w,
+                                           'total':tot}
+        self.eui_kwh_total = totals
+
+        for zkey in self.eui_kwh:
+            temp = {}
+            for key in self.eui_kwh[zkey]:
+                temp[key] = self.eui_kwh[zkey][key] * 3.41214
+            self.eui_kbtu[zkey] = temp
+        
+        totals = [self.eui_kbtu[zkey]['total'] for zkey in self.eui_kbtu]
+        self.eui_kbtu_total = sum(totals)
+        
+        for zkey in self.eui_kbtu:
+            temp = {}
+            for key in self.eui_kbtu[zkey]:
+                temp[key] = self.eui_kbtu[zkey][key] / self.floor_areas[zkey]
+            self.eui_kbtu_ft[zkey] = temp
+
+        totals = [self.eui_kbtu_ft[zkey]['total'] for zkey in self.eui_kbtu_ft]
+        self.eui_kbtu_ft_total = sum(totals)
+
+        for zkey in self.eui_kwh:
+            temp = {}
+            for key in self.eui_kwh[zkey]:
+                temp[key] = self.eui_kwh[zkey][key] * self.kgCo2e_kwh
+            self.eui_kgco2e[zkey] = temp
+
+        totals = [self.eui_kgco2e[zkey]['total'] for zkey in self.eui_kgco2e]
+        self.eui_kgco2e_total = sum(totals)
+
     def write_csv_result(self):
-        fh = self.simulation_name+ '.csv'
-        filepath = os.path.join(self.simulation_folder, fh)
+        # fn = self.simulation_name+ '.csv'
+        fn = self.csv
+        filepath = os.path.join(self.simulation_folder, fn)
         fh = open(filepath, 'w')
 
         fh.write('{}\n'.format(self.simulation_name))
@@ -859,45 +910,87 @@ class Building(object):
                 areas.append(0)
         fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
 
-        fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
-        fh.write('Cooling EUI (kBtu/sf/year),0,0,0,0,0,0\n')
-        fh.write('Heating EUI (kBtu/sf/year),0,0,0,0,0,0\n')
-        fh.write('Lighting EUI (kBtu/sf/year),0,0,0,0,0,0\n')
-        fh.write('Equipment EUI (kBtu/sf/year),0,0,0,0,0,0\n')
-        fh.write('Hot Water EUI (kBtu/sf/year),0,0,0,0,0,0\n')
-        fh.write('Total EUI (kBtu/sf/year),0,0,0,0,0,0\n')
+        names = ['Cooling', 'Heating', 'Lighting', 'Equipment', 'Hot Water', 'Total']
+        dkeys = ['cooling','heating','lighting','equipment','hot_water','total']
 
         fh.write('\n')
         fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
-        fh.write('Cooling EUI (kBtu/year),0,0,0,0,0,0\n')
-        fh.write('Heating EUI (kBtu/year),0,0,0,0,0,0\n')
-        fh.write('Lighting EUI (kBtu/year),0,0,0,0,0,0\n')
-        fh.write('Equipment EUI (kBtu/year),0,0,0,0,0,0\n')
-        fh.write('Hot Water EUI (kBtu/year),0,0,0,0,0,0\n')
-        fh.write('Total EUI (kBtu/year),0,0,0,0,0,0\n')
+        
+        s = '{0} EUI (kBtu/sf/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kbtu_ft:
+                    data.append(self.eui_kbtu_ft[self.zones[i]][dkey])
+                    tot += self.eui_kbtu_ft[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
 
         fh.write('\n')
         fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
-        fh.write('Cooling EUI (kWh/year),0,0,0,0,0,0\n')
-        fh.write('Heating EUI (kWh/year),0,0,0,0,0,0\n')
-        fh.write('Lighting EUI (kWh/year),0,0,0,0,0,0\n')
-        fh.write('Equipment EUI (kWh/year),0,0,0,0,0,0\n')
-        fh.write('Hot Water EUI (kWh/year),0,0,0,0,0,0\n')
-        fh.write('Total EUI (kWh/year),0,0,0,0,0,0\n')
+
+        s = '{0} EUI (kBtu/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kbtu:
+                    data.append(self.eui_kbtu[self.zones[i]][dkey])
+                    tot += self.eui_kbtu[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
 
         fh.write('\n')
         fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
-        fh.write('Cooling EUI (kg CO2/year),0,0,0,0,0,0\n')
-        fh.write('Heating EUI (kg CO2/year),0,0,0,0,0,0\n')
-        fh.write('Lighting EUI (kg CO2/year),0,0,0,0,0,0\n')
-        fh.write('Equipment EUI (kg CO2/year),0,0,0,0,0,0\n')
-        fh.write('Hot Water EUI (kg CO2/year),0,0,0,0,0,0\n')
-        fh.write('Total EUI (kg CO2/year),0,0,0,0,0,0\n')
+
+        s = '{0} EUI (kWh/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kwh:
+                    data.append(self.eui_kwh[self.zones[i]][dkey])
+                    tot += self.eui_kwh[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+
+        s = '{0} EUI (kg CO2/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kgco2e:
+                    data.append(self.eui_kgco2e[self.zones[i]][dkey])
+                    tot += self.eui_kgco2e[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+        slab = self.structure.slab_embodied
+        beam = self.structure.beam_embodied
+        col = self.structure.column_embodied
+        win = self.envelope.window_embodied
+        wall = self.envelope.wall_embodied
+
+        emb = sum([slab, beam, col, win, wall])
+        op = self.eui_kgco2e_total * 30
 
         fh.write('\n')
         fh.write(',Embodied,Operational,Total\n')
-        fh.write('Emissions Total 30 years (kg),{0},{1},{2}\n'.format(0,0,0))
+        fh.write('Emissions Total 30 years (kg),{0},{1},{2}\n'.format(emb, op, emb + op))
 
         fh.close()
 
