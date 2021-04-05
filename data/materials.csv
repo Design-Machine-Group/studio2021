@@ -17,3 +17,6 @@ Concrete,Exterior Wall Framing,0.08,0.08,1,0.0254,1.802,2255,750,435
 2x6 Wood Studs,Exterior Wall Framing,14.68,3.55,3.5,0.0889,0.041,141.25,None,44.3
 Glulam,Beams or columns,None,None,None,None,None,None,None,98.6
 GypsumX,Type X fire protecting sypsum,None,None,0.625,0.015875,None,None,None,241.52
+Rebar,Beams or columns,None,None,None,None,None,None,None,7771.0
+Steel,plates,None,None,None,None,None,None,None,7771.0
+Aluminum,NOT CORRECT YET,None,None,None,None,None,None,None,23800.0

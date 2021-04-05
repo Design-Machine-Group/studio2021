@@ -16,6 +16,9 @@ from studio2021.datastructures import envelope
 reload(envelope)
 from studio2021.datastructures.envelope import Envelope
 
+from studio2021.functions import city_carbon
+reload(city_carbon)
+
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
 from studio2021.functions import normal_polygon
@@ -25,6 +28,9 @@ from studio2021.functions import add_vectors
 from studio2021.functions import distance_point_point
 from studio2021.functions import geometric_key
 from studio2021.functions import midpoint_point_point
+from studio2021.functions.city_carbon import city_EUI
+from studio2021.functions.city_carbon import weather
+
 
 __author__ = ["Tomas Mendez Echenagucia"]
 __copyright__ = "Copyright 2020, Design Machine Group - University of Washington"
@@ -44,10 +50,16 @@ class Building(object):
     def __init__(self):
         self.__name__               = 'Studio2021Building'
         self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
+        self.city                   = None
         self.zones                  = {}
         self.floor_surfaces         = {}
         self.ceiling_surfaces       = {}
         self.adiabatic_walls        = {}
+        self.floor_areas            = {}
+        self.eui_kwh                = {}
+        self.eui_kbtu               = {}
+        self.eui_kbtu_ft            = {}
+        self.eui_kgco2e             = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -254,6 +266,7 @@ class Building(object):
     @classmethod
     def from_gh_data(cls, data):
         import rhinoscriptsyntax as rs
+
         znames                  = data['znames']
         exterior_walls_n        = data['exterior_walls_n']
         exterior_walls_s        = data['exterior_walls_s']
@@ -279,8 +292,6 @@ class Building(object):
         sql_path                = data['sql_path']
         simulation_folder       = data['simulation_folder']
         run_simulation          = data['run_simulation'] 
-
-
 
         b = cls()
 
@@ -387,8 +398,9 @@ class Building(object):
         b.simulation_folder     = simulation_folder
         b.run_simulation        = run_simulation
 
+
         # floor - ceiling data - - -
-        b.height            = data['height']
+        b.height            = float(data['height'])
         b.ceiling_condition = data['ceiling_condition']
         b.floor_condition   = data['floor_condition']
 
@@ -399,12 +411,20 @@ class Building(object):
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
+       
+        # city - - - -
+        b.csv               = data['csv']
+        b.city              = data['city']
+        b.kgCo2e_kwh        = city_EUI(b.city)['kg/kWh']
+        b.weather_file      = weather(b.city)
+       
         return b
 
     def add_structure(self, data):
         columns = data['columns']
         beams_x = data['beams_x']
         beams_y = data['beams_y']
+        core    = data['core']
 
         cmap = []
         cols = []
@@ -432,10 +452,11 @@ class Building(object):
             if gk not in cmap:
                 by.append(b)
                 cmap.append(gk)
-
+        
         self.columns = cols
         self.beams_x = bx
         self.beams_y = by
+        self.core    = core
 
     def compute_areas(self):
         for okey in self.exterior_walls:
@@ -451,7 +472,9 @@ class Building(object):
         
         for zkey in self.floor_surfaces:
             srf = self.floor_surfaces[zkey]
-            self.floor_area += abs(area_polygon(srf))
+            area = abs(area_polygon(srf))
+            self.floor_areas[zkey] = area
+            self.floor_area += area
 
     def fix_normals(self):
         import rhinoscriptsyntax as rs
@@ -616,6 +639,7 @@ class Building(object):
                 areas[j] = [self.window_areas[okey][zkey]]
             data['window_areas'][okey] = th.list_to_tree(areas, source=[])
 
+        data['city']                    = self.city
 
         # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['height']                  = self.height
@@ -644,10 +668,11 @@ class Building(object):
         columns = self.columns
         bx = self.beams_x
         by = self.beams_y
+        core = self.core
         composite = self.composite_slab
         btype = self.building_type
         numf = self.num_floors_above
-        self.structure = Structure(area, columns, bx, by, composite, btype, numf)
+        self.structure = Structure(area, columns, bx, by, composite, btype, numf, core)
         self.structure.compute_embodied()
 
     def compute_envelope_embodied(self):
@@ -656,7 +681,12 @@ class Building(object):
                                  self.external_insulation,
                                  self.insulation_thickness,
                                  self.facade_cladding,
-                                 self.glazing_system)
+                                 self.glazing_system,
+                                 self.height,
+                                 self.shade_depth_h,
+                                 self.shade_depth_v1,
+                                 self.shade_depth_v2,
+                                 self.wwr)
 
         self.envelope.compute_embodied()
      
@@ -729,7 +759,252 @@ class Building(object):
             beam = rs.AddLine(sp, ep)
             beams.append(rs.ExtrudeCurve(sec, beam))
 
-        return slabs, columns, beams
+        core = rs.ExtrudeCurve(rs.AddPolyline(self.core), col)
+
+        return slabs, columns, beams, core
+
+    def add_eui_results(self, cool, heat, light, eq, hot):
+        totals = 0
+        for i in range(len(cool)):
+            c = sum(cool[i])
+            h = sum(heat[i])
+            l = sum(light[i])
+            e = sum(eq[i])
+            w = sum(hot[i])
+            tot = sum([c, h, l, e, w])
+            totals += tot
+            self.eui_kwh[self.zones[i]] = {'cooling':c,
+                                           'heating':h,
+                                           'lighting':l,
+                                           'equipment':e,
+                                           'hot_water':w,
+                                           'total':tot}
+        self.eui_kwh_total = totals
+
+        for zkey in self.eui_kwh:
+            temp = {}
+            for key in self.eui_kwh[zkey]:
+                temp[key] = self.eui_kwh[zkey][key] * 3.41214
+            self.eui_kbtu[zkey] = temp
+        
+        totals = [self.eui_kbtu[zkey]['total'] for zkey in self.eui_kbtu]
+        self.eui_kbtu_total = sum(totals)
+        
+        for zkey in self.eui_kbtu:
+            temp = {}
+            for key in self.eui_kbtu[zkey]:
+                temp[key] = self.eui_kbtu[zkey][key] / self.floor_areas[zkey]
+            self.eui_kbtu_ft[zkey] = temp
+
+        totals = [self.eui_kbtu_ft[zkey]['total'] for zkey in self.eui_kbtu_ft]
+        self.eui_kbtu_ft_total = sum(totals)
+
+        for zkey in self.eui_kwh:
+            temp = {}
+            for key in self.eui_kwh[zkey]:
+                temp[key] = self.eui_kwh[zkey][key] * self.kgCo2e_kwh
+            self.eui_kgco2e[zkey] = temp
+
+        totals = [self.eui_kgco2e[zkey]['total'] for zkey in self.eui_kgco2e]
+        self.eui_kgco2e_total = sum(totals)
+
+    def write_csv_result(self):
+        # fn = self.simulation_name+ '.csv'
+        fn = self.csv
+        filepath = os.path.join(self.simulation_folder, fn)
+        fh = open(filepath, 'w')
+
+        fh.write('{}\n'.format(self.simulation_name))
+        fh.write('Program,{}\n'.format(self.zone_program))
+        fh.write('Location,{}\n'.format(self.city))
+        fh.write('\n')
+
+        fh.write('Height (ft),{}\n'.format(self.height))
+        fh.write('Wall Assembly R Value,{}\n'.format('Not yet'))
+        fh.write('U Value window,{}\n'.format('Not yet'))
+        fh.write('\n')
+
+        fh.write('N WWR,{}\n'.format(self.wwr['n']))
+        fh.write('N SHGC,{}\n'.format(self.shade_gc['n']))
+        fh.write('N Shade depth h,{}\n'.format(self.shade_depth_h['n']))
+        fh.write('N Shade depth v1,{}\n'.format(self.shade_depth_v1['n']))
+        fh.write('N Shade depth v2,{}\n'.format(self.shade_depth_v2['n']))
+
+        fh.write('S WWR,{}\n'.format(self.wwr['s']))
+        fh.write('S SHGC,{}\n'.format(self.shade_gc['s']))
+        fh.write('S Shade depth h,{}\n'.format(self.shade_depth_h['s']))
+        fh.write('S Shade depth v1,{}\n'.format(self.shade_depth_v1['s']))
+        fh.write('S Shade depth v2,{}\n'.format(self.shade_depth_v2['s']))
+
+        fh.write('E WWR,{}\n'.format(self.wwr['e']))
+        fh.write('E SHGC,{}\n'.format(self.shade_gc['e']))
+        fh.write('E Shade depth h,{}\n'.format(self.shade_depth_h['e']))
+        fh.write('E Shade depth v1,{}\n'.format(self.shade_depth_v1['e']))
+        fh.write('E Shade depth v2,{}\n'.format(self.shade_depth_v2['e']))
+
+        fh.write('W WWR,{}\n'.format(self.wwr['w']))
+        fh.write('W SHGC,{}\n'.format(self.shade_gc['w']))
+        fh.write('W Shade depth h,{}\n'.format(self.shade_depth_h['w']))
+        fh.write('W Shade depth v1,{}\n'.format(self.shade_depth_v1['w']))
+        fh.write('W Shade depth v2,{}\n'.format(self.shade_depth_v2['w']))
+        fh.write('\n')
+
+        fh.write(',Slab,Beams & Columns,Core,Window,Opaque Wall,Total\n')
+        s = 'Embodied (eq CO2 kg total),{0},{1},{2},{3},{4},{5}\n'
+        tot = self.structure.slab_embodied + self.structure.beam_embodied 
+        tot += self.structure.column_embodied + self.envelope.window_embodied 
+        tot += self.envelope.wall_embodied + self.structure.core_embodied
+        tot += self.structure.connections_embodied
+        
+        fh.write(s.format(self.structure.slab_embodied,
+                          self.structure.beam_embodied + self.structure.column_embodied + self.structure.connections_embodied,
+                          self.structure.core_embodied,
+                          self.envelope.window_embodied,
+                          self.envelope.wall_embodied,
+                          tot))
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        s = 'Floor Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.floor_areas:
+                areas.append(self.floor_areas[self.zones[i]])
+                tot += self.floor_areas[self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+        
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        
+        s = 'North Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['n']:
+                areas.append(self.facade_areas['n'][self.zones[i]])
+                tot += self.facade_areas['n'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'South Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['s']:
+                areas.append(self.facade_areas['s'][self.zones[i]])
+                tot += self.facade_areas['s'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'East Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['e']:
+                areas.append(self.facade_areas['e'][self.zones[i]])
+                tot += self.facade_areas['e'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        s = 'West Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
+        areas = []
+        tot = 0
+        for i in range(5):
+            if self.zones[i] in self.facade_areas['w']:
+                areas.append(self.facade_areas['w'][self.zones[i]])
+                tot += self.facade_areas['w'][self.zones[i]]
+            else:
+                areas.append(0)
+        fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
+
+        names = ['Cooling', 'Heating', 'Lighting', 'Equipment', 'Hot Water', 'Total']
+        dkeys = ['cooling','heating','lighting','equipment','hot_water','total']
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        
+        s = '{0} EUI (kBtu/sf/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kbtu_ft:
+                    data.append(self.eui_kbtu_ft[self.zones[i]][dkey])
+                    tot += self.eui_kbtu_ft[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+
+        s = '{0} EUI (kBtu/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kbtu:
+                    data.append(self.eui_kbtu[self.zones[i]][dkey])
+                    tot += self.eui_kbtu[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+
+        s = '{0} EUI (kWh/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kwh:
+                    data.append(self.eui_kwh[self.zones[i]][dkey])
+                    tot += self.eui_kwh[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+
+        fh.write('\n')
+        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+
+        s = '{0} EUI (kg CO2/year),{1},{2},{3},{4},{5},{6}\n'
+        for j, name in enumerate(names):
+            dkey = dkeys[j]
+            data = []
+            tot = 0
+            for i in range(5):
+                if self.zones[i] in self.eui_kgco2e:
+                    data.append(self.eui_kgco2e[self.zones[i]][dkey])
+                    tot += self.eui_kgco2e[self.zones[i]][dkey]
+                else:
+                    data.append(0)
+            fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
+
+        slab = self.structure.slab_embodied
+        beam = self.structure.beam_embodied
+        col = self.structure.column_embodied
+        win = self.envelope.window_embodied
+        wall = self.envelope.wall_embodied
+
+        emb = sum([slab, beam, col, win, wall])
+        op = self.eui_kgco2e_total * 30
+
+        fh.write('\n')
+        fh.write(',Embodied,Operational,Total\n')
+        fh.write('Emissions Total 30 years (kg),{0},{1},{2}\n'.format(emb, op, emb + op))
+
+        fh.close()
 
 if __name__ == '__main__':
     for i in range(50): print('')

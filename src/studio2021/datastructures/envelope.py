@@ -32,7 +32,12 @@ class Envelope(object):
                  external_insulation,
                  insulation_thickness,
                  facade_cladding,
-                 glazing_system):
+                 glazing_system,
+                 height,
+                 shade_depth_h,
+                 shade_depth_v1,
+                 shade_depth_v2,
+                 wwr):
         self.name                   = 'Base envelope'
         self.opaque_areas           = opaque_areas
         self.window_areas           = window_areas
@@ -40,6 +45,11 @@ class Envelope(object):
         self.insulation_thickness   = insulation_thickness
         self.facade_cladding        = facade_cladding
         self.glazing_system         = glazing_system
+        self.height                 = height
+        self.shade_depth_h          = shade_depth_h
+        self.shade_depth_v1         = shade_depth_v1
+        self.shade_depth_v2         = shade_depth_v2
+        self.wwr                    = wwr
 
         self.wall_embodied = None
         self.window_embodied = None
@@ -49,10 +59,16 @@ class Envelope(object):
 
         tot_opaque = 0.  # this should be in feet?
         tot_win = 0.     # this should be in feet?
+        sides = {}
         for okey in self.opaque_areas:
+            opaque_orient = 0
+            win_orient = 0
             for zkey in self.opaque_areas[okey]:
-                tot_opaque += self.opaque_areas[okey][zkey]
-                tot_win += self.window_areas[okey][zkey]
+                opaque_orient += self.opaque_areas[okey][zkey]
+                win_orient += self.window_areas[okey][zkey]
+            sides[okey] = (opaque_orient + win_orient) / self.height
+            tot_opaque += opaque_orient
+            tot_win += win_orient
 
         ins_mat = self.external_insulation
         ins_thick = float(self.insulation_thickness) / 12. # currently in inches
@@ -76,6 +92,20 @@ class Envelope(object):
         self.wall_embodied =  int_emb + fac_emb + int_emb
         self.window_embodied = win_emb
 
+        alum_emb = float(read_materials('Aluminum')['embodied_carbon']) * 27. # currently (kgCO2/yd3)
+
+        self.shading_embodied = 0
+        for okey in sides:
+            side = sides[okey]
+            numsec = round(side / 10., 0)
+            secside = side / float(numsec)
+            secarea = secside * self.height
+            wwr = self.wwr[okey]
+            h = self.height - 2
+            x = (secarea * wwr) / h
+            self.shading_embodied += (self.shade_depth_h[okey] * x * (1. /36.) * alum_emb) / 27.
+        
+        self.window_embodied += self.shading_embodied
 
 
 if __name__ == "__main__":
