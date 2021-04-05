@@ -400,7 +400,7 @@ class Building(object):
 
 
         # floor - ceiling data - - -
-        b.height            = data['height']
+        b.height            = float(data['height'])
         b.ceiling_condition = data['ceiling_condition']
         b.floor_condition   = data['floor_condition']
 
@@ -681,7 +681,12 @@ class Building(object):
                                  self.external_insulation,
                                  self.insulation_thickness,
                                  self.facade_cladding,
-                                 self.glazing_system)
+                                 self.glazing_system,
+                                 self.height,
+                                 self.shade_depth_h,
+                                 self.shade_depth_v1,
+                                 self.shade_depth_v2,
+                                 self.wwr)
 
         self.envelope.compute_embodied()
      
