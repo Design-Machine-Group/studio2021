@@ -50,6 +50,7 @@ class Building(object):
     def __init__(self):
         self.__name__               = 'Studio2021Building'
         self.orient_dict            = {0:'n', 1:'s', 2:'e', 3:'w'}
+        self.csv                    = None
         self.city                   = None
         self.zones                  = {}
         self.floor_surfaces         = {}
@@ -57,6 +58,7 @@ class Building(object):
         self.adiabatic_walls        = {}
         self.floor_areas            = {}
         self.eui_kwh                = {}
+        self.eui_kwh_hourly         = {}
         self.eui_kbtu               = {}
         self.eui_kbtu_ft            = {}
         self.eui_kgco2e             = {}
@@ -81,11 +83,6 @@ class Building(object):
         self.ewall_framing          = None
         self.int_finish             = None
         self.glazing_system         = None
-        self.zone_program           = None
-        self.weather_file           = None
-        self.sql_path               = None
-        self.simulation_folder      = None
-        self.run_simulation         = False  
         self.simulation_name        = None
         self.zone_program           = None
         self.weather_file           = None
@@ -102,7 +99,8 @@ class Building(object):
         return TPL.format(self.__name__)
 
     def to_json(self):
-        filepath = os.path.join(studio2021.TEMP, '{}.json'.format(self.__name__))
+        fn = os.path.splitext(self.csv)[0]
+        filepath = os.path.join(studio2021.TEMP, '{}.json'.format(fn))
         with open(filepath, 'w+') as fp:
             json.dump(self.data, fp)
 
@@ -116,38 +114,54 @@ class Building(object):
 
     @property
     def data(self):
-        data = {
-        'name'                   : self.__name__,
-        'orient_dict'            : {0:'n', 1:'s', 2:'e', 3:'w'},
-        'zones'                  : {},
-        'ceiling_surfaces'       : {},
-        'floor_surfaces'         : {},
-        'adiabatic_walls'        : {},
-        'facade_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'window_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'opaque_areas'           : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'wwr'                    : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'shade_gc'               : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'shade_depth'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'exterior_walls'         : {repr(key): {} for key in ['n', 's', 'e', 'w']},
-        'floor_area'             : self.floor_area,
-        'span'                   : self.span,
-        'beam_length'            : self.beam_length,
-        'col_length'             : self.col_length,
-        'facade_cladding'        : self.facade_cladding,
-        'external_insulation'    : self.external_insulation,
-        'insulation_thickness'   : self.insulation_thickness,
-        'ewall_framing'          : self.ewall_framing,
-        'int_finish'             : self.int_finish,
-        'glazing_system'         : self.glazing_system,
-        'simulation_name'        : self.simulation_name,
-        'zone_program'           : self.zone_program,
-        'weather_file'           : self.weather_file,
-        'sql_path'               : self.sql_path,
-        'simulation_folder'      : self.simulation_folder,
-        'run_simulation'         : self.run_simulation,
-        'structure'              : self.structure.data,
-        }
+        data = {'name'                      : self.__name__,
+                'orient_dict'               : {0:'n', 1:'s', 2:'e', 3:'w'},
+                'zones'                     : {},
+                'ceiling_surfaces'          : {},
+                'floor_surfaces'            : {},
+                'adiabatic_walls'           : {},
+                'eui_kwh'                   : {},
+                'eui_kwh_hourly'            : {},
+                'eui_kbtu'                  : {},
+                'eui_kbtu_ft'               : {},
+                'eui_kgco2e'                : {},
+                'facade_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'window_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'opaque_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'wwr'                       : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'shade_gc'                  : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'exterior_walls'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'shade_depth_h'             : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'shade_depth_v1'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'shade_depth_v2'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+                'csv'                       : self.csv,
+                'floor_area'                : self.floor_area,
+                'simulation_name'           : self.simulation_name,
+                'zone_program'              : self.zone_program,
+                'weather_file'              : self.weather_file,
+                'sql_path'                  : self.sql_path,
+                'simulation_folder'         : self.simulation_folder,
+                'run_simulation'            : self.run_simulation,
+                'structure'                 : self.structure.data,
+                'envelope'                  : self.envelope.data,
+                'city'                      : self.city,
+                'floor_areas'               : {},
+                'height'                    : self.height,
+                'span_x'                    : self.span_x,
+                'span_y'                    : self.span_y,
+                'beam_length'               : self.beam_length,
+                'col_length'                : self.col_length,
+                'facade_cladding'           : self.facade_cladding,
+                'external_insulation'       : self.external_insulation,
+                'insulation_thickness'      : self.insulation_thickness,
+                'ewall_framing'             : self.ewall_framing,
+                'int_finish'                : self.int_finish,
+                'glazing_system'            : self.glazing_system,
+                'building_type'             : self.building_type,
+                'num_floors_above'          : self.num_floors_above,
+                'ceiling_condition'         : self.ceiling_condition,
+                'floor_condition'           : self.floor_condition,
+                }
 
 
         for key in self.orient_dict:
@@ -158,6 +172,9 @@ class Building(object):
 
         for key in self.ceiling_surfaces:
             data['ceiling_surfaces'][repr(key)] = self.ceiling_surfaces[key]
+
+        for key in self.floor_areas:
+            data['floor_areas'][repr(key)] = self.floor_areas[key]
 
         for key in self.floor_surfaces:
             data['floor_surfaces'][repr(key)] = self.floor_surfaces[key]
@@ -183,8 +200,29 @@ class Building(object):
         for okey in self.shade_gc:
             data['shade_gc'][repr(okey)] = self.shade_gc[okey]
 
-        for okey in self.shade_depth:
-            data['shade_depth'][repr(okey)] = self.shade_depth[okey]
+        for okey in self.shade_depth_h:
+            data['shade_depth_h'][repr(okey)] = self.shade_depth_h[okey]
+
+        for okey in self.shade_depth_v1:
+            data['shade_depth_v1'][repr(okey)] = self.shade_depth_v1[okey]
+
+        for okey in self.shade_depth_v2:
+            data['shade_depth_v2'][repr(okey)] = self.shade_depth_v2[okey]
+
+        for zkey in self.eui_kwh:
+            data['eui_kwh'][repr(zkey)] = self.eui_kwh[zkey]
+        
+        for zkey in self.eui_kwh_hourly:
+            data['eui_kwh_hourly'][repr(zkey)] = self.eui_kwh_hourly[zkey]
+        
+        for zkey in self.eui_kbtu:
+            data['eui_kbtu'][repr(zkey)] = self.eui_kbtu[zkey]
+        
+        for zkey in self.eui_kbtu_ft:
+            data['eui_kbtu_ft'][repr(zkey)] = self.eui_kbtu_ft[zkey]
+
+        for zkey in self.eui_kgco2e:
+            data['eui_kgco2e'][repr(zkey)] = self.eui_kgco2e[zkey]
 
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
@@ -194,16 +232,41 @@ class Building(object):
 
     @data.setter
     def data(self, data):
-        ceiling_surfaces = data.get('ceiling_surfaces') or {}
-        floor_surfaces = data.get('floor_surfaces') or {}
-        adiabatic_walls = data.get('adiabatic_walls') or {}
-        facade_areas = data.get('facade_areas') or {}
-        window_areas = data.get('window_areas') or {}
-        opaque_areas = data.get('opaque_areas') or {}
-        wwr = data.get('wwr') or {}
-        shade_gc = data.get('shade_gc') or {}
-        shade_depth = data.get('shade_depth') or {}
-        exterior_walls = data.get('exterior_walls') or {}
+        ceiling_surfaces        = data.get('ceiling_surfaces') or {}
+        floor_surfaces          = data.get('floor_surfaces') or {}
+        adiabatic_walls         = data.get('adiabatic_walls') or {}
+        facade_areas            = data.get('facade_areas') or {}
+        window_areas            = data.get('window_areas') or {}
+        opaque_areas            = data.get('opaque_areas') or {}
+        wwr                     = data.get('wwr') or {}
+        zones                   = data.get('zones') or {}
+        shade_gc                = data.get('shade_gc') or {}
+        shade_depth_h           = data.get('shade_depth_h') or {}
+        shade_depth_v1          = data.get('shade_depth_v1') or {}
+        shade_depth_v2          = data.get('shade_depth_v2') or {}
+        exterior_walls          = data.get('exterior_walls') or {}
+
+        eui_kwh                 = data.get('eui_kwh') or {}
+        eui_kwh_hourly          = data.get('eui_kwh_hourly') or {}
+        eui_kbtu                = data.get('eui_kbtu') or {}
+        eui_kbtu_ft             = data.get('eui_kbtu_ft') or {}
+        eui_kgco2e              = data.get('eui_kgco2e') or {}
+
+
+        for key in eui_kwh:
+            self.eui_kwh[literal_eval(key)] = eui_kwh[key]
+
+        for key in eui_kwh_hourly:
+            self.eui_kwh_hourly[literal_eval(key)] = eui_kwh_hourly[key]
+
+        for key in eui_kbtu:
+            self.eui_kbtu[literal_eval(key)] = eui_kbtu[key]
+
+        for key in eui_kbtu_ft:
+            self.eui_kbtu_ft[literal_eval(key)] = eui_kbtu_ft[key]
+
+        for key in eui_kgco2e:
+            self.eui_kgco2e[literal_eval(key)] = eui_kgco2e[key]
 
         for key in ceiling_surfaces:
             self.ceiling_surfaces[literal_eval(key)] = ceiling_surfaces[key]
@@ -226,24 +289,29 @@ class Building(object):
             for zkey in opaque_areas[okey]:
                 self.opaque_areas[literal_eval(okey)][literal_eval(zkey)] = opaque_areas[okey][zkey]
 
+        for k in zones:
+            self.zones[literal_eval(k)] = zones[k]
+
         for okey in wwr:
             self.wwr[literal_eval(okey)] = wwr[okey]
 
         for okey in shade_gc:
             self.shade_gc[literal_eval(okey)] = shade_gc[okey]
 
-        for okey in shade_depth:
-            self.shade_depth[literal_eval(okey)] = shade_depth[okey]
+        for okey in shade_depth_h:
+            self.shade_depth_h[literal_eval(okey)] = shade_depth_h[okey]
+        for okey in shade_depth_v1:
+            self.shade_depth_v1[literal_eval(okey)] = shade_depth_v1[okey]
+        for okey in shade_depth_v1:
+            self.shade_depth_v2[literal_eval(okey)] = shade_depth_v2[okey]
 
         for okey in exterior_walls:
             for zkey in exterior_walls[okey]:
                 self.exterior_walls[literal_eval(okey)][literal_eval(zkey)] = exterior_walls[okey][zkey]
-
+                
         self.__name__               = data.get('name') or {}
+        self.csv                    = data.get('csv') or {}
         self.floor_area             = data.get('floor_area') or {}
-        self.span                   = data.get('span') or {}
-        self.beam_length            = data.get('beam_length') or {}
-        self.col_length             = data.get('col_length') or {}
         self.facade_cladding        = data.get('facade_cladding') or {}
         self.external_insulation    = data.get('external_insulation') or {}
         self.insulation_thickness   = data.get('insulation_thickness') or {}
@@ -256,12 +324,10 @@ class Building(object):
         self.simulation_folder      = data.get('simulation_folder') or {}
         self.run_simulation         = data.get('run_simulation') or {}  
         self.simulation_name        = data.get('simulation_name') or {}
-        self.zone_program           = data.get('zone_program') or {}
-        self.weather_file           = data.get('weather_file') or {}
-        self.sql_path               = data.get('sql_path') or {}
-        self.simulation_folder      = data.get('simulation_folder') or {}
-        self.run_simulation         = data.get('run_simulation') or {}
-        self.structure              = data.get('structure') or {}
+        structure                   = data.get('structure') or {}
+        envelope                    = data.get('envelope') or {}  
+        self.structure              = Structure.from_data(structure)
+        self.envelope               = Envelope.from_data(envelope)
 
     @classmethod
     def from_gh_data(cls, data):
@@ -303,6 +369,7 @@ class Building(object):
             b.exterior_walls['n'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
+                p = [list(pt) for pt in p]
                 b.exterior_walls['n'][b.zones[k]].append(p)
 
         for k in range(exterior_walls_s.BranchCount):
@@ -310,6 +377,7 @@ class Building(object):
             b.exterior_walls['s'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
+                p = [list(pt) for pt in p]
                 b.exterior_walls['s'][b.zones[k]].append(p)
 
         for k in range(exterior_walls_e.BranchCount):
@@ -317,6 +385,7 @@ class Building(object):
             b.exterior_walls['e'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
+                p = [list(pt) for pt in p]
                 b.exterior_walls['e'][b.zones[k]].append(p)
 
         for k in range(exterior_walls_w.BranchCount):
@@ -324,6 +393,7 @@ class Building(object):
             b.exterior_walls['w'][b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
+                p = [list(pt) for pt in p]
                 b.exterior_walls['w'][b.zones[k]].append(p)
 
 
@@ -333,6 +403,7 @@ class Building(object):
             b.adiabatic_walls[b.zones[k]] = []
             for wall in walls:
                 p = rs.PolylineVertices(wall)
+                p = [list(pt) for pt in p]
                 b.adiabatic_walls[b.zones[k]].append(p)
 
         # floor surfaces - - -
@@ -340,6 +411,7 @@ class Building(object):
             srf = floor_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.PolylineVertices(srf[0])
+                p = [list(pt) for pt in p]
                 b.floor_surfaces[b.zones[i]] = p
 
         # ceiling surfaces - - -
@@ -347,6 +419,7 @@ class Building(object):
             srf = ceiling_surfaces.Branch(i)
             if len(srf) > 0:
                 p = rs.PolylineVertices(srf[0])
+                p = [list(pt) for pt in p]
                 b.ceiling_surfaces[b.zones[i]] = p
 
         # wwr - - -
@@ -361,7 +434,6 @@ class Building(object):
             if shade_gc_:
                 b.shade_gc[b.orient_dict[i]] = shade_gc_[0]
             
-
         # shade depth - - -
         for i in range(shade_depth_h.BranchCount):
             shade_depth_ = shade_depth_h.Branch(i)
@@ -377,6 +449,10 @@ class Building(object):
             shade_depth_ = shade_depth_v2.Branch(i)
             if shade_depth_:
                 b.shade_depth_v2[b.orient_dict[i]] = shade_depth_[0]
+
+        # general stuff - - -
+
+        b.__name__ = simulation_name
 
         # facade areas - - -
         b.compute_areas()
@@ -407,11 +483,11 @@ class Building(object):
         # embodied - - -
 
         b.add_structure(data)
-
+        b.add_envelope(data)
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
-       
+
         # city - - - -
         b.csv               = data['csv']
         b.city              = data['city']
@@ -421,42 +497,20 @@ class Building(object):
         return b
 
     def add_structure(self, data):
-        columns = data['columns']
-        beams_x = data['beams_x']
-        beams_y = data['beams_y']
-        core    = data['core']
+        self.structure = Structure.from_geometry(data, self)
 
-        cmap = []
-        cols = []
-        for col in columns:
-            mpt = midpoint_point_point(col[0], col[1])
-            gk = geometric_key(mpt)
-            if gk not in cmap:
-                cols.append(col)
-                cmap.append(gk)
-
-        cmap = []
-        bx = []
-        for b in beams_x:
-            mpt = midpoint_point_point(b[0], b[1])
-            gk = geometric_key(mpt)
-            if gk not in cmap:
-                bx.append(b)
-                cmap.append(gk)
-
-        cmap = []
-        by = []
-        for b in beams_y:
-            mpt = midpoint_point_point(b[0], b[1])
-            gk = geometric_key(mpt)
-            if gk not in cmap:
-                by.append(b)
-                cmap.append(gk)
-        
-        self.columns = cols
-        self.beams_x = bx
-        self.beams_y = by
-        self.core    = core
+    def add_envelope(self, data):
+        self.envelope = Envelope.from_geometry(self.opaque_areas,
+                                               self.window_areas,
+                                               self.external_insulation,
+                                               self.insulation_thickness,
+                                               self.facade_cladding,
+                                               self.glazing_system,
+                                               self.height,
+                                               self.shade_depth_h,
+                                               self.shade_depth_v1,
+                                               self.shade_depth_v2,
+                                               self.wwr)
 
     def compute_areas(self):
         for okey in self.exterior_walls:
@@ -540,9 +594,12 @@ class Building(object):
 
         data['exterior_walls'] = {}
         for i in range(4):
+            print('i', i)
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
+            print(self.zones)
             for j, zkey in enumerate(self.zones):
+                print('j', j, 'zkey', zkey)
                 zkey = self.zones[zkey]
                 if zkey in self.exterior_walls[okey]:
                     pls = self.exterior_walls[okey][zkey]
@@ -550,6 +607,7 @@ class Building(object):
                     for pl in pls:
                         pl = rs.AddPolyline(pl)
                         walls[j].append(rs.AddPlanarSrf(pl)[0])
+                        print(rs.AddPlanarSrf(pl)[0])
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -660,34 +718,12 @@ class Building(object):
 
         data['ceiling_condition']       = self.ceiling_condition
         data['floor_condition']         = self.floor_condition
-
         return data
 
     def compute_structure_embodied(self):
-        area = self.floor_area
-        columns = self.columns
-        bx = self.beams_x
-        by = self.beams_y
-        core = self.core
-        composite = self.composite_slab
-        btype = self.building_type
-        numf = self.num_floors_above
-        self.structure = Structure(area, columns, bx, by, composite, btype, numf, core)
         self.structure.compute_embodied()
 
     def compute_envelope_embodied(self):
-        self.envelope = Envelope(self.opaque_areas,
-                                 self.window_areas,
-                                 self.external_insulation,
-                                 self.insulation_thickness,
-                                 self.facade_cladding,
-                                 self.glazing_system,
-                                 self.height,
-                                 self.shade_depth_h,
-                                 self.shade_depth_v1,
-                                 self.shade_depth_v2,
-                                 self.wwr)
-
         self.envelope.compute_embodied()
      
     def draw_structure(self):
@@ -712,7 +748,7 @@ class Building(object):
         sh = self.structure.timber_thick + self.structure.conc_thick
 
         columns = []
-        for sp, ep in self.columns:
+        for sp, ep in self.structure.columns:
             sp_ = rs.VectorAdd(sp, [-side/2., -side/2.,0])
             b = rs.VectorAdd(sp_, [1,0,0])
             c = rs.VectorAdd(sp_, [0,1,0])
@@ -759,13 +795,16 @@ class Building(object):
             beam = rs.AddLine(sp, ep)
             beams.append(rs.ExtrudeCurve(sec, beam))
 
-        core = rs.ExtrudeCurve(rs.AddPolyline(self.core), col)
+        core = rs.ExtrudeCurve(rs.AddPolyline(self.structure.core), col)
 
         return slabs, columns, beams, core
 
     def add_eui_results(self, cool, heat, light, eq, hot):
         totals = 0
+        print(len(cool))
+        print(self.zones)
         for i in range(len(cool)):
+            print('i', i)
             c = sum(cool[i])
             h = sum(heat[i])
             l = sum(light[i])
@@ -779,6 +818,12 @@ class Building(object):
                                            'equipment':e,
                                            'hot_water':w,
                                            'total':tot}
+            
+            self.eui_kwh_hourly[self.zones[i]] = {'cooling':list(cool[i]),
+                                                  'heating':list(heat[i]),
+                                                  'lighting':list(light[i]),
+                                                  'equipment':list(eq[i]),
+                                                  'hot_water':list(hot[i])}
         self.eui_kwh_total = totals
 
         for zkey in self.eui_kwh:
@@ -793,6 +838,9 @@ class Building(object):
         for zkey in self.eui_kbtu:
             temp = {}
             for key in self.eui_kbtu[zkey]:
+                print(key, zkey)
+                print(type(zkey))
+                print(self.floor_areas[zkey])
                 temp[key] = self.eui_kbtu[zkey][key] / self.floor_areas[zkey]
             self.eui_kbtu_ft[zkey] = temp
 
@@ -808,10 +856,14 @@ class Building(object):
         totals = [self.eui_kgco2e[zkey]['total'] for zkey in self.eui_kgco2e]
         self.eui_kgco2e_total = sum(totals)
 
+    def write_results(self):
+        self.write_csv_result()
+        self.to_json()
+
     def write_csv_result(self):
-        # fn = self.simulation_name+ '.csv'
-        fn = self.csv
-        filepath = os.path.join(self.simulation_folder, fn)
+        # fn = self.csv
+        # filepath = os.path.join(self.simulation_folder, fn)
+        filepath = self.csv
         fh = open(filepath, 'w')
 
         fh.write('{}\n'.format(self.simulation_name))

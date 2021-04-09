@@ -12,6 +12,9 @@ from studio2021.functions.material_reader import read_materials
 
 from math import sqrt
 from studio2021.functions import distance_point_point
+from studio2021.functions import geometric_key
+from studio2021.functions import midpoint_point_point
+from studio2021.functions import area_polygon
 
 TPL = """
 ################################################################################
@@ -26,23 +29,9 @@ embodied: {}
 # TODO: Add gypsum to beams and columns
 
 class Structure(object):
-
-    def __init__(self, area, columns, bx, by, composite, btype, numf, core):
-        self.name = 'Structure'
-        self.area = area
-        self.composite = composite
-        self.btype = btype
-        self.num_floors_above = numf
-        self.core = core
-
+    def __init__(self):
         self.conc_thick = 2. / 12. # 2 inches in feet
-        self.timber_thick = None
         self.gypsum_thick = (2 * (5. / 8.)) / 12. # based on min 80 minutes fire rating
-
-        self.slab_embodied = None
-        self.beam_embodied = None
-        self.column_embodied = None
-
         self.gl_allowable = 2400 * 144. * .6 # GL24f in psi to psf .6 safety
         self.liveload = 80  # lbs / ft2 
         self.clt_density = 36  # lbs / ft3
@@ -55,6 +44,182 @@ class Structure(object):
         self.steel_kgco2_yd3 = read_materials('Steel')['embodied_carbon']
         self.rebar_kgco2_yd3 = read_materials('Rebar')['embodied_carbon']
 
+        self.area               = None
+        self.composite          = None
+        self.btype              = None
+        self.num_floors_above   = None
+        self.core               = None
+        self.slab_embodied      = None
+        self.beam_embodied      = None
+        self.column_embodied    = None
+        self.timber_thick       = None
+        self.span_x             = None
+        self.span_y             = None
+        self.column_length      = None
+        self.height             = None
+        self.columns            = None
+        self.n_columns          = None
+        self.main_beams         = None
+        self.second_beams       = None 
+        self.main_span          = None
+        self.second_span        = None 
+        
+    def __str__(self):
+        return TPL.format(self.name)
+
+    @property
+    def data(self):
+        data = {
+            'area'              : self.area,
+            'composite'         : self.composite,
+            'btype'             : self.btype,
+            'num_floors_above'  : self.num_floors_above,
+            'conc_thick'        : self.conc_thick,
+            'timber_thick'      : self.timber_thick,
+            'gypsum_thick'      : self.gypsum_thick,
+            'slab_embodied'     : self.slab_embodied,
+            'beam_embodied'     : self.beam_embodied,
+            'column_embodied'   : self.column_embodied,
+            'gl_allowable'      : self.gl_allowable,
+            'liveload'          : self.liveload,
+            'clt_density'       : self.clt_density,
+            'concrete_density'  : self.concrete_density,
+            'clt_kgco2_yd3'     : self.clt_kgco2_yd3,
+            'glulam_kgco2_yd3'  : self.glulam_kgco2_yd3,
+            'conc_kgco2_yd3'    : self.conc_kgco2_yd3,
+            'gyp_kgco2_yd3'     : self.gyp_kgco2_yd3,
+            'steel_kgco2_yd3'   : self.steel_kgco2_yd3,
+            'rebar_kgco2_yd3'   : self.rebar_kgco2_yd3,
+            'span_x'            : self.span_x,
+            'span_y'            : self.span_y,
+            'column_length'     : self.column_length,
+            'height'            : self.height,
+            'n_columns'         : self.n_columns,
+            'columns'           : self.columns,
+            'core'              : self.core,
+            'main_beams'        : self.main_beams,
+            'second_beams'      : self.second_beams,
+            'main_span'         : self.main_span,
+            'second_span'       : self.second_span,
+        }
+        return data
+
+    @data.setter
+    def data(self, data):
+        self.conc_thick         = data.get('conc_thick') or {}
+        self.gypsum_thick       = data.get('gypsum_thick') or {}
+        self.gl_allowable       = data.get('gl_allowable') or {}
+        self.liveload           = data.get('liveload') or {} 
+        self.clt_density        = data.get('clt_density') or {}
+        self.concrete_density   = data.get('concrete_density') or {}
+        self.clt_kgco2_yd3      = data.get('clt_kgco2_yd3') or {}
+        self.glulam_kgco2_yd3   = data.get('glulam_kgco2_yd3') or {}
+        self.conc_kgco2_yd3     = data.get('conc_kgco2_yd3') or {}
+        self.gyp_kgco2_yd3      = data.get('gyp_kgco2_yd3') or {}
+        self.steel_kgco2_yd3    = data.get('steel_kgco2_yd3') or {}
+        self.rebar_kgco2_yd3    = data.get('rebar_kgco2_yd3') or {}
+        self.area               = data.get('area') or {}
+        self.composite          = data.get('composite') or {}
+        self.btype              = data.get('btype') or {}
+        self.num_floors_above   = data.get('num_floors_above') or {}
+        self.core               = data.get('core') or {}
+        self.slab_embodied      = data.get('slab_embodied') or {}
+        self.beam_embodied      = data.get('beam_embodied') or {}
+        self.column_embodied    = data.get('column_embodied') or {}
+        self.timber_thick       = data.get('timber_thick') or {}
+        self.span_x             = data.get('span_x') or {}
+        self.span_y             = data.get('span_y') or {}
+        self.column_length      = data.get('column_length') or {}
+        self.height             = data.get('height') or {}
+        self.columns            = data.get('columns') or {}
+        self.n_columns          = data.get('n_columns') or {}
+        self.main_beams         = data.get('main_beams') or {}
+        self.second_beams       = data.get('second_beams') or {}
+        self.main_span          = data.get('main_span') or {}
+        self.second_span        = data.get('second_span') or {}
+
+    @classmethod
+    def from_data(cls, data):
+        structure = cls()
+        structure.data = data
+        return structure
+
+    @classmethod
+    def from_geometry(cls, data, building):
+        structure = cls()
+        structure.add_columns_beams(data)
+        structure.area = building.floor_area
+
+        structure.composite          = data['composite_slab']
+        structure.btype              = data['building_type']
+        structure.num_floors_above   = data['num_floors_above']
+
+        structure.column_length = 0
+        temp = []
+        for a, b in structure.columns:
+            d = distance_point_point(a, b)
+            structure.column_length += d
+            temp.append(d)
+
+        structure.height = max(temp)
+        structure.n_columns = len(structure.columns)
+
+        if structure.span_x > structure.span_y:
+            structure.main_beams = structure.beams_x
+            structure.second_beams = structure.beams_y
+            structure.main_span = structure.span_x
+            structure.second_span = structure.span_y
+        else:
+            structure.main_beams = structure.beams_y
+            structure.second_beams = structure.beams_x
+            structure.main_span = structure.span_y
+            structure.second_span = structure.span_x
+        return structure
+
+    def add_columns_beams(self, data):
+        columns = data['columns']
+        beams_x = data['beams_x']
+        beams_y = data['beams_y']
+        core    = data['core']
+
+        cmap = []
+        cols = []
+        for col in columns:
+            mpt = midpoint_point_point(col[0], col[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                cols.append(col)
+                cmap.append(gk)
+
+        cmap = []
+        bx = []
+        for b in beams_x:
+            mpt = midpoint_point_point(b[0], b[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                bx.append(b)
+                cmap.append(gk)
+
+        cmap = []
+        by = []
+        for b in beams_y:
+            mpt = midpoint_point_point(b[0], b[1])
+            gk = geometric_key(mpt)
+            if gk not in cmap:
+                by.append(b)
+                cmap.append(gk)
+
+        columns = [[list(a), list(b)] for a, b in columns]
+        bx = [[list(a), list(b)] for a, b in bx]
+        by = [[list(a), list(b)] for a, b in by]
+
+        core = [list(p) for p in core]
+
+        self.columns = columns
+        self.beams_x = bx
+        self.beams_y = by
+        self.core = core
+
         self.span_x = 0
         self.span_y = 0
         for a, b in bx:
@@ -65,37 +230,7 @@ class Structure(object):
         for a, b in by:
             d = distance_point_point(a, b)
             if d > self.span_y:
-                self.span_y = d      
-
-        self.column_length = 0
-        temp = []
-        for a, b in columns:
-            d = distance_point_point(a, b)
-            self.column_length += d
-            temp.append(d)
-
-        self.height = max(temp)
-        self.columns = columns
-        self.n_columns = len(columns)
-
-        if self.span_x > self.span_y:
-            self.main_beams = bx
-            self.second_beams = by
-            self.main_span = self.span_x
-            self.second_span = self.span_y
-        else:
-            self.main_beams = by
-            self.second_beams = bx
-            self.main_span = self.span_y
-            self.second_span = self.span_x
-        
-
-    def __str__(self):
-        return TPL.format(self.name)
-
-    @property
-    def data(self):
-        return {}
+                self.span_y = d  
 
     def compute_embodied(self):
         self.compute_slab_embodied()

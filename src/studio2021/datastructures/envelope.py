@@ -6,6 +6,8 @@ __license__ = "MIT License"
 __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
+from ast import literal_eval
+
 from studio2021.functions import read_materials
 from studio2021.functions import read_glazing
 
@@ -26,37 +28,135 @@ embodied: {}
 
 class Envelope(object):
     
-    def __init__(self, 
-                 opaque_areas,
-                 window_areas,
-                 external_insulation,
-                 insulation_thickness,
-                 facade_cladding,
-                 glazing_system,
-                 height,
-                 shade_depth_h,
-                 shade_depth_v1,
-                 shade_depth_v2,
-                 wwr):
-        self.name                   = 'Base envelope'
-        self.opaque_areas           = opaque_areas
-        self.window_areas           = window_areas
-        self.external_insulation    = external_insulation
-        self.insulation_thickness   = insulation_thickness
-        self.facade_cladding        = facade_cladding
-        self.glazing_system         = glazing_system
-        self.height                 = height
-        self.shade_depth_h          = shade_depth_h
-        self.shade_depth_v1         = shade_depth_v1
-        self.shade_depth_v2         = shade_depth_v2
-        self.wwr                    = wwr
+    def __init__(self):
+        self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.external_insulation    = None
+        self.insulation_thickness   = None
+        self.facade_cladding        = None
+        self.glazing_system         = None
+        self.height                 = None
+        self.shade_depth_h          = {'n':{}, 's':{}, 'e':{}, 'w':{}} 
+        self.shade_depth_v1         = {'n':{}, 's':{}, 'e':{}, 'w':{}} 
+        self.shade_depth_v2         = {'n':{}, 's':{}, 'e':{}, 'w':{}} 
+        self.wwr                    = {'n':{}, 's':{}, 'e':{}, 'w':{}} 
+        self.wall_embodied          = None
+        self.window_embodied        = None
+        self.shading_embodied       = None
 
-        self.wall_embodied = None
-        self.window_embodied = None
-    
+    @classmethod
+    def from_data(cls, data):
+        env = cls()
+        env.data = data
+        return env
+
+    @classmethod
+    def from_geometry(cls,
+                      opaque_areas,
+                      window_areas,
+                      external_insulation,
+                      insulation_thickness,
+                      facade_cladding,
+                      glazing_system,
+                      height,
+                      shade_depth_h,
+                      shade_depth_v1,
+                      shade_depth_v2,
+                      wwr):
+
+        env = cls()
+        env.opaque_areas           = opaque_areas
+        env.window_areas           = window_areas
+        env.external_insulation    = external_insulation
+        env.insulation_thickness   = insulation_thickness
+        env.facade_cladding        = facade_cladding
+        env.glazing_system         = glazing_system
+        env.height                 = height
+        env.shade_depth_h          = shade_depth_h
+        env.shade_depth_v1         = shade_depth_v1
+        env.shade_depth_v2         = shade_depth_v2
+        env.wwr                    = wwr
+        return env
+
+    @property
+    def data(self):
+        data = {
+            'opaque_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'window_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'external_insulation'       : self.external_insulation,
+            'insulation_thickness'      : self.insulation_thickness,
+            'facade_cladding'           : self.facade_cladding,
+            'glazing_system'            : self.glazing_system,
+            'height'                    : self.height,
+            'shade_depth_h'             : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'shade_depth_v1'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'shade_depth_v2'            : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'wwr'                       : {repr(key): {} for key in ['n', 's', 'e', 'w']},
+            'wall_embodied'             : self.wall_embodied,
+            'window_embodied'           : self.window_embodied,
+            'shading_embodied'          : self.shading_embodied,
+        }
+
+        for okey in self.shade_depth_h:
+            data['shade_depth_h'][repr(okey)] = self.shade_depth_h[okey]
+
+        for okey in self.shade_depth_v1:
+            data['shade_depth_v1'][repr(okey)] = self.shade_depth_v1[okey]
+        
+        for okey in self.shade_depth_v2:
+            data['shade_depth_v2'][repr(okey)] = self.shade_depth_v2[okey]
+
+        for okey in self.wwr:
+            data['wwr'][repr(okey)] = self.wwr[okey]
+
+        for okey in self.opaque_areas:
+            for zkey in self.opaque_areas[okey]:
+                data['opaque_areas'][repr(okey)][repr(zkey)] = self.opaque_areas[okey][zkey]
+
+        for okey in self.window_areas:
+            for zkey in self.window_areas[okey]:
+                data['window_areas'][repr(okey)][repr(zkey)] = self.window_areas[okey][zkey]
+
+        return data
+
+    @data.setter
+    def data(self, data):
+        opaque_areas                = data.get('opaque_areas') or {}
+        window_areas                = data.get('window_areas') or {}
+        self.external_insulation    = data.get('external_insulation') or {}
+        self.insulation_thickness   = data.get('insulation_thickness') or {}
+        self.facade_cladding        = data.get('facade_cladding') or {}
+        self.glazing_system         = data.get('glazing_system') or {}
+        self.height                 = data.get('height') or {}
+        shade_depth_h               = data.get('shade_depth_h') or {}
+        shade_depth_v1              = data.get('shade_depth_v1') or {}
+        shade_depth_v2              = data.get('shade_depth_v2') or {}
+        wwr                         = data.get('wwr') or {} 
+        self.wall_embodied          = data.get('wall_embodied') or {}
+        self.window_embodied        = data.get('window_embodied') or {}
+        self.shading_embodied       = data.get('shading_embodied') or {}
+
+        for okey in opaque_areas:
+            for zkey in opaque_areas[okey]:
+                self.opaque_areas[literal_eval(okey)][literal_eval(zkey)] = opaque_areas[okey][zkey]
+
+        for okey in window_areas:
+            for zkey in window_areas[okey]:
+                self.window_areas[literal_eval(okey)][literal_eval(zkey)] = window_areas[okey][zkey]
+
+        for okey in wwr:
+            self.wwr[literal_eval(okey)] = wwr[okey]
+
+        for okey in shade_depth_h:
+            self.shade_depth_h[literal_eval(okey)] = shade_depth_h[okey]
+
+        for okey in shade_depth_v1:
+            self.shade_depth_v1[literal_eval(okey)] = shade_depth_v1[okey]
+
+        for okey in shade_depth_v2:
+            self.shade_depth_v2[literal_eval(okey)] = shade_depth_v2[okey]
 
     def compute_embodied(self):
-
         tot_opaque = 0.  # this should be in feet?
         tot_win = 0.     # this should be in feet?
         sides = {}
