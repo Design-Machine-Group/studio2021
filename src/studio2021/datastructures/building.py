@@ -801,10 +801,12 @@ class Building(object):
 
     def add_eui_results(self, cool, heat, light, eq, hot):
         totals = 0
-        print(len(cool))
-        print(self.zones)
+        # print(len(cool))
+        # print(self.zones)
+        if not hot == 0:
+                hot = [[0]*8760 for _ in range(len(cool))]
         for i in range(len(cool)):
-            print('i', i)
+            # print('i', i)
             c = sum(cool[i])
             h = sum(heat[i])
             l = sum(light[i])
@@ -838,9 +840,9 @@ class Building(object):
         for zkey in self.eui_kbtu:
             temp = {}
             for key in self.eui_kbtu[zkey]:
-                print(key, zkey)
-                print(type(zkey))
-                print(self.floor_areas[zkey])
+                # print(key, zkey)
+                # print(type(zkey))
+                # print(self.floor_areas[zkey])
                 temp[key] = self.eui_kbtu[zkey][key] / self.floor_areas[zkey]
             self.eui_kbtu_ft[zkey] = temp
 
