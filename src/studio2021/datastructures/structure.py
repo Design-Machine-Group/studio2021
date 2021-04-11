@@ -7,7 +7,10 @@ __email__ = "tmendeze@uw.edu"
 __version__ = "0.1.0"
 
 from studio2021.functions import material_reader
-reload(material_reader)
+try:
+    reload(material_reader)
+except:
+    pass
 from studio2021.functions.material_reader import read_materials
 
 from math import sqrt

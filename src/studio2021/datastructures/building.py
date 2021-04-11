@@ -9,15 +9,24 @@ from copy import deepcopy
 
 import studio2021
 from studio2021.datastructures import structure
-reload(structure)
+try:
+    reload(structure)
+except:
+    pass
 from studio2021.datastructures.structure import Structure
 
 from studio2021.datastructures import envelope
-reload(envelope)
+try:
+    reload(envelope)
+except:
+    pass
 from studio2021.datastructures.envelope import Envelope
 
 from studio2021.functions import city_carbon
-reload(city_carbon)
+try:
+    reload(city_carbon)
+except:
+    pass
 
 from studio2021.functions import area_polygon
 from studio2021.functions import intersection_segment_plane
@@ -311,6 +320,7 @@ class Building(object):
                 
         self.__name__               = data.get('name') or {}
         self.csv                    = data.get('csv') or {}
+        self.city                   = data.get('city') or {}
         self.floor_area             = data.get('floor_area') or {}
         self.facade_cladding        = data.get('facade_cladding') or {}
         self.external_insulation    = data.get('external_insulation') or {}

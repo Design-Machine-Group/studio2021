@@ -1,4 +1,7 @@
-import rhinoscriptsyntax as rs
+try:
+    import rhinoscriptsyntax as rs
+except Exception:
+    pass
 
 def make_spaced_frames(guid, x_dist, y_dist, height, core):
     pts = rs.PolylineVertices(guid)
