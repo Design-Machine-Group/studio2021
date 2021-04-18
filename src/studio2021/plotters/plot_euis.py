@@ -86,6 +86,6 @@ if __name__ == '__main__':
     name = 'awesome_name_202104111448.json'
     filepath = os.path.join(studio2021.TEMP, name)
     building = Building.from_json(filepath)
-    time = 'week'
-    # plot_eui_curves(building, time)
-    plot_eui_map(building)
+    time = 'hour'
+    plot_eui_curves(building, time)
+    # plot_eui_map(building)
