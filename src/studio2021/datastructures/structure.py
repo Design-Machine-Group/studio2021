@@ -12,6 +12,7 @@ try:
 except:
     pass
 from studio2021.functions.material_reader import read_materials
+from studio2021.functions.material_reader import read_materials_city
 
 from math import sqrt
 from studio2021.functions import distance_point_point
@@ -40,13 +41,7 @@ class Structure(object):
         self.clt_density = 36  # lbs / ft3
         self.concrete_density = 149.8271  # lbs / ft3
 
-        self.clt_kgco2_yd3 = read_materials('CLT')['embodied_carbon']
-        self.glulam_kgco2_yd3 = read_materials('Glulam')['embodied_carbon']
-        self.conc_kgco2_yd3 = read_materials('Concrete')['embodied_carbon']
-        self.gyp_kgco2_yd3 = read_materials('GypsumX')['embodied_carbon']
-        self.steel_kgco2_yd3 = read_materials('Steel')['embodied_carbon']
-        self.rebar_kgco2_yd3 = read_materials('Rebar')['embodied_carbon']
-
+        self.city               = None
         self.area               = None
         self.composite          = None
         self.btype              = None
@@ -153,6 +148,7 @@ class Structure(object):
         structure.add_columns_beams(data)
         structure.area = building.floor_area
 
+        structure.city               = data['city']
         structure.composite          = data['composite_slab']
         structure.btype              = data['building_type']
         structure.num_floors_above   = data['num_floors_above']
@@ -178,6 +174,14 @@ class Structure(object):
             structure.main_span = structure.span_y
             structure.second_span = structure.span_x
         return structure
+
+    def get_materials(self):
+        self.clt_kgco2_yd3 = read_materials_city('CLT', self.city)
+        self.glulam_kgco2_yd3 = read_materials_city('Glulam', self.city)
+        self.conc_kgco2_yd3 = read_materials_city('Concrete', self.city)
+        self.gyp_kgco2_yd3 = read_materials_city('GypsumX', self.city)
+        self.steel_kgco2_yd3 = read_materials_city('Steel', self.city)
+        self.rebar_kgco2_yd3 = read_materials_city('Rebar', self.city)
 
     def add_columns_beams(self, data):
         columns = data['columns']
@@ -238,6 +242,7 @@ class Structure(object):
                 self.span_y = d  
 
     def compute_embodied(self):
+        self.get_materials()
         self.compute_slab_embodied()
         self.compute_column_embodied()
         self.compute_beam_embodied()

@@ -28,7 +28,23 @@ def read_materials(material_name):
     return materials[material_name]
 
 def read_materials_city(material, city):
-    pass
+    # city_dict = {'National': 2, 'Seattle':3, 'Milwaukee':4, 'San Antonio':5}
+    filepath = os.path.join(studio2021.DATA, 'materials_embodied.csv')
+    fh = open(filepath, 'r')
+    lines = fh.readlines()
+    fh.close()
+    data = {}
+    del(lines[0])
+    for l in lines:
+        l = l.split(',')
+        data[l[0]] = {'National': float(l[2]),
+                      'Seattle': float(l[3]),
+                      'Milwaukee': float(l[4]),
+                      'San Antonio': float(l[5])}
+    if data[material][city] == 0:
+        return data[material]['National']
+    else:
+        return data[material][city]
 
 if __name__ == "__main__":
     for i in range(50):

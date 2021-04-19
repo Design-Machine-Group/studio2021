@@ -105,5 +105,7 @@ def make_emb_pie(building):
     wi = ['{} {}%'.format('windows', win)] * int(win)
     wa = ['{} {}%'.format('walls', wall)] * int(wall)
 
-    return s + b + c + wi + wa, tot
+    tot_ft2 = tot / building.floor_area
+
+    return s + b + c + wi + wa, tot, tot_ft2
 
