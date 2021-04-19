@@ -27,6 +27,8 @@ def read_materials(material_name):
                                 'embodied_carbon': data[9]}
     return materials[material_name]
 
+def read_materials_city(material, city):
+    pass
 
 if __name__ == "__main__":
     for i in range(50):

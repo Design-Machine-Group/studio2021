@@ -183,7 +183,7 @@ class Structure(object):
         columns = data['columns']
         beams_x = data['beams_x']
         beams_y = data['beams_y']
-        core    = data['core']
+        cores    = data['cores']
 
         cmap = []
         cols = []
@@ -216,12 +216,14 @@ class Structure(object):
         bx = [[list(a), list(b)] for a, b in bx]
         by = [[list(a), list(b)] for a, b in by]
 
-        core = [list(p) for p in core]
+        cores_ = []
+        for core in cores:
+            cores_.append([list(p) for p in core])
 
         self.columns = columns
         self.beams_x = bx
         self.beams_y = by
-        self.core = core
+        self.cores = cores_
 
         self.span_x = 0
         self.span_y = 0
@@ -354,11 +356,11 @@ class Structure(object):
         self.beam_embodied = timber
 
     def compute_core_embodied(self):
-        pts = self.core
         tdist = 0
-        for i in range(len(pts) - 1):
-            a, b = pts[i], pts[i + 1]
-            tdist += distance_point_point(a, b)
+        for pts in self.cores:
+            for i in range(len(pts) - 1):
+                a, b = pts[i], pts[i + 1]
+                tdist += distance_point_point(a, b)
         vol = tdist * self.height * 0.037037
         self.core_embodied = (vol * self.conc_kgco2_yd3) + (vol * .04 * self.rebar_kgco2_yd3)
         

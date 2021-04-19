@@ -804,17 +804,33 @@ class Building(object):
             sec = rs.AddRectangle(plane, bw, bh_)
             beam = rs.AddLine(sp, ep)
             beams.append(rs.ExtrudeCurve(sec, beam))
+        cores = []
+        for core in self.structure.cores:
+            sp = core[0]
+            ep = (core[0][0], core[0][1], core[0][2]+ self.height)
+            core = rs.ExtrudeCurveStraight(rs.AddPolyline(core), sp, ep)
+            cores.append(core)
 
-        core = rs.ExtrudeCurve(rs.AddPolyline(self.structure.core), col)
-
-        return slabs, columns, beams, core
+        return slabs, columns, beams, cores
 
     def add_eui_results(self, cool, heat, light, eq, hot):
         totals = 0
-        # print(len(cool))
-        # print(self.zones)
-        if not hot == 0:
-                hot = [[0]*8760 for _ in range(len(cool))]
+        if not cool:
+            print('there is no cooling for some reason')
+            cool = [[0]*8760 for _ in range(len(cool))]
+        if not heat:
+            print('there is no heating for some reason')
+            heat = [[0]*8760 for _ in range(len(cool))]
+        if not light:
+            print('there is no light for some reason')
+            light = [[0]*8760 for _ in range(len(cool))]
+        if not eq:
+            print('there is no equipment for some reason')
+            eq = [[0]*8760 for _ in range(len(cool))]
+        if not hot:
+            print('there is no hot water for some reason')
+            hot = [[0]*8760 for _ in range(len(cool))]
+
         for i in range(len(cool)):
             # print('i', i)
             c = sum(cool[i])

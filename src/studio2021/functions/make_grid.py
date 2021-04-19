@@ -126,7 +126,11 @@ def trim_beam(beam, srf, pl):
             else:
                 spt = [b[0], b[1], b_[2]]
             rs.DeleteObjects([beam, beam_])
-            return rs.AddLine(spt, xpt)
+
+            if rs.Distance(spt, xpt) > 1:
+                return rs.AddLine(spt, xpt)
+            else:
+                return None
     else:
         rs.DeleteObject(beam)
         return None
