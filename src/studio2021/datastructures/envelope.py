@@ -9,6 +9,7 @@ __version__ = "0.1.0"
 from ast import literal_eval
 
 from studio2021.functions import read_materials
+from studio2021.functions import read_materials_city
 from studio2021.functions import read_glazing
 
 
@@ -31,6 +32,7 @@ class Envelope(object):
     def __init__(self):
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
+        self.city                   = None
         self.external_insulation    = None
         self.insulation_thickness   = None
         self.facade_cladding        = None
@@ -62,7 +64,8 @@ class Envelope(object):
                       shade_depth_h,
                       shade_depth_v1,
                       shade_depth_v2,
-                      wwr):
+                      wwr,
+                      city):
 
         env = cls()
         env.opaque_areas           = opaque_areas
@@ -76,6 +79,7 @@ class Envelope(object):
         env.shade_depth_v1         = shade_depth_v1
         env.shade_depth_v2         = shade_depth_v2
         env.wwr                    = wwr
+        env.city                   = city 
         return env
 
     @property
@@ -172,17 +176,17 @@ class Envelope(object):
 
         ins_mat = self.external_insulation
         ins_thick = float(self.insulation_thickness) / 12. # currently in inches
-        ins_emb = float(read_materials(ins_mat)['embodied_carbon']) * 27.  # currently (kgCO2/yd3)
+        ins_emb = float(read_materials_city(ins_mat, self.city)) * 27.  # currently (kgCO2/yd3)
         ins_emb = tot_opaque * ins_thick * ins_emb 
 
         fac_mat = self.facade_cladding
         fac_thick = float(read_materials(fac_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
-        fac_emb = float(read_materials(fac_mat)['embodied_carbon']) * 27. # currently (kgCO2/yd3)
+        fac_emb = float(read_materials_city(fac_mat, self.city)) * 27. # currently (kgCO2/yd3)
         fac_emb = tot_opaque * fac_thick * fac_emb 
 
         int_mat = self.facade_cladding
         int_thick = float(read_materials(int_mat)['thickness_in']) # currently (kgCO2/yd3)
-        int_emb = float(read_materials(int_mat)['embodied_carbon']) # currently (kgCO2/yd3)
+        int_emb = float(read_materials_city(int_mat, self.city)) # currently (kgCO2/yd3)
         int_emb = tot_opaque * int_thick * int_emb 
         
         win_sys = self.glazing_system
@@ -192,7 +196,7 @@ class Envelope(object):
         self.wall_embodied =  int_emb + fac_emb + int_emb
         self.window_embodied = win_emb
 
-        alum_emb = float(read_materials('Aluminum')['embodied_carbon']) * 27. # currently (kgCO2/yd3)
+        alum_emb = float(read_materials_city('Aluminum', self.city)) * 27. # currently (kgCO2/yd3)
 
         self.shading_embodied = 0
         for okey in sides:

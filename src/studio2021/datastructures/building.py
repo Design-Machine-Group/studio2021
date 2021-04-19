@@ -490,20 +490,18 @@ class Building(object):
         b.ceiling_condition = data['ceiling_condition']
         b.floor_condition   = data['floor_condition']
 
-        # embodied - - -
-
-        b.add_structure(data)
-        b.add_envelope(data)
-        b.building_type         = data['building_type']
-        b.num_floors_above      = data['num_floors_above']
-        b.composite_slab        = data['composite_slab']
-
         # city - - - -
         b.csv               = data['csv']
         b.city              = data['city']
         b.kgCo2e_kwh        = city_EUI(b.city)['kg/kWh']
         b.weather_file      = weather(b.city)
-       
+
+        # embodied - - -
+        b.add_structure(data)
+        b.add_envelope(data)
+        b.building_type         = data['building_type']
+        b.num_floors_above      = data['num_floors_above']
+        b.composite_slab        = data['composite_slab']
         return b
 
     def add_structure(self, data):
@@ -520,7 +518,8 @@ class Building(object):
                                                self.shade_depth_h,
                                                self.shade_depth_v1,
                                                self.shade_depth_v2,
-                                               self.wwr)
+                                               self.wwr,
+                                               self.city)
 
     def compute_areas(self):
         for okey in self.exterior_walls:
