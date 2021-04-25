@@ -89,6 +89,7 @@ class Building(object):
         self.facade_cladding        = None
         self.external_insulation    = None
         self.insulation_thickness   = None
+        self.interior_insul_mat     = None
         self.ewall_framing          = None
         self.int_finish             = None
         self.glazing_system         = None
@@ -103,6 +104,7 @@ class Building(object):
         self.num_floors_above       = None
         self.ceiling_condition      = None
         self.floor_condition        = None
+        self.context                = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -163,6 +165,7 @@ class Building(object):
                 'facade_cladding'           : self.facade_cladding,
                 'external_insulation'       : self.external_insulation,
                 'insulation_thickness'      : self.insulation_thickness,
+                'interior_insul_mat'        : self.interior_insul_mat,
                 'ewall_framing'             : self.ewall_framing,
                 'int_finish'                : self.int_finish,
                 'glazing_system'            : self.glazing_system,
@@ -325,6 +328,7 @@ class Building(object):
         self.facade_cladding        = data.get('facade_cladding') or {}
         self.external_insulation    = data.get('external_insulation') or {}
         self.insulation_thickness   = data.get('insulation_thickness') or {}
+        self.interior_insul_mat     = data.get('interior_insul_mat') or {}
         self.ewall_framing          = data.get('ewall_framing') or {}
         self.int_finish             = data.get('int_finish') or {}
         self.glazing_system         = data.get('glazing_system') or {}
@@ -359,6 +363,7 @@ class Building(object):
         facade_cladding         = data['facade_cladding']
         external_insulation     = data['external_insulation']
         insulation_thickness    = data['insulation_thickness']
+        interior_insul_mat      = data['interior_insul_mat']
         ewall_framing           = data['ewall_framing']
         int_finish              = data['int_finish']
         glazing_system          = data['glazing_system']
@@ -367,7 +372,8 @@ class Building(object):
         weather_file            = data['weather_file']
         sql_path                = data['sql_path']
         simulation_folder       = data['simulation_folder']
-        run_simulation          = data['run_simulation'] 
+        run_simulation          = data['run_simulation']
+        context                 = data['context']
 
         b = cls()
 
@@ -474,6 +480,7 @@ class Building(object):
         b.facade_cladding       = facade_cladding
         b.external_insulation   = external_insulation
         b.insulation_thickness  = insulation_thickness
+        b.interior_insul_mat    = interior_insul_mat
         b.ewall_framing         = ewall_framing
         b.int_finish            = int_finish
         b.glazing_system        = glazing_system
@@ -495,6 +502,7 @@ class Building(object):
         b.city              = data['city']
         b.kgCo2e_kwh        = city_EUI(b.city)['kg/kWh']
         b.weather_file      = weather(b.city)
+        b.context           = context
 
         # embodied - - -
         b.add_structure(data)
@@ -519,7 +527,10 @@ class Building(object):
                                                self.shade_depth_v1,
                                                self.shade_depth_v2,
                                                self.wwr,
-                                               self.city)
+                                               self.city,
+                                               self.int_finish,
+                                               self.ewall_framing,
+                                               self.interior_insul_mat)
 
     def compute_areas(self):
         for okey in self.exterior_walls:
@@ -603,12 +614,12 @@ class Building(object):
 
         data['exterior_walls'] = {}
         for i in range(4):
-            print('i', i)
+            # print('i', i)
             okey = self.orient_dict[i]
             walls = [[] for _ in range(len(self.exterior_walls[okey]))]
-            print(self.zones)
+            # print(self.zones)
             for j, zkey in enumerate(self.zones):
-                print('j', j, 'zkey', zkey)
+                # print('j', j, 'zkey', zkey)
                 zkey = self.zones[zkey]
                 if zkey in self.exterior_walls[okey]:
                     pls = self.exterior_walls[okey][zkey]
@@ -616,7 +627,7 @@ class Building(object):
                     for pl in pls:
                         pl = rs.AddPolyline(pl)
                         walls[j].append(rs.AddPlanarSrf(pl)[0])
-                        print(rs.AddPlanarSrf(pl)[0])
+                        # print(rs.AddPlanarSrf(pl)[0])
             data['exterior_walls'][okey] = th.list_to_tree(walls, source=[])
 
         # cieling - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -706,7 +717,13 @@ class Building(object):
                 areas[j] = [self.window_areas[okey][zkey]]
             data['window_areas'][okey] = th.list_to_tree(areas, source=[])
 
-        data['city']                    = self.city
+        # city stuff - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        data['city'] = self.city
+        surfaces = []
+        for pt in self.context:
+            surfaces.append(rs.AddSrfPt(pt))
+        data['context'] = surfaces
 
         # facade data - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         data['height']                  = self.height
@@ -722,6 +739,21 @@ class Building(object):
         data['sql_path']                = self.sql_path
         data['simulation_folder']       = self.simulation_folder
         data['run_simulation']          = self.run_simulation
+        data['interior_insul_mat']      = self.interior_insul_mat
+
+        if self.ewall_framing == '2x4 Wood Studs':
+            int_ins_thick = 4. / 12.
+        elif self.ewall_framing == '2x6 Wood Studs':
+            int_ins_thick = 6. / 12.
+        elif self.ewall_framing == '2x8 Wood Studs':
+            int_ins_thick = 8. / 12.
+        elif self.ewall_framing == '2x10 Wood Studs':
+            int_ins_thick = 10. / 12.
+        elif self.ewall_framing == '2x12 Wood Studs':
+            int_ins_thick = 12. / 12. 
+        else:
+            int_ins_thick = 0.
+        data['int_ins_thick']    = int_ins_thick
 
         # floor - ceiling data - - - - - - - - - - - - - - - - - - - - - - - - -
 

@@ -45,6 +45,9 @@ class Envelope(object):
         self.wall_embodied          = None
         self.window_embodied        = None
         self.shading_embodied       = None
+        self.int_finish             = None
+        self.ewall_framing          = None
+        self.interior_insul_mat     = None
 
     @classmethod
     def from_data(cls, data):
@@ -65,21 +68,27 @@ class Envelope(object):
                       shade_depth_v1,
                       shade_depth_v2,
                       wwr,
-                      city):
+                      city,
+                      int_finish,
+                      ewall_framing,
+                      interior_insul_mat):
 
         env = cls()
-        env.opaque_areas           = opaque_areas
-        env.window_areas           = window_areas
-        env.external_insulation    = external_insulation
-        env.insulation_thickness   = insulation_thickness
-        env.facade_cladding        = facade_cladding
-        env.glazing_system         = glazing_system
-        env.height                 = height
-        env.shade_depth_h          = shade_depth_h
-        env.shade_depth_v1         = shade_depth_v1
-        env.shade_depth_v2         = shade_depth_v2
-        env.wwr                    = wwr
-        env.city                   = city 
+        env.opaque_areas            = opaque_areas
+        env.window_areas            = window_areas
+        env.external_insulation     = external_insulation
+        env.insulation_thickness    = insulation_thickness
+        env.facade_cladding         = facade_cladding
+        env.glazing_system          = glazing_system
+        env.height                  = height
+        env.shade_depth_h           = shade_depth_h
+        env.shade_depth_v1          = shade_depth_v1
+        env.shade_depth_v2          = shade_depth_v2
+        env.wwr                     = wwr
+        env.city                    = city 
+        env.int_finish              = int_finish
+        env.ewall_framing           = ewall_framing
+        env.interior_insul_mat      = interior_insul_mat
         return env
 
     @property
@@ -99,6 +108,9 @@ class Envelope(object):
             'wall_embodied'             : self.wall_embodied,
             'window_embodied'           : self.window_embodied,
             'shading_embodied'          : self.shading_embodied,
+            'int_finish'                : self.int_finish,
+            'ewall_framing'             : self.ewall_framing,
+            'interior_insul_mat'        : self.interior_insul_mat,
         }
 
         for okey in self.shade_depth_h:
@@ -139,6 +151,9 @@ class Envelope(object):
         self.wall_embodied          = data.get('wall_embodied') or {}
         self.window_embodied        = data.get('window_embodied') or {}
         self.shading_embodied       = data.get('shading_embodied') or {}
+        self.int_finish             = data.get('int_finish') or {}
+        self.ewall_framing          = data.get('ewall_framing') or {}
+        self.interior_insul_mat     = data.get('interior_insul_mat') or {}
 
         for okey in opaque_areas:
             for zkey in opaque_areas[okey]:
@@ -174,42 +189,110 @@ class Envelope(object):
             tot_opaque += opaque_orient
             tot_win += win_orient
 
+        # external insulation - - -
         ins_mat = self.external_insulation
-        ins_thick = float(self.insulation_thickness) / 12. # currently in inches
-        ins_emb = float(read_materials_city(ins_mat, self.city)) * 27.  # currently (kgCO2/yd3)
-        ins_emb = tot_opaque * ins_thick * ins_emb 
+        if ins_mat == 'None':
+            ins_thick = 0.
+            ins_emb_ = 0
+        else:
+            ins_thick = float(self.insulation_thickness) / 12. # currently in inches
+            ins_emb_ = float(read_materials_city(ins_mat, self.city)) / 27.  # currently (kgCO2/yd3)
+        ins_emb = tot_opaque * ins_thick * ins_emb_ 
 
+        # facade cladding - - -
         fac_mat = self.facade_cladding
         fac_thick = float(read_materials(fac_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
-        fac_emb = float(read_materials_city(fac_mat, self.city)) * 27. # currently (kgCO2/yd3)
-        fac_emb = tot_opaque * fac_thick * fac_emb 
+        fac_emb_ = float(read_materials_city(fac_mat, self.city)) / 27. # currently (kgCO2/yd3)
+        fac_emb = tot_opaque * fac_thick * fac_emb_ 
 
-        int_mat = self.facade_cladding
-        int_thick = float(read_materials(int_mat)['thickness_in']) # currently (kgCO2/yd3)
-        int_emb = float(read_materials_city(int_mat, self.city)) # currently (kgCO2/yd3)
-        int_emb = tot_opaque * int_thick * int_emb 
+        # interior framing - - -
+        fram_mat = self.ewall_framing
+        fram_thick = float(read_materials(fram_mat)['thickness_in']) / 12. # currently (kgCO2/yd3)
+        fram_emb_ = float(read_materials_city(fram_mat, self.city)) / 27. # currently (kgCO2/yd3)
+        fram_emb = tot_opaque * fram_thick * fram_emb_ 
+
+        # interior insulation - - -
+        int_ins_mat = self.interior_insul_mat
+        if fram_mat == '2x4 Wood Studs':
+            int_ins_thick = 4. / 12.
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            self.int_finish = 'Gyp'
+        elif fram_mat == '2x6 Wood Studs':
+            int_ins_thick = 6. / 12.
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            self.int_finish = 'Gyp'
+        elif fram_mat == '2x8 Wood Studs':
+            int_ins_thick = 8. / 12.
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            self.int_finish = 'Gyp'
+        elif fram_mat == '2x10 Wood Studs':
+            int_ins_thick = 10. / 12.
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            self.int_finish = 'Gyp'
+        elif fram_mat == '2x12 Wood Studs':
+            int_ins_thick = 12. / 12. 
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            self.int_finish = 'Gyp'
+        else:
+            int_ins_thick = 0.
+            int_ins_emb_ = 0.       
         
-        win_sys = self.glazing_system
-        win_emb = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
-        win_emb = tot_win * win_emb
+        int_ins_emb = tot_opaque * int_ins_thick * int_ins_emb_ 
 
-        self.wall_embodied =  int_emb + fac_emb + int_emb
+        # interior finish - - -
+        int_mat = self.int_finish
+        if int_mat == 'None':
+            int_thick = 0.
+            int_emb_ = 0
+        else:
+            int_thick = float(read_materials(int_mat)['thickness_in']) / 12# currently (kgCO2/yd3)
+            int_emb_ = float(read_materials_city(int_mat, self.city)) / 27 # currently (kgCO2/yd3)
+        int_emb = tot_opaque * int_thick * int_emb_ 
+
+        win_sys = self.glazing_system
+        if win_sys == 'Aluminum Double' or win_sys == 'Wood Double':
+            glass_mat = 'Glass Double'
+        else:
+            glass_mat = 'Glass Triple'
+        # win_emb_ = float(read_glazing(win_sys)['embodied_carbon_imperial']) # currently (KgCO2/ft2)
+        glass_thick = float(read_materials(glass_mat)['thickness_in']) / 12# currently (kgCO2/yd3)
+        win_emb_ = float(read_materials_city(glass_mat, self.city)) / 27. # currently (kgCO2/yd3)
+        win_emb = tot_win * win_emb_ * glass_thick
+
+        self.wall_embodied =  ins_emb + fac_emb + int_emb + fram_emb + int_ins_emb
         self.window_embodied = win_emb
 
-        alum_emb = float(read_materials_city('Aluminum', self.city)) * 27. # currently (kgCO2/yd3)
+        alum_emb = float(read_materials_city('Aluminum', self.city)) / 27. # currently (kgCO2/yd3)
 
-        self.shading_embodied = 0
+        shd_area = 0
         for okey in sides:
             side = sides[okey]
             numsec = round(side / 10., 0)
             secside = side / float(numsec)
             secarea = secside * self.height
             wwr = self.wwr[okey]
-            h = self.height - 2
-            x = (secarea * wwr) / h
-            self.shading_embodied += (self.shade_depth_h[okey] * x * (1. /36.) * alum_emb) / 27.
-        
+            vertical = self.height - 2
+            horizontal = (secarea * wwr) / vertical
+            shd_area += horizontal * self.shade_depth_h[okey] * numsec
+            shd_area += vertical * self.shade_depth_v1[okey] * numsec
+            shd_area += vertical * self.shade_depth_v2[okey] * numsec
+
+        self.shading_embodied = shd_area * 0.0164042 * alum_emb # 5 mm aluminimum
         self.window_embodied += self.shading_embodied
+
+        print('{0:20}{1:35}{2:20}{3:20}{4:20}'.format('Type', 'Material', 'Thickness', 'GWP', 'GWP/ft2'))
+        
+        names = ['cladding', 'ext.insulation', 'framing', 'int.insulation', 'interior', 'window']
+        mat = [fac_mat, ins_mat, fram_mat, int_ins_mat, int_mat, glass_mat]
+        thick = [fac_thick, ins_thick, fram_thick, int_ins_thick, int_thick, glass_thick]
+        emb = [fac_emb_, ins_emb_, fram_emb_, int_ins_emb_, int_emb_, win_emb_]
+
+        for i in range(6):
+            print('{0:20}{1:20}{2:20}{3:20}{4:20}'.format(names[i],
+                                                          mat[i],
+                                                          thick[i],
+                                                          emb[i],
+                                                          thick[i] * emb[i]))
 
 
 if __name__ == "__main__":

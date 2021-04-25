@@ -1,0 +1,21 @@
+Material,Type,R value (FÂ°-ft2-hr/Btu),r per inch (FÂ°-ft2-hr/Btu-in),thickness (in),thickness (m),conductivity (W/m-K),density (kg/m3),specific heat (J/kg-K),Embodied Carbon (kgCO2/yd3)
+Brick,Façade Cladding,0.8,0.18,1,0.1016,0.824,1920,790,0.314
+Metal Panel,Façade Cladding,None,None,none,0.001,44,7688,409,10.46
+Fiberglass Cement,Façade Cladding,0.6,0.6,1,0.0254,0.24,1300,840,0.538
+Wood Siding,Façade Cladding,none,none,none,0.01,0.11,545,1209,0.0136
+EPS,Insulation,None,5,None,None,None,None,None,None
+Polyiso,Insulation,None,7,None,None,None,None,None,None
+Rockwool,Insulation,None,3.55,None,None,None,None,None,None
+CLT,Exterior Wall Framing,6.63,1.47,4.5,0.1143,0.098,470,1600,140.2
+Concrete,Exterior Wall Framing,0.08,0.08,5,0.0254,1.802,2255,750,435
+Cellulose 2x4 Wood Studs,Exterior Wall Framing,12.29,none,none,none,none,none,none,none
+Cellulose 2x6 Wood Studs,Exterior Wall Framing,18.95,none,none,none,none,none,none,none
+Cellulose 2x8 Wood Studs,Exterior Wall Framing,24.77,none,none,none,none,none,none,none
+Cellulose 2x10 Wood Studs,Exterior Wall Framing,31.43,none,none,none,none,none,none,none
+Cellulose 2x12 Wood Studs,Exterior Wall Framing,38.09,none,none,none,none,none,none,none
+Fiberglass 2x4 Wood Studs,Exterior Wall Framing,13.23,none,none,none,none,none,none,none
+Fiberglass 2x6 Wood Studs,Exterior Wall Framing,20.43,none,none,none,none,none,none,none
+Fiberglass 2x8 Wood Studs,Exterior Wall Framing,26.73,none,none,none,none,none,none,none
+Fiberglass 2x10 Wood Studs,Exterior Wall Framing,33.93,none,none,none,none,none,none,none
+Fiberglass 2x12 Wood Studs,Exterior Wall Framing,41.13,none,none,none,none,none,none,none
+Gyp,Interior Finish,none,none,0.625,0.0159,0.16,800,1089,273
