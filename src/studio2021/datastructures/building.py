@@ -105,6 +105,8 @@ class Building(object):
         self.ceiling_condition      = None
         self.floor_condition        = None
         self.context                = None
+        self.window_u               = None
+        self.wall_r                 = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -844,7 +846,11 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
-    def add_eui_results(self, cool, heat, light, eq, hot):
+    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu):
+        
+        self.window_u = winu
+        self.wall_r = wallr
+
         totals = 0
         if not cool:
             print('there is no cooling for some reason')
@@ -931,8 +937,8 @@ class Building(object):
         fh.write('\n')
 
         fh.write('Height (ft),{}\n'.format(self.height))
-        fh.write('Wall Assembly R Value,{}\n'.format('Not yet'))
-        fh.write('U Value window,{}\n'.format('Not yet'))
+        fh.write('Wall Assembly R Value,{}\n'.format(self.wall_r))
+        fh.write('Window U value,{}\n'.format(self.window_u))
         fh.write('\n')
 
         fh.write('N WWR,{}\n'.format(self.wwr['n']))
