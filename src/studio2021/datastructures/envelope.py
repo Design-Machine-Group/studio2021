@@ -263,11 +263,11 @@ class Envelope(object):
         self.window_embodied = win_emb
 
         alum_emb = float(read_materials_city('Aluminum', self.city)) / 27. # currently (kgCO2/yd3)
-
         shd_area = 0
         for okey in sides:
             side = sides[okey]
             numsec = round(side / 10., 0)
+            # print(side, numsec)
             secside = side / float(numsec)
             secarea = secside * self.height
             wwr = self.wwr[okey]

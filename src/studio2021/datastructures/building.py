@@ -974,11 +974,15 @@ class Building(object):
                           self.envelope.wall_embodied,
                           tot))
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        z = [self.zones[k] for k in self.zones]
+        zones_str = ',{0},{1},{2},{3},{4},Total\n'.format(z[0], z[1], z[2], z[3], z[4])
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
         s = 'Floor Area (ft2),{0},{1},{2},{3},{4},{5}\n'
         areas = []
         tot = 0
         for i in range(5):
+            print(self.zones)
             if self.zones[i] in self.floor_areas:
                 areas.append(self.floor_areas[self.zones[i]])
                 tot += self.floor_areas[self.zones[i]]
@@ -987,7 +991,8 @@ class Building(object):
         fh.write(s.format(areas[0], areas[1], areas[2], areas[3], areas[4], tot))
         
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
         
         s = 'North Facade Area (ft2),{0},{1},{2},{3},{4},{5}\n'
         areas = []
@@ -1037,7 +1042,8 @@ class Building(object):
         dkeys = ['cooling','heating','lighting','equipment','hot_water','total']
 
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
         
         s = '{0} EUI (kBtu/sf/year),{1},{2},{3},{4},{5},{6}\n'
         for j, name in enumerate(names):
@@ -1053,7 +1059,8 @@ class Building(object):
             fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
 
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
 
         s = '{0} EUI (kBtu/year),{1},{2},{3},{4},{5},{6}\n'
         for j, name in enumerate(names):
@@ -1070,7 +1077,8 @@ class Building(object):
 
 
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
 
         s = '{0} EUI (kWh/year),{1},{2},{3},{4},{5},{6}\n'
         for j, name in enumerate(names):
@@ -1087,7 +1095,8 @@ class Building(object):
 
 
         fh.write('\n')
-        fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        # fh.write(',Zone1,Zone2,Zone3,Zone4,Zone5,Total\n')
+        fh.write(zones_str)
 
         s = '{0} EUI (kg CO2/year),{1},{2},{3},{4},{5},{6}\n'
         for j, name in enumerate(names):
