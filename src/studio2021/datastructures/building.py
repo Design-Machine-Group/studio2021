@@ -1053,9 +1053,11 @@ class Building(object):
             for i in range(5):
                 if self.zones[i] in self.eui_kbtu_ft:
                     data.append(self.eui_kbtu_ft[self.zones[i]][dkey])
-                    tot += self.eui_kbtu_ft[self.zones[i]][dkey]
+                    # tot += self.eui_kbtu_ft[self.zones[i]][dkey]
+                    tot += self.eui_kbtu[self.zones[i]][dkey]
                 else:
                     data.append(0)
+            tot /= self.floor_area
             fh.write(s.format(name, data[0], data[1], data[2], data[3], data[4], tot))
 
         fh.write('\n')
