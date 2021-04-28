@@ -67,11 +67,14 @@ def make_grid_structure(sp, span_x, span_y, xaxis, yaxis, height, cores):
 
     return columns, beams_x, beams_y, cores_
 
-def trim_structure(pl, columns, beams_x, beams_y, cores):
-    vert = rs.PolylineVertices(pl)
-    pl_ = [[p[0], p[1], 0] for p in vert]
-    pl_ = rs.AddPolyline(pl_)
-    srf = rs.AddPlanarSrf(pl_)
+def trim_structure(pls, columns, beams_x, beams_y, cores):
+    
+    pls_ = []
+    for pl in pls:
+        vert = rs.PolylineVertices(pl)
+        pl_ = [[p[0], p[1], 0] for p in vert]
+        pls_.append(rs.AddPolyline(pl_))
+    srf = rs.AddPlanarSrf(pls_)
     z = (0, 0, vert[0][2])
 
     cols = []
@@ -85,14 +88,14 @@ def trim_structure(pl, columns, beams_x, beams_y, cores):
             cols.append(col)
     bx = []
     for beam in beams_x:
-        beam = trim_beam(beam, srf, pl_)
+        beam = trim_beam(beam, srf, pls_)
         if beam:
             rs.MoveObject(beam, z)
             bx.append(beam)
 
     by = []
     for beam in beams_y:
-        beam = trim_beam(beam, srf, pl_)
+        beam = trim_beam(beam, srf, pls_)
         if beam:
             rs.MoveObject(beam, z)
             by.append(beam)
@@ -108,7 +111,7 @@ def trim_structure(pl, columns, beams_x, beams_y, cores):
 
     return cols, bx, by, cores_
 
-def trim_beam(beam, srf, pl):
+def trim_beam(beam, srf, pls):
     a_ = rs.CurveStartPoint(beam)
     b_ = rs.CurveEndPoint(beam)
     a = [a_[0], a_[1], 0]
@@ -117,7 +120,11 @@ def trim_beam(beam, srf, pl):
         return beam
     elif rs.IsPointOnSurface(srf, a) or rs.IsPointOnSurface(srf, b):
         beam_ = rs.AddLine(a, b)
-        xpt = rs.CurveCurveIntersection(pl, beam_)
+        xpt = rs.CurveCurveIntersection(pls[0], beam_)
+        if len(pls) == 2:
+            xpt_ = rs.CurveCurveIntersection(pls[1], beam_)
+            if xpt_:
+                xpt = xpt_
         if xpt:
             xpt = xpt[0][1]
             xpt[2] = a_[2]
