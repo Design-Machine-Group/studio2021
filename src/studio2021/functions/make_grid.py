@@ -76,6 +76,7 @@ def trim_structure(pls, columns, beams_x, beams_y, cores):
         pls_.append(rs.AddPolyline(pl_))
     srf = rs.AddPlanarSrf(pls_)
     z = (0, 0, vert[0][2])
+    height = rs.CurveLength(columns[0])
 
     cols = []
     for col in columns:
@@ -84,28 +85,34 @@ def trim_structure(pls, columns, beams_x, beams_y, cores):
         if not rs.IsPointOnSurface(srf, pt):
             rs.DeleteObject(col)
         else:
-            rs.MoveObject(col, z)
             cols.append(col)
+            if rs.CurveStartPoint(col)[2] - vert[0][2] < .1:
+                rs.MoveObject(col, z)
     bx = []
     for beam in beams_x:
         beam = trim_beam(beam, srf, pls_)
         if beam:
-            rs.MoveObject(beam, z)
             bx.append(beam)
+            if rs.CurveStartPoint(beam)[2] - vert[0][2] +  height < .1:
+                rs.MoveObject(beam, z)
 
     by = []
     for beam in beams_y:
         beam = trim_beam(beam, srf, pls_)
         if beam:
-            rs.MoveObject(beam, z)
             by.append(beam)
-    
+            if rs.CurveStartPoint(beam)[2] - vert[0][2] +  height < .1:
+                rs.MoveObject(beam, z)    
+
     cores_ = []
     for core in cores:
-        check = [rs.IsPointOnSurface(srf, pt) for pt in rs.PolylineVertices(core)]
+        pts_ = rs.PolylineVertices(core)
+        pts = [[p[0], p[1], 0] for p in pts_]
+        check = [rs.IsPointOnSurface(srf, pt) for pt in pts]
         if all(check):
-            rs.MoveObject(core, z)
             cores_.append(core)
+            if pts_[0][2] - vert[0][2] +  height < .1:
+                rs.MoveObject(core, z)
         else:
             pass
 

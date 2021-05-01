@@ -972,7 +972,7 @@ class Building(object):
         tot += self.structure.column_embodied + self.envelope.window_embodied 
         tot += self.envelope.wall_embodied + self.structure.core_embodied
         tot += self.structure.connections_embodied
-        
+  
         fh.write(s.format(self.structure.slab_embodied,
                           self.structure.beam_embodied + self.structure.column_embodied + self.structure.connections_embodied,
                           self.structure.core_embodied,
@@ -1122,10 +1122,13 @@ class Building(object):
         slab = self.structure.slab_embodied
         beam = self.structure.beam_embodied
         col = self.structure.column_embodied
+        conn = self.structure.connections_embodied
+        core = self.structure.core_embodied
+        
         win = self.envelope.window_embodied
         wall = self.envelope.wall_embodied
 
-        emb = sum([slab, beam, col, win, wall])
+        emb = sum([slab, beam, col, conn, core, win, wall])
         op = self.eui_kgco2e_total * 30
 
         fh.write('\n')
