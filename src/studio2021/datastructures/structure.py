@@ -286,14 +286,36 @@ class Structure(object):
         # gypsum - - - 
         if self.btype in ['Type 3', 'Type 4C', 'Type 5']:
             gypsum = 0
+            self.gypsum_thick = 0.
         elif self.btype == 'Type 4B':
             gypsum = ((self.area * .8 * self.gypsum_thick) / 27.) * self.gyp_kgco2_yd3
+            self.gypsum_thick *= .8
         elif self.btype == 'Type 4A':
             gypsum = ((self.area * 1. * self.gypsum_thick) / 27.) * self.gyp_kgco2_yd3
         else:
             raise(NameError('Bulinding type is wrong'))
         
         self.slab_embodied = timber + concrete + gypsum
+
+        self.slab_strings = []
+        s = '{0:20}{1:32}{2:22}{3:20}{4:20}'.format('Type', 'Material', 'Thickness (ft)', 'GWP/ft3', 'GWP/ft2')
+        self.slab_strings.append(s)
+
+        names = ['Top', 'Slab ', 'Fire protection', 'total']
+        mat = ['Concrete', 'CLT', 'Gypsum', 'all']
+        thick = [self.conc_thick, self.timber_thick, self.gypsum_thick]
+        thick.append(sum(thick))
+        emb = [self.conc_kgco2_yd3 / 27., self.clt_kgco2_yd3 / 27., self.gyp_kgco2_yd3 / 27]
+        etot = sum([emb[0] * thick[0], emb[1] * thick[1], emb[2] * thick[2]])
+        etot /= thick[-1]
+        emb.append(etot)
+        for i in range(4):
+            string = '{0:20}{1:20}{2:20}{3:20}{4:20}'.format(names[i],
+                                                             mat[i],
+                                                             thick[i],
+                                                             emb[i],
+                                                             thick[i] * emb[i])
+            self.slab_strings.append(string)
         
     def compute_column_embodied(self):
         
@@ -326,6 +348,7 @@ class Structure(object):
 
         steel_vol = (self.col_side * 4 * (1. / 12.)) / 27. 
         self.connections_embodied = steel_vol * self.steel_kgco2_yd3 * self.n_columns
+        self.col_string = 'Column dim. {} x {} ft'.format(round(self.col_side, 2), round(self.col_side, 2))
 
     def compute_beam_embodied(self):
 
@@ -359,6 +382,7 @@ class Structure(object):
 
         timber = vol * self.glulam_kgco2_yd3
         self.beam_embodied = timber
+        self.beam_string = 'Beam dim. {} x {} ft'.format(round(self.beam_width, 2), round(self.beam_height, 2))
 
     def compute_core_embodied(self):
         tdist = 0

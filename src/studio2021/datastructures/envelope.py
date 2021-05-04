@@ -279,8 +279,9 @@ class Envelope(object):
 
         self.shading_embodied = shd_area * 0.0164042 * alum_emb # 5 mm aluminimum
         self.window_embodied += self.shading_embodied
-
-        print('{0:20}{1:35}{2:20}{3:20}{4:20}'.format('Type', 'Material', 'Thickness', 'GWP', 'GWP/ft2'))
+        self.env_strings = []
+        s = '{0:20}{1:32}{2:22}{3:20}{4:20}'.format('Type', 'Material', 'Thickness (ft)', 'GWP/ft3', 'GWP/ft2')
+        self.env_strings.append(s)
         
         names = ['cladding', 'ext.insulation', 'framing', 'int.insulation', 'interior', 'window']
         mat = [fac_mat, ins_mat, fram_mat, int_ins_mat, int_mat, glass_mat]
@@ -288,11 +289,12 @@ class Envelope(object):
         emb = [fac_emb_, ins_emb_, fram_emb_, int_ins_emb_, int_emb_, win_emb_]
 
         for i in range(6):
-            print('{0:20}{1:20}{2:20}{3:20}{4:20}'.format(names[i],
-                                                          mat[i],
-                                                          thick[i],
-                                                          emb[i],
-                                                          thick[i] * emb[i]))
+            string = '{0:20}{1:20}{2:20}{3:20}{4:20}'.format(names[i],
+                                                             mat[i],
+                                                             thick[i],
+                                                             emb[i],
+                                                             thick[i] * emb[i])
+            self.env_strings.append(string)
 
 
 if __name__ == "__main__":
