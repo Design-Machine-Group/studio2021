@@ -1,4 +1,7 @@
-import rhinoscriptsyntax as rs
+try:
+    import rhinoscriptsyntax as rs
+except:
+    pass
 
 
 def make_grid_structure(sp, span_x, span_y, xaxis, yaxis, height, cores):
