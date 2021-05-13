@@ -41,8 +41,8 @@ def plotly_pareto_csvs(buildings):
             text = b.wall_r
             data[b.city]['x'].append(x)
             data[b.city]['y'].append(y)
-            data[b.city]['text'].append(TPL.format(round(b.wall_r, 2),
-                                                   round(b.win_u, 3),
+            data[b.city]['text'].append(TPL.format(b.wall_r,
+                                                   b.win_u,
                                                    b.wwr_n,
                                                    b.wwr_s,
                                                    b.wwr_e,
@@ -74,7 +74,7 @@ def plotly_pareto_csvs(buildings):
 if __name__ == '__main__':
     for i in range(50): print('')
 
-    studio_out = '/Users/tmendeze/Documents/UW/02_teaching/00_courses/mendez_meek_2021/05_output'
+    studio_out = '/Users/tmendeze/Documents/UW/02_teaching/00_courses/mendez_meek_2021/05_output/week_7'
     folders = next(os.walk(studio_out))[1]
 
     csvs = []

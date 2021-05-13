@@ -83,9 +83,9 @@ if __name__ == '__main__':
     for i in range(20): print('')
     import studio2021
 
-    name = 'awesome_name_202104111448.json'
+    name = 'Seattle_example_202105081627.json'
     filepath = os.path.join(studio2021.TEMP, name)
     building = Building.from_json(filepath)
     time = 'hour'
-    plot_eui_curves(building, time)
-    # plot_eui_map(building)
+    # plot_eui_curves(building, time)
+    plot_eui_map(building)

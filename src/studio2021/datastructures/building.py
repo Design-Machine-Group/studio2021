@@ -175,6 +175,7 @@ class Building(object):
                 'num_floors_above'          : self.num_floors_above,
                 'ceiling_condition'         : self.ceiling_condition,
                 'floor_condition'           : self.floor_condition,
+                'context'                   : self.context
                 }
 
 
@@ -242,6 +243,8 @@ class Building(object):
             for zkey in self.exterior_walls[okey]:
                 data['exterior_walls'][repr(okey)][repr(zkey)] = self.exterior_walls[okey][zkey]
 
+        
+
         return data
 
     @data.setter
@@ -265,7 +268,6 @@ class Building(object):
         eui_kbtu                = data.get('eui_kbtu') or {}
         eui_kbtu_ft             = data.get('eui_kbtu_ft') or {}
         eui_kgco2e              = data.get('eui_kgco2e') or {}
-
 
         for key in eui_kwh:
             self.eui_kwh[literal_eval(key)] = eui_kwh[key]
@@ -340,6 +342,7 @@ class Building(object):
         self.simulation_folder      = data.get('simulation_folder') or {}
         self.run_simulation         = data.get('run_simulation') or {}  
         self.simulation_name        = data.get('simulation_name') or {}
+        self.context                = data.get('context') or {}
         structure                   = data.get('structure') or {}
         envelope                    = data.get('envelope') or {}  
         self.structure              = Structure.from_data(structure)
