@@ -91,9 +91,15 @@ def make_plot(filename, scale):
         z = round(m + (i * delta), 2)
         rs.AddText(str(z), [a + (i * s) + s / 2, b + s / 2, c], s / 4, font='Arial', justification=131072+2)
 
+    for i in x[1:]:
+        rs.AddText(str(i), [i, y[1] -s, 0], s/3, font='Arial', justification=131072+2)
+
+    for i in y[1:]:
+        rs.AddText(str(i), [x[1] - s, i, 0], s/3, font='Arial', justification=131072+2)
+
 if __name__ == '__main__':
     for i in range(20): print('')
     rs.DeleteObjects(rs.ObjectsByLayer('Default'))
 
-    scale = 1, 1, .11
+    scale = 1, 1, .3
     make_plot('landscape.csv', scale)
