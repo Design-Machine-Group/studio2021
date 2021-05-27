@@ -18,7 +18,7 @@ To install `studio2021` from a local source repo, clone the repo onto your compu
 Then navigate to the root of the `studio2021` repo and install using pip:
 
 ```bash
-cd compas_fea
+cd studio2021
 pip install -e .
 ```
 
