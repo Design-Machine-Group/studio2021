@@ -183,6 +183,7 @@ class Envelope(object):
             opaque_orient = 0
             win_orient = 0
             for zkey in self.opaque_areas[okey]:
+                print(okey, zkey, self.opaque_areas[okey][zkey])
                 opaque_orient += self.opaque_areas[okey][zkey]
                 win_orient += self.window_areas[okey][zkey]
             sides[okey] = (opaque_orient + win_orient) / self.height
@@ -266,16 +267,17 @@ class Envelope(object):
         shd_area = 0
         for okey in sides:
             side = sides[okey]
-            numsec = round(side / 10., 0)
-            # print(side, numsec)
-            secside = side / float(numsec)
-            secarea = secside * self.height
-            wwr = self.wwr[okey]
-            vertical = self.height - 2
-            horizontal = (secarea * wwr) / vertical
-            shd_area += horizontal * self.shade_depth_h[okey] * numsec
-            shd_area += vertical * self.shade_depth_v1[okey] * numsec
-            shd_area += vertical * self.shade_depth_v2[okey] * numsec
+            if side:
+                numsec = round(side / 10., 0)
+                # print(okey, side, numsec)
+                secside = side / float(numsec)
+                secarea = secside * self.height
+                wwr = self.wwr[okey]
+                vertical = self.height - 2
+                horizontal = (secarea * wwr) / vertical
+                shd_area += horizontal * self.shade_depth_h[okey] * numsec
+                shd_area += vertical * self.shade_depth_v1[okey] * numsec
+                shd_area += vertical * self.shade_depth_v2[okey] * numsec
 
         self.shading_embodied = shd_area * 0.0164042 * alum_emb # 5 mm aluminimum
         self.window_embodied += self.shading_embodied
