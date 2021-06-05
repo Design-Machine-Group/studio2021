@@ -99,7 +99,12 @@ def make_plot(filename, scale):
 
 if __name__ == '__main__':
     for i in range(20): print('')
-    rs.DeleteObjects(rs.ObjectsByLayer('Default'))
 
-    scale = 1, 1, .3
-    make_plot('landscape.csv', scale)
+    scale = 1, 1, 20
+    rs.DeleteObjects(rs.ObjectsByLayer('operational'))
+    rs.CurrentLayer('operational')
+    make_plot('operational_wwr_ins_FL.csv', scale)
+
+    rs.DeleteObjects(rs.ObjectsByLayer('embodied'))
+    rs.CurrentLayer('embodied')
+    make_plot('embodied_wwr_ins_FL.csv', scale)
