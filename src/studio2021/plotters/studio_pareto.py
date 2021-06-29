@@ -23,7 +23,15 @@ def read_jsons(jsons):
     return buildings
 
 def read_csvs(csvs):
-    buildings = [CSV_Result(j) for j in csvs]
+    # buildings = [CSV_Result(j) for j in csvs]
+    buildings = []
+    count = 0
+    for j in csvs:
+        try:
+            buildings.append(CSV_Result(j))
+        except:
+            count += 1
+    print('there are {} bad files'.format(count))
     return buildings
 
 def plotly_pareto_csvs(buildings):
@@ -74,19 +82,24 @@ def plotly_pareto_csvs(buildings):
 if __name__ == '__main__':
     for i in range(50): print('')
 
-    studio_out = '/Users/tmendeze/Documents/UW/02_teaching/00_courses/mendez_meek_2021/05_output/week_7'
+    # studio_out = '/Users/tmendeze/Documents/UW/02_teaching/00_courses/mendez_meek_2021/05_output/final'
+    studio_out = '/Users/time/Documents/UW/02_teaching/00_courses/mendez_meek_2021/05_output/final'
     folders = next(os.walk(studio_out))[1]
 
     csvs = []
     jsons = []
     for folder in folders:
+        print(folder)
         path = os.path.join(studio_out, folder)
-        files = folders = next(os.walk(path))[2]
-        for f in files:
-            if f.endswith('.json'):
-                jsons.append(os.path.join(path, f))
-            elif f.endswith('.csv'):
-                csvs.append(os.path.join(path, f))
+        folders_ = next(os.walk(path))[1]
+        for folder_ in folders_:
+            path_ = os.path.join(path, folder_)
+            files = next(os.walk(path_))[2]
+            for f in files:
+                if f.endswith('.json'):
+                    jsons.append(os.path.join(path_, f))
+                elif f.endswith('.csv'):
+                    csvs.append(os.path.join(path_, f))
 
     # jbldgs = read_jsons(jsons)
     cbldgs = read_csvs(csvs)

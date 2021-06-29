@@ -7,7 +7,6 @@ class CSV_Result(object):
         self.read_csv()
 
     def read_csv(self):
-        
         fh = open(self.filepath, 'r')
         lines = fh.readlines()
         fh.close()
