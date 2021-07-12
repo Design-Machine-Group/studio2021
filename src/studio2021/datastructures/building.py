@@ -107,6 +107,7 @@ class Building(object):
         self.context                = None
         self.window_u               = None
         self.wall_r                 = None
+        self.win_geometry           = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -175,7 +176,8 @@ class Building(object):
                 'num_floors_above'          : self.num_floors_above,
                 'ceiling_condition'         : self.ceiling_condition,
                 'floor_condition'           : self.floor_condition,
-                'context'                   : self.context
+                'context'                   : self.context,
+                'win_geometry'              : self.win_geometry,
                 }
 
 
@@ -343,6 +345,7 @@ class Building(object):
         self.run_simulation         = data.get('run_simulation') or {}  
         self.simulation_name        = data.get('simulation_name') or {}
         self.context                = data.get('context') or {}
+        self.win_geometry           = data.get('win_geometry') or {}
         structure                   = data.get('structure') or {}
         envelope                    = data.get('envelope') or {}  
         self.structure              = Structure.from_data(structure)
@@ -379,6 +382,7 @@ class Building(object):
         simulation_folder       = data['simulation_folder']
         run_simulation          = data['run_simulation']
         context                 = data['context']
+        win_geometry            = data['win_geometry']
 
         b = cls()
 
@@ -482,6 +486,7 @@ class Building(object):
         b.fix_normals()
 
         # facade data - - -
+        b.win_geometry          = win_geometry
         b.facade_cladding       = facade_cladding
         b.external_insulation   = external_insulation
         b.insulation_thickness  = insulation_thickness
