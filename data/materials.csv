@@ -21,9 +21,9 @@ Concrete,Exterior Wall Framing,0.08,0.08,5,0.0254,1.802,2255,750,435
 2x12 Wood Studs,Exterior Wall Framing,None,None,2,None,None,None,None,None
 Glulam,Beams or columns,None,None,None,None,None,None,None,98.6
 GypsumX,Type X fire protecting sypsum,None,None,0.625,0.015875,None,None,None,241.52
-Rebar,Beams or columns,None,None,None,None,None,None,None,7771.0
-Steel,plates,None,None,None,None,None,None,None,7771.0
-Aluminum,NOT CORRECT YET,None,None,None,None,None,None,None,23800.0
+Rebar,Beams or columns,None,None,None,None,None,None,None,7771
+Steel,plates,None,None,None,None,None,None,None,7771
+Aluminum,NOT CORRECT YET,None,None,None,None,None,None,None,23800
 Glass Double,windows,None,None,0.472441,None,None,None,None,None
 Glass Triple,windows,None,None,0.708661,None,None,None,None,None
 Metal Panel,Facade Cladding,None,None,None,0.001,44,7688,409,10.46
@@ -36,8 +36,8 @@ Cellulose 2x6 Wood Studs,Exterior Wall Framing,18.95,None,None,None,None,None,No
 Cellulose 2x8 Wood Studs,Exterior Wall Framing,24.77,None,None,None,None,None,None,None
 Cellulose 2x10 Wood Studs,Exterior Wall Framing,31.43,None,None,None,None,None,None,None
 Cellulose 2x12 Wood Studs,Exterior Wall Framing,38.09,None,None,None,None,None,None,None
-Fiberglass 2x4 Wood Studs,Exterior Wall Framing,13.23,None,None,None,None,None,None,None
-Fiberglass 2x6 Wood Studs,Exterior Wall Framing,20.43,None,None,None,None,None,None,None
-Fiberglass 2x8 Wood Studs,Exterior Wall Framing,26.73,None,None,None,None,None,None,None
-Fiberglass 2x10 Wood Studs,Exterior Wall Framing,33.93,None,None,None,None,None,None,None
-Fiberglass 2x12 Wood Studs,Exterior Wall Framing,41.13,None,None,None,None,None,None,None
+Fiberglass 2x4 Wood Studs,Exterior Wall Framing,14.22,None,None,None,None,None,None,None
+Fiberglass 2x6 Wood Studs,Exterior Wall Framing,21.96,None,None,None,None,None,None,None
+Fiberglass 2x8 Wood Studs,Exterior Wall Framing,28.73,None,None,None,None,None,None,None
+Fiberglass 2x10 Wood Studs,Exterior Wall Framing,36.47,None,None,None,None,None,None,None
+Fiberglass 2x12 Wood Studs,Exterior Wall Framing,44.21,None,None,None,None,None,None,None
