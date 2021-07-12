@@ -71,7 +71,8 @@ class Envelope(object):
                       city,
                       int_finish,
                       ewall_framing,
-                      interior_insul_mat):
+                      interior_insul_mat,
+                      total_shade_len):
 
         env = cls()
         env.opaque_areas            = opaque_areas
@@ -89,6 +90,7 @@ class Envelope(object):
         env.int_finish              = int_finish
         env.ewall_framing           = ewall_framing
         env.interior_insul_mat      = interior_insul_mat
+        env.total_shade_len         = total_shade_len
         return env
 
     @property
@@ -264,20 +266,25 @@ class Envelope(object):
         self.window_embodied = win_emb
 
         alum_emb = float(read_materials_city('Aluminum', self.city)) / 27. # currently (kgCO2/yd3)
-        shd_area = 0
-        for okey in sides:
-            side = sides[okey]
-            if side:
-                numsec = round(side / 10., 0)
-                # print(okey, side, numsec)
-                secside = side / float(numsec)
-                secarea = secside * self.height
-                wwr = self.wwr[okey]
-                vertical = self.height - 2
-                horizontal = (secarea * wwr) / vertical
-                shd_area += horizontal * self.shade_depth_h[okey] * numsec
-                shd_area += vertical * self.shade_depth_v1[okey] * numsec
-                shd_area += vertical * self.shade_depth_v2[okey] * numsec
+
+        if self.total_shade_len:
+            shd_area = self.total_shade_len * self.shade_depth_h['s']
+        else:
+            shd_area = 0
+            for okey in sides:
+                side = sides[okey]
+                if side:
+                    numsec = round(side / 10., 0)
+                    # print(okey, side, numsec)
+                    secside = side / float(numsec)
+                    secarea = secside * self.height
+                    wwr = self.wwr[okey]
+                    vertical = self.height - 2
+                    horizontal = (secarea * wwr) / vertical
+                    shd_area += horizontal * self.shade_depth_h[okey] * numsec
+                    shd_area += vertical * self.shade_depth_v1[okey] * numsec
+                    shd_area += vertical * self.shade_depth_v2[okey] * numsec
+
 
         self.shading_embodied = shd_area * 0.0164042 * alum_emb # 5 mm aluminimum
         self.window_embodied += self.shading_embodied

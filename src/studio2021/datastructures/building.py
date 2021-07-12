@@ -108,6 +108,7 @@ class Building(object):
         self.window_u               = None
         self.wall_r                 = None
         self.win_geometry           = None
+        self.total_shade_len        = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -178,6 +179,7 @@ class Building(object):
                 'floor_condition'           : self.floor_condition,
                 'context'                   : self.context,
                 'win_geometry'              : self.win_geometry,
+                'total_shade_len'           : self.total_shade_len,
                 }
 
 
@@ -346,6 +348,7 @@ class Building(object):
         self.simulation_name        = data.get('simulation_name') or {}
         self.context                = data.get('context') or {}
         self.win_geometry           = data.get('win_geometry') or {}
+        self.total_shade_len        = data.get('total_shade_len') or {}
         structure                   = data.get('structure') or {}
         envelope                    = data.get('envelope') or {}  
         self.structure              = Structure.from_data(structure)
@@ -383,6 +386,7 @@ class Building(object):
         run_simulation          = data['run_simulation']
         context                 = data['context']
         win_geometry            = data['win_geometry']
+        total_shade_len         = data['total_shade_len']
 
         b = cls()
 
@@ -486,6 +490,7 @@ class Building(object):
         b.fix_normals()
 
         # facade data - - -
+        b.total_shade_len       = total_shade_len
         b.win_geometry          = win_geometry
         b.facade_cladding       = facade_cladding
         b.external_insulation   = external_insulation
@@ -540,7 +545,8 @@ class Building(object):
                                                self.city,
                                                self.int_finish,
                                                self.ewall_framing,
-                                               self.interior_insul_mat)
+                                               self.interior_insul_mat,
+                                               self.total_shade_len)
 
     def compute_areas(self):
         for okey in self.exterior_walls:
