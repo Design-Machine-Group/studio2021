@@ -5,7 +5,7 @@ import math
 import json
 
 from ast import literal_eval
-from copy import deepcopy
+import shutil
 
 import studio2021
 from studio2021.datastructures import structure
@@ -71,6 +71,11 @@ class Building(object):
         self.eui_kbtu               = {}
         self.eui_kbtu_ft            = {}
         self.eui_kgco2e             = {}
+        self.max_heating            = {}
+        self.max_cooling            = {}
+        self.max_lighting           = {}
+        self.max_equipment          = {}
+        self.max_hot_water          = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -140,6 +145,11 @@ class Building(object):
                 'eui_kbtu'                  : {},
                 'eui_kbtu_ft'               : {},
                 'eui_kgco2e'                : {},
+                'max_lighting'              : {},
+                'max_heating'               : {},
+                'max_equipment'             : {},
+                'max_hot_water'             : {},
+                'max_cooling'               : {},
                 'facade_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'window_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'opaque_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
@@ -243,6 +253,21 @@ class Building(object):
         for zkey in self.eui_kgco2e:
             data['eui_kgco2e'][repr(zkey)] = self.eui_kgco2e[zkey]
 
+        for zkey in self.max_cooling:
+            data['max_cooling'][repr(zkey)] = self.max_cooling[zkey]
+
+        for zkey in self.max_heating:
+            data['max_heating'][repr(zkey)] = self.max_heating[zkey]
+
+        for zkey in self.max_lighting:
+            data['max_lighting'][repr(zkey)] = self.max_lighting[zkey]
+
+        for zkey in self.max_equipment:
+            data['max_equipment'][repr(zkey)] = self.max_equipment[zkey]
+
+        for zkey in self.max_hot_water:
+            data['max_hot_water'][repr(zkey)] = self.max_hot_water[zkey]
+
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
                 data['exterior_walls'][repr(okey)][repr(zkey)] = self.exterior_walls[okey][zkey]
@@ -272,6 +297,27 @@ class Building(object):
         eui_kbtu                = data.get('eui_kbtu') or {}
         eui_kbtu_ft             = data.get('eui_kbtu_ft') or {}
         eui_kgco2e              = data.get('eui_kgco2e') or {}
+
+        max_cooling             = data.get('max_cooling') or {}
+        max_heating             = data.get('max_heating') or {}
+        max_lighting            = data.get('max_lighting') or {}
+        max_equipment           = data.get('max_equipment') or {}
+        max_hot_water           = data.get('max_hot_water') or {}
+
+        for key in max_cooling:
+            self.max_cooling[literal_eval(key)] = max_cooling[key]
+
+        for key in max_heating:
+            self.max_heating[literal_eval(key)] = max_heating[key]
+
+        for key in max_lighting:
+            self.max_lighting[literal_eval(key)] = max_lighting[key]
+
+        for key in max_equipment:
+            self.max_equipment[literal_eval(key)] = max_equipment[key]
+
+        for key in max_hot_water:
+            self.max_hot_water[literal_eval(key)] = max_hot_water[key]
 
         for key in eui_kwh:
             self.eui_kwh[literal_eval(key)] = eui_kwh[key]
@@ -860,12 +906,11 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
-    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu):
+    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu, hourly=True):
         
         self.window_u = winu
         self.wall_r = wallr
 
-        totals = 0
         if not cool:
             print('there is no cooling for some reason')
             cool = [[0]*8760 for _ in range(len(cool))]
@@ -881,7 +926,8 @@ class Building(object):
         if not hot:
             print('there is no hot water for some reason')
             hot = [[0]*8760 for _ in range(len(cool))]
-
+        
+        totals = 0
         for i in range(len(cool)):
             # print('i', i)
             c = sum(cool[i])
@@ -892,17 +938,23 @@ class Building(object):
             tot = sum([c, h, l, e, w])
             totals += tot
             self.eui_kwh[self.zones[i]] = {'cooling':c,
-                                           'heating':h,
-                                           'lighting':l,
-                                           'equipment':e,
-                                           'hot_water':w,
-                                           'total':tot}
-            
-            self.eui_kwh_hourly[self.zones[i]] = {'cooling':list(cool[i]),
-                                                  'heating':list(heat[i]),
-                                                  'lighting':list(light[i]),
-                                                  'equipment':list(eq[i]),
-                                                  'hot_water':list(hot[i])}
+                                        'heating':h,
+                                        'lighting':l,
+                                        'equipment':e,
+                                        'hot_water':w,
+                                        'total':tot}
+            self.max_cooling[self.zones[i]] = max(cool[i])
+            self.max_heating[self.zones[i]] = max(heat[i])
+            self.max_lighting[self.zones[i]] = max(light[i])
+            self.max_equipment[self.zones[i]] = max(eq[i])
+            self.max_hot_water[self.zones[i]] = max(hot[i])
+
+            if hourly:
+                self.eui_kwh_hourly[self.zones[i]] = {'cooling':list(cool[i]),
+                                                    'heating':list(heat[i]),
+                                                    'lighting':list(light[i]),
+                                                    'equipment':list(eq[i]),
+                                                    'hot_water':list(hot[i])}
         self.eui_kwh_total = totals
 
         for zkey in self.eui_kwh:
@@ -935,9 +987,16 @@ class Building(object):
         totals = [self.eui_kgco2e[zkey]['total'] for zkey in self.eui_kgco2e]
         self.eui_kgco2e_total = sum(totals)
 
-    def write_results(self):
-        self.write_csv_result()
-        self.to_json()
+    def write_results(self, csv=True, json_=True, delete=False):
+        if csv:
+            self.write_csv_result()
+        if json_:
+            self.to_json()
+        if delete:
+            fn = os.path.splitext(self.csv)[0]
+            folder = os.path.join(self.simulation_folder, fn)
+            shutil.rmtree(folder) 
+
 
     def write_csv_result(self):
         # fn = self.csv
