@@ -1014,7 +1014,7 @@ class Building(object):
             self.max_heating[self.zones[i]] = {'max': max(heat[i]), 'hour': heat[i].values.index(max(heat[i].values))}
             self.max_lighting[self.zones[i]] = {'max': max(light[i]), 'hour': light[i].values.index(max(light[i].values))}
             self.max_equipment[self.zones[i]] = {'max': max(eq[i]), 'hour': eq[i].values.index(max(eq[i].values))}
-            self.max_hot_water[self.zones[i]] = {'max': max(hot[i]), 'hour': hot[i].values.index(max(hot[i].values))}
+            # self.max_hot_water[self.zones[i]] = {'max': max(hot[i]), 'hour': hot[i].values.index(max(hot[i].values))}
             self.max_solar[self.zones[i]] = {'max': solar[i].max, 'hour': solar[i].values.index(solar[i].max)}
             
             if monthly:
@@ -1022,26 +1022,27 @@ class Building(object):
                 heat_am  = heat[i].average_monthly().values
                 light_am = light[i].average_monthly().values
                 eq_am    = eq[i].average_monthly().values
-                hot_am   = hot[i].average_monthly().values
+                # hot_am   = hot[i].average_monthly().values
                 solar_am = solar[i].average_monthly().values
                 
                 cool_tm  = cool[i].total_monthly().values
                 heat_tm  = heat[i].total_monthly().values
                 light_tm = light[i].total_monthly().values
                 eq_tm    = eq[i].total_monthly().values
-                hot_tm   = hot[i].total_monthly().values
+                # hot_tm   = hot[i].total_monthly().values
                 solar_tm = solar[i].total_monthly().values
 
                 self.monthly_euis[self.zones[i]] = {'cooling_avg':cool_am,
                                                     'heating_avg':heat_am,
                                                     'lighting_avg':light_am,
                                                     'equipment_avg': eq_am,
-                                                    'hot_water_avg': hot_am,
+                                                    # 'hot_water_avg': hot_am,
                                                     'cooling_tot':cool_tm,
                                                     'heating_tot':heat_tm,
                                                     'lighting_tot':light_tm,
                                                     'equipment_tot': eq_tm,
-                                                    'hot_water_tot': hot_tm}
+                                                    # 'hot_water_tot': hot_tm,
+                                                    }
 
                 self.monthly_solar[self.zones[i]] = {'average': solar_am, 'total': solar_tm}
 
