@@ -76,6 +76,7 @@ class Building(object):
         self.max_lighting           = {}
         self.max_equipment          = {}
         self.max_hot_water          = {}
+        self.monthly_euis           = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -254,19 +255,24 @@ class Building(object):
             data['eui_kgco2e'][repr(zkey)] = self.eui_kgco2e[zkey]
 
         for zkey in self.max_cooling:
-            data['max_cooling'][repr(zkey)] = self.max_cooling[zkey]
+            for vk in self.max_cooling[zkey]:
+                data['max_cooling'][repr(zkey)][repr(vk)] = self.max_cooling[zkey][vk]
 
         for zkey in self.max_heating:
-            data['max_heating'][repr(zkey)] = self.max_heating[zkey]
+            for vk in self.max_heating[zkey]:
+                data['max_heating'][repr(zkey)][repr(vk)] = self.max_heating[zkey][vk]
 
         for zkey in self.max_lighting:
-            data['max_lighting'][repr(zkey)] = self.max_lighting[zkey]
+            for vk in self.max_lighting[zkey]:
+                data['max_lighting'][repr(zkey)][repr(vk)] = self.max_lighting[zkey][vk]
 
         for zkey in self.max_equipment:
-            data['max_equipment'][repr(zkey)] = self.max_equipment[zkey]
+            for vk in self.max_equipment[zkey]:
+                data['max_equipment'][repr(zkey)][repr(vk)] = self.max_equipment[zkey][vk]
 
         for zkey in self.max_hot_water:
-            data['max_hot_water'][repr(zkey)] = self.max_hot_water[zkey]
+            for vk in self.max_hot_water[zkey]:
+                data['max_hot_water'][repr(zkey)][repr(vk)] = self.max_hot_water[zkey][vk]
 
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
@@ -906,7 +912,7 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
-    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu, hourly=True):
+    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu, hourly=True, monthly=True):
         
         self.window_u = winu
         self.wall_r = wallr
@@ -938,16 +944,43 @@ class Building(object):
             tot = sum([c, h, l, e, w])
             totals += tot
             self.eui_kwh[self.zones[i]] = {'cooling':c,
-                                        'heating':h,
-                                        'lighting':l,
-                                        'equipment':e,
-                                        'hot_water':w,
-                                        'total':tot}
-            self.max_cooling[self.zones[i]] = max(cool[i])
-            self.max_heating[self.zones[i]] = max(heat[i])
-            self.max_lighting[self.zones[i]] = max(light[i])
-            self.max_equipment[self.zones[i]] = max(eq[i])
-            self.max_hot_water[self.zones[i]] = max(hot[i])
+                                           'heating':h,
+                                           'lighting':l,
+                                           'equipment':e,
+                                           'hot_water':w,
+                                           'total':tot}
+
+
+            self.max_cooling[self.zones[i]] = {'max': max(cool[i]), 'hour': cool[i].values.index(max(cool[i].values))}
+            self.max_heating[self.zones[i]] = {'max': max(heat[i]), 'hour': heat[i].values.index(max(heat[i].values))}
+            self.max_lighting[self.zones[i]] = {'max': max(light[i]), 'hour': light[i].values.index(max(light[i].values))}
+            self.max_equipment[self.zones[i]] = {'max': max(eq[i]), 'hour': eq[i].values.index(max(eq[i].values))}
+            self.max_hot_water[self.zones[i]] = {'max': max(hot[i]), 'hour': hot[i].values.index(max(hot[i].values))}
+            
+            if monthly:
+                cool_am  = cool[i].average_monthly()
+                heat_am  = heat[i].average_monthly()
+                light_am = light[i].average_monthly()
+                eq_am    = eq[i].average_monthly()
+                hot_am   = hot[i].average_monthly()
+                
+                cool_tm  = cool[i].total_monthly()
+                heat_tm  = heat[i].total_monthly()
+                light_tm = light[i].total_monthly()
+                eq_tm    = eq[i].total_monthly()
+                hot_tm   = hot[i].total_monthly()
+
+                self.monthly_euis[self.zones[i]] = {'average': {'cooling':cool_am,
+                                                                'heating':heat_am,
+                                                                'lighting':light_am,
+                                                                'equipment': eq_am,
+                                                                'hot_water': hot_am},
+                                                    'total':{'cooling':cool_tm,
+                                                             'heating':heat_tm,
+                                                             'lighting':light_tm,
+                                                             'equipment': eq_tm,
+                                                             'hot_water': hot_tm},}
+
 
             if hourly:
                 self.eui_kwh_hourly[self.zones[i]] = {'cooling':list(cool[i]),
@@ -996,7 +1029,6 @@ class Building(object):
             fn = os.path.splitext(self.csv)[0]
             folder = os.path.join(self.simulation_folder, fn)
             shutil.rmtree(folder) 
-
 
     def write_csv_result(self):
         # fn = self.csv
