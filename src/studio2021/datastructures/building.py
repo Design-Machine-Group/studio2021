@@ -153,7 +153,9 @@ class Building(object):
                 'max_equipment'             : {},
                 'max_hot_water'             : {},
                 'max_cooling'               : {},
+                'max_solar'                 : {},
                 'monthly_euis'              : {},
+                'monthly_solar'             : {},
                 'facade_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'window_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'opaque_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
@@ -282,11 +284,20 @@ class Building(object):
             for vk in self.max_hot_water[zkey]:
                 data['max_hot_water'][repr(zkey)][repr(vk)] = self.max_hot_water[zkey][vk]
 
+        for zkey in self.max_solar:
+            data['max_solar'][repr(zkey)] = {}
+            for vk in self.max_solar[zkey]:
+                data['max_solar'][repr(zkey)][repr(vk)] = self.max_solar[zkey][vk]
+
         for zkey in self.monthly_euis:
             data['monthly_euis'][repr(zkey)] = {}
             for vk in self.monthly_euis[zkey]:
                 data['monthly_euis'][repr(zkey)][repr(vk)] = self.monthly_euis[zkey][vk]
 
+        for zkey in self.monthly_solar:
+            data['monthly_solar'][repr(zkey)] = {}
+            for vk in self.monthly_solar[zkey]:
+                data['monthly_solar'][repr(zkey)][repr(vk)] = self.monthly_solar[zkey][vk]
 
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
@@ -323,7 +334,9 @@ class Building(object):
         max_lighting            = data.get('max_lighting') or {}
         max_equipment           = data.get('max_equipment') or {}
         max_hot_water           = data.get('max_hot_water') or {}
+        max_solar               = data.get('max_solar') or {}
         monthly_euis            = data.get('monthly_euis') or {}
+        monthly_solar            = data.get('monthly_solar') or {}
 
         for key in max_cooling:
             self.max_cooling[literal_eval(key)] = {}
@@ -350,10 +363,21 @@ class Building(object):
             for rk in max_hot_water[key]: 
                 self.max_hot_water[literal_eval(key)][literal_eval[rk]] = max_hot_water[key][rk]
 
+        for key in max_solar:
+            self.max_solar[literal_eval(key)] = {}
+            for rk in max_solar[key]: 
+                self.max_solar[literal_eval(key)][literal_eval[rk]] = max_solar[key][rk]
+
         for key in monthly_euis:
             self.monthly_euis[literal_eval(key)] = {}
             for rk in monthly_euis[key]: 
                 self.monthly_euis[literal_eval(key)][literal_eval[rk]] = monthly_euis[key][rk]
+
+        for key in monthly_solar:
+            self.monthly_solar[literal_eval(key)] = {}
+            for rk in monthly_solar[key]: 
+                self.monthly_solar[literal_eval(key)][literal_eval[rk]] = monthly_solar[key][rk]
+
 
         for key in eui_kwh:
             self.eui_kwh[literal_eval(key)] = eui_kwh[key]
@@ -967,11 +991,11 @@ class Building(object):
         if not solar:
             print('there is no solar gain for some reason')
             solar = [[0]*8760 for _ in range(len(cool))]
-
+        if len(solar) == 8760:
+            solar = [solar]
 
         totals = 0
         for i in range(len(cool)):
-            # print('i', i)
             c = sum(cool[i])
             h = sum(heat[i])
             l = sum(light[i])
@@ -986,13 +1010,12 @@ class Building(object):
                                            'hot_water':w,
                                            'total':tot}
             
-
             self.max_cooling[self.zones[i]] = {'max': max(cool[i]), 'hour': cool[i].values.index(max(cool[i].values))}
             self.max_heating[self.zones[i]] = {'max': max(heat[i]), 'hour': heat[i].values.index(max(heat[i].values))}
             self.max_lighting[self.zones[i]] = {'max': max(light[i]), 'hour': light[i].values.index(max(light[i].values))}
             self.max_equipment[self.zones[i]] = {'max': max(eq[i]), 'hour': eq[i].values.index(max(eq[i].values))}
             self.max_hot_water[self.zones[i]] = {'max': max(hot[i]), 'hour': hot[i].values.index(max(hot[i].values))}
-            # self.max_solar[self.zones[i]] = {'max': max(solar[i]), 'hour': solar[i].values.index(max(solar[i].values))}
+            self.max_solar[self.zones[i]] = {'max': solar[i].max, 'hour': solar[i].values.index(solar[i].max)}
             
             if monthly:
                 cool_am  = cool[i].average_monthly().values
@@ -1000,14 +1023,14 @@ class Building(object):
                 light_am = light[i].average_monthly().values
                 eq_am    = eq[i].average_monthly().values
                 hot_am   = hot[i].average_monthly().values
-                # solar_am = solar[i].average_monthly().values
+                solar_am = solar[i].average_monthly().values
                 
                 cool_tm  = cool[i].total_monthly().values
                 heat_tm  = heat[i].total_monthly().values
                 light_tm = light[i].total_monthly().values
                 eq_tm    = eq[i].total_monthly().values
                 hot_tm   = hot[i].total_monthly().values
-                # solar_tm = solar[i].total_monthly().values
+                solar_tm = solar[i].total_monthly().values
 
                 self.monthly_euis[self.zones[i]] = {'cooling_avg':cool_am,
                                                     'heating_avg':heat_am,
@@ -1020,7 +1043,7 @@ class Building(object):
                                                     'equipment_tot': eq_tm,
                                                     'hot_water_tot': hot_tm}
 
-                # self.monthly_solar[self.zones[i]] = {'average': solar_am, 'total': solar_tm}
+                self.monthly_solar[self.zones[i]] = {'average': solar_am, 'total': solar_tm}
 
 
             if hourly:
@@ -1043,9 +1066,6 @@ class Building(object):
         for zkey in self.eui_kbtu:
             temp = {}
             for key in self.eui_kbtu[zkey]:
-                # print(key, zkey)
-                # print(type(zkey))
-                # print(self.floor_areas[zkey])
                 temp[key] = self.eui_kbtu[zkey][key] / self.floor_areas[zkey]
             self.eui_kbtu_ft[zkey] = temp
 
@@ -1134,7 +1154,6 @@ class Building(object):
         areas = []
         tot = 0
         for i in range(5):
-            print(self.zones)
             if self.zones[i] in self.floor_areas:
                 areas.append(self.floor_areas[self.zones[i]])
                 tot += self.floor_areas[self.zones[i]]
@@ -1285,5 +1304,5 @@ class Building(object):
 
 if __name__ == '__main__':
     for i in range(50): print('')
-    filepath = os.path.join(studio2021.TEMP, 'Studio2021Building.json')
-    b = Building.from_json(filepath)
+    # filepath = os.path.join(studio2021.TEMP, 'Studio2021Building.json')
+    # b = Building.from_json(filepath)
