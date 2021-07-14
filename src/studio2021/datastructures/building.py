@@ -76,7 +76,9 @@ class Building(object):
         self.max_lighting           = {}
         self.max_equipment          = {}
         self.max_hot_water          = {}
+        self.max_solar              = {}
         self.monthly_euis           = {}
+        self.monthly_solar          = {}
         self.facade_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.window_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
         self.opaque_areas           = {'n':{}, 's':{}, 'e':{}, 'w':{}}
@@ -151,6 +153,7 @@ class Building(object):
                 'max_equipment'             : {},
                 'max_hot_water'             : {},
                 'max_cooling'               : {},
+                'monthly_euis'              : {},
                 'facade_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'window_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
                 'opaque_areas'              : {repr(key): {} for key in ['n', 's', 'e', 'w']},
@@ -255,24 +258,35 @@ class Building(object):
             data['eui_kgco2e'][repr(zkey)] = self.eui_kgco2e[zkey]
 
         for zkey in self.max_cooling:
+            data['max_cooling'][repr(zkey)] = {}
             for vk in self.max_cooling[zkey]:
                 data['max_cooling'][repr(zkey)][repr(vk)] = self.max_cooling[zkey][vk]
 
         for zkey in self.max_heating:
+            data['max_heating'][repr(zkey)] = {}
             for vk in self.max_heating[zkey]:
                 data['max_heating'][repr(zkey)][repr(vk)] = self.max_heating[zkey][vk]
 
         for zkey in self.max_lighting:
+            data['max_lighting'][repr(zkey)] = {}
             for vk in self.max_lighting[zkey]:
                 data['max_lighting'][repr(zkey)][repr(vk)] = self.max_lighting[zkey][vk]
 
         for zkey in self.max_equipment:
+            data['max_equipment'][repr(zkey)] = {}
             for vk in self.max_equipment[zkey]:
                 data['max_equipment'][repr(zkey)][repr(vk)] = self.max_equipment[zkey][vk]
 
         for zkey in self.max_hot_water:
+            data['max_hot_water'][repr(zkey)] = {}
             for vk in self.max_hot_water[zkey]:
                 data['max_hot_water'][repr(zkey)][repr(vk)] = self.max_hot_water[zkey][vk]
+
+        for zkey in self.monthly_euis:
+            data['monthly_euis'][repr(zkey)] = {}
+            for vk in self.monthly_euis[zkey]:
+                data['monthly_euis'][repr(zkey)][repr(vk)] = self.monthly_euis[zkey][vk]
+
 
         for okey in self.exterior_walls:
             for zkey in self.exterior_walls[okey]:
@@ -309,21 +323,37 @@ class Building(object):
         max_lighting            = data.get('max_lighting') or {}
         max_equipment           = data.get('max_equipment') or {}
         max_hot_water           = data.get('max_hot_water') or {}
+        monthly_euis            = data.get('monthly_euis') or {}
 
         for key in max_cooling:
-            self.max_cooling[literal_eval(key)] = max_cooling[key]
+            self.max_cooling[literal_eval(key)] = {}
+            for rk in max_cooling[key]: 
+                self.max_cooling[literal_eval(key)][literal_eval[rk]] = max_cooling[key][rk]
 
         for key in max_heating:
-            self.max_heating[literal_eval(key)] = max_heating[key]
+            self.max_heating[literal_eval(key)] = {}
+            for rk in max_heating[key]: 
+                self.max_heating[literal_eval(key)][literal_eval[rk]] = max_heating[key][rk]
 
         for key in max_lighting:
-            self.max_lighting[literal_eval(key)] = max_lighting[key]
+            self.max_lighting[literal_eval(key)] = {}
+            for rk in max_lighting[key]: 
+                self.max_lighting[literal_eval(key)][literal_eval[rk]] = max_lighting[key][rk]
 
         for key in max_equipment:
-            self.max_equipment[literal_eval(key)] = max_equipment[key]
+            self.max_equipment[literal_eval(key)] = {}
+            for rk in max_equipment[key]: 
+                self.max_equipment[literal_eval(key)][literal_eval[rk]] = max_equipment[key][rk]
 
         for key in max_hot_water:
-            self.max_hot_water[literal_eval(key)] = max_hot_water[key]
+            self.max_hot_water[literal_eval(key)] = {}
+            for rk in max_hot_water[key]: 
+                self.max_hot_water[literal_eval(key)][literal_eval[rk]] = max_hot_water[key][rk]
+
+        for key in monthly_euis:
+            self.monthly_euis[literal_eval(key)] = {}
+            for rk in monthly_euis[key]: 
+                self.monthly_euis[literal_eval(key)][literal_eval[rk]] = monthly_euis[key][rk]
 
         for key in eui_kwh:
             self.eui_kwh[literal_eval(key)] = eui_kwh[key]
@@ -912,7 +942,8 @@ class Building(object):
 
         return slabs, columns, beams, cores
 
-    def add_eui_results(self, cool, heat, light, eq, hot, wallr, winu, hourly=True, monthly=True):
+    def add_eui_results(self, cool, heat, light, eq, hot, solar, wallr, winu,
+                        hourly=True, monthly=True):
         
         self.window_u = winu
         self.wall_r = wallr
@@ -932,7 +963,12 @@ class Building(object):
         if not hot:
             print('there is no hot water for some reason')
             hot = [[0]*8760 for _ in range(len(cool))]
-        
+
+        if not solar:
+            print('there is no solar gain for some reason')
+            solar = [[0]*8760 for _ in range(len(cool))]
+
+
         totals = 0
         for i in range(len(cool)):
             # print('i', i)
@@ -949,37 +985,42 @@ class Building(object):
                                            'equipment':e,
                                            'hot_water':w,
                                            'total':tot}
-
+            
 
             self.max_cooling[self.zones[i]] = {'max': max(cool[i]), 'hour': cool[i].values.index(max(cool[i].values))}
             self.max_heating[self.zones[i]] = {'max': max(heat[i]), 'hour': heat[i].values.index(max(heat[i].values))}
             self.max_lighting[self.zones[i]] = {'max': max(light[i]), 'hour': light[i].values.index(max(light[i].values))}
             self.max_equipment[self.zones[i]] = {'max': max(eq[i]), 'hour': eq[i].values.index(max(eq[i].values))}
             self.max_hot_water[self.zones[i]] = {'max': max(hot[i]), 'hour': hot[i].values.index(max(hot[i].values))}
+            # self.max_solar[self.zones[i]] = {'max': max(solar[i]), 'hour': solar[i].values.index(max(solar[i].values))}
             
             if monthly:
-                cool_am  = cool[i].average_monthly()
-                heat_am  = heat[i].average_monthly()
-                light_am = light[i].average_monthly()
-                eq_am    = eq[i].average_monthly()
-                hot_am   = hot[i].average_monthly()
+                cool_am  = cool[i].average_monthly().values
+                heat_am  = heat[i].average_monthly().values
+                light_am = light[i].average_monthly().values
+                eq_am    = eq[i].average_monthly().values
+                hot_am   = hot[i].average_monthly().values
+                # solar_am = solar[i].average_monthly().values
                 
-                cool_tm  = cool[i].total_monthly()
-                heat_tm  = heat[i].total_monthly()
-                light_tm = light[i].total_monthly()
-                eq_tm    = eq[i].total_monthly()
-                hot_tm   = hot[i].total_monthly()
+                cool_tm  = cool[i].total_monthly().values
+                heat_tm  = heat[i].total_monthly().values
+                light_tm = light[i].total_monthly().values
+                eq_tm    = eq[i].total_monthly().values
+                hot_tm   = hot[i].total_monthly().values
+                # solar_tm = solar[i].total_monthly().values
 
-                self.monthly_euis[self.zones[i]] = {'average': {'cooling':cool_am,
-                                                                'heating':heat_am,
-                                                                'lighting':light_am,
-                                                                'equipment': eq_am,
-                                                                'hot_water': hot_am},
-                                                    'total':{'cooling':cool_tm,
-                                                             'heating':heat_tm,
-                                                             'lighting':light_tm,
-                                                             'equipment': eq_tm,
-                                                             'hot_water': hot_tm},}
+                self.monthly_euis[self.zones[i]] = {'cooling_avg':cool_am,
+                                                    'heating_avg':heat_am,
+                                                    'lighting_avg':light_am,
+                                                    'equipment_avg': eq_am,
+                                                    'hot_water_avg': hot_am,
+                                                    'cooling_tot':cool_tm,
+                                                    'heating_tot':heat_tm,
+                                                    'lighting_tot':light_tm,
+                                                    'equipment_tot': eq_tm,
+                                                    'hot_water_tot': hot_tm}
+
+                # self.monthly_solar[self.zones[i]] = {'average': solar_am, 'total': solar_tm}
 
 
             if hourly:
