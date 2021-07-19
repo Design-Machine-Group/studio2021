@@ -97,4 +97,4 @@ if __name__ == '__main__':
     fit_types = ['max', 'min', 'max']
     pf = non_dom_sort(pop, fit_types)
     print(pf)
-    plot_pf(pop, pf, fit_indices=[0,2])
+    plot_pf(pop, pf, fit_indices=[0,1])

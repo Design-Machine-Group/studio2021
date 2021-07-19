@@ -341,42 +341,42 @@ class Building(object):
         for key in max_cooling:
             self.max_cooling[literal_eval(key)] = {}
             for rk in max_cooling[key]: 
-                self.max_cooling[literal_eval(key)][literal_eval[rk]] = max_cooling[key][rk]
+                self.max_cooling[literal_eval(key)][literal_eval(rk)] = max_cooling[key][rk]
 
         for key in max_heating:
             self.max_heating[literal_eval(key)] = {}
             for rk in max_heating[key]: 
-                self.max_heating[literal_eval(key)][literal_eval[rk]] = max_heating[key][rk]
+                self.max_heating[literal_eval(key)][literal_eval(rk)] = max_heating[key][rk]
 
         for key in max_lighting:
             self.max_lighting[literal_eval(key)] = {}
             for rk in max_lighting[key]: 
-                self.max_lighting[literal_eval(key)][literal_eval[rk]] = max_lighting[key][rk]
+                self.max_lighting[literal_eval(key)][literal_eval(rk)] = max_lighting[key][rk]
 
         for key in max_equipment:
             self.max_equipment[literal_eval(key)] = {}
             for rk in max_equipment[key]: 
-                self.max_equipment[literal_eval(key)][literal_eval[rk]] = max_equipment[key][rk]
+                self.max_equipment[literal_eval(key)][literal_eval(rk)] = max_equipment[key][rk]
 
         for key in max_hot_water:
             self.max_hot_water[literal_eval(key)] = {}
             for rk in max_hot_water[key]: 
-                self.max_hot_water[literal_eval(key)][literal_eval[rk]] = max_hot_water[key][rk]
+                self.max_hot_water[literal_eval(key)][literal_eval(rk)] = max_hot_water[key][rk]
 
         for key in max_solar:
             self.max_solar[literal_eval(key)] = {}
             for rk in max_solar[key]: 
-                self.max_solar[literal_eval(key)][literal_eval[rk]] = max_solar[key][rk]
+                self.max_solar[literal_eval(key)][literal_eval(rk)] = max_solar[key][rk]
 
         for key in monthly_euis:
             self.monthly_euis[literal_eval(key)] = {}
             for rk in monthly_euis[key]: 
-                self.monthly_euis[literal_eval(key)][literal_eval[rk]] = monthly_euis[key][rk]
+                self.monthly_euis[literal_eval(key)][literal_eval(rk)] = monthly_euis[key][rk]
 
         for key in monthly_solar:
             self.monthly_solar[literal_eval(key)] = {}
             for rk in monthly_solar[key]: 
-                self.monthly_solar[literal_eval(key)][literal_eval[rk]] = monthly_solar[key][rk]
+                self.monthly_solar[literal_eval(key)][literal_eval(rk)] = monthly_solar[key][rk]
 
 
         for key in eui_kwh:
