@@ -28,20 +28,35 @@ def load_jsons(folderpath):
             key = os.path.splitext(f)[0]
             program = pdict[b.zone_program]
             city = cdict[b.city]
-            data[city][program][key] = parse_building(b)
+            data[city][program][key] = parse_building(b, f)
     return data
 
 
-def parse_building(bldg):
+def parse_building(bldg, filename):
     data = {}
+    area = bldg.floor_area
     win  = bldg.envelope.window_embodied or 0.
     wall = bldg.envelope.wall_embodied or 0.
+    win /= area
+    wall/= area
+
     zonek = list(bldg.eui_kgco2e.keys())[0]
-    cool = bldg.eui_kgco2e[zonek]['cooling']
-    heat = bldg.eui_kgco2e[zonek]['heating']
-    light = bldg.eui_kgco2e[zonek]['lighting']
-    hot = bldg.eui_kgco2e[zonek]['hot_water']
-    eq = bldg.eui_kgco2e[zonek]['equipment']
+    cool = bldg.eui_kgco2e[zonek]['cooling'] / area
+    heat = bldg.eui_kgco2e[zonek]['heating'] / area
+    light = bldg.eui_kgco2e[zonek]['lighting'] / area
+    hot = bldg.eui_kgco2e[zonek]['hot_water'] / area
+    eq = bldg.eui_kgco2e[zonek]['equipment'] / area
+
+    filename = filename.split('_')
+    data['orient'] = filename[1]
+    data['wwr'] = bldg.wwr['n']
+    data['glazing'] = bldg.glazing_system
+    data['shading'] = bldg.shade_depth_h['n']
+    data['shgc'] = bldg.shade_gc['n']
+    data['exterior_mat'] = bldg.external_insulation
+    data['exterior_t'] = bldg.insulation_thickness or 0.
+    data['interior_mat'] = bldg.interior_insul_mat
+    data['interior_t'] = bldg.ewall_framing
 
     data['total_embodied'] = win + wall
     data['window_embodied'] = win
@@ -121,9 +136,13 @@ def plot_pareto(data):
 def dash_pareto(data):
     app = dash.Dash(__name__)
     cities = list(data.keys())
+    cities.append('all')
     programs = list(data['seattle'].keys())
+    programs.append('all')
     dtkey = list(data['seattle']['residential'].keys())[0]
     data_types = list(data['seattle']['residential'][dtkey].keys())
+    orientations = ['n', 'w', 's', 'e', 'all']
+    wwrs = ['0', '20', '40', '60', '80', 'all']
 
     app.layout = html.Div([
         html.Div([
@@ -132,19 +151,38 @@ def dash_pareto(data):
                 dcc.Dropdown(
                     id='cities',
                     options=[{'label': i, 'value': i} for i in cities],
-                    value='seattle'
+                    value='all'
                 ),
             ],
-            style={'width': '25%', 'display': 'inline-block', 'font-family':'open sans'}),
+            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='programs',
                     options=[{'label': i, 'value': i} for i in programs],
-                    value='residential'
+                    value='all'
                 ),
             ],
-            style={'width': '25%', 'display': 'inline-block', 'font-family':'open sans'}),
+            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+
+
+            html.Div([
+                dcc.Dropdown(
+                    id='orientations',
+                    options=[{'label': i, 'value': i} for i in orientations],
+                    value='all'
+                ),
+            ],
+            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+
+            html.Div([
+                dcc.Dropdown(
+                    id='wwr',
+                    options=[{'label': i, 'value': i} for i in wwrs],
+                    value='all'
+                ),
+            ],
+            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
 
 
             html.Div([
@@ -154,7 +192,7 @@ def dash_pareto(data):
                     value='total_embodied'
                 ),
             ],
-            style={'width': '25%', 'display': 'inline-block', 'font-family':'open sans'}),
+            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
 
             html.Div([
                 dcc.Dropdown(
@@ -162,7 +200,7 @@ def dash_pareto(data):
                     options=[{'label': i, 'value': i} for i in data_types],
                     value='total_operational'
                 ),
-            ],style={'width': '25%', 'display': 'inline-block', 'font-family':'open sans'})
+            ],style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'})
         ]),
 
         dcc.Graph(id='indicator-graphic'),
@@ -172,29 +210,83 @@ def dash_pareto(data):
         Output('indicator-graphic', 'figure'),
         Input('cities', 'value'),
         Input('programs', 'value'),
+        Input('orientations', 'value'),
+        Input('wwr', 'value'),
         Input('xaxis', 'value'),
         Input('yaxis', 'value'))
-    def update_graph(city, program, kx, ky):
+    def update_graph(city, program, orientation, wwr, kx, ky):
 
-        # city = 'seattle'
-        # program = 'office'
-        x = []
-        y = []
-        text = []
-        for k in data[city][program]:
-            x.append(data[city][program][k][kx])
-            y.append(data[city][program][k][ky])
-            text.append(k)
+        if city == 'all':
+            cities = ['seattle', 'san_antonio', 'milwaukee']
+        else:
+            cities = [city]
 
-        fig = px.scatter(x=x, y=y, hover_name=text, )
-        fig.update_layout(margin={'l': 40, 'b': 40, 't': 10, 'r': 0}, hovermode='closest', )
+        if program == 'all':
+            programs = ['residential', 'office']
+        else:
+            programs = [program]
+
+        if orientation == 'all':
+            orientation = ['n', 'w', 's', 'e']
+        else:
+            orientation = [orientation]
+
+        if wwr == 'all':
+            wwr = [0., 0.2, 0.4, 0.6, 0.8]
+        else:
+            wwr = [float(wwr) / 100.]
+
+        fig = go.Figure()
+        # fig.update_layout(height = '1000px')
+        string = 'wwr = {}<br>orientation = {}<br>glazing = {}<br>shading = {}<br>'
+        string += 'shgc = {}<br>exterior mat = {}<br>exterior thick = {}<br>'
+        string += 'interior mat = {}<br>interior_ thick = {}'
+
+        for city in cities:
+            for program in programs:
+                x = []
+                y = []
+                text = []
+                for k in data[city][program]:
+                    o = data[city][program][k]['orient']
+                    wwr_ = data[city][program][k]['wwr']
+                    gl = data[city][program][k]['glazing']
+                    sh = data[city][program][k]['shading']
+                    shg = data[city][program][k]['shgc']
+                    em = data[city][program][k]['exterior_mat']
+                    et = data[city][program][k]['exterior_t']
+                    im = data[city][program][k]['interior_mat']
+                    it = data[city][program][k]['interior_t']
+
+                    if o not in orientation:
+                        continue
+                    if wwr_ not in wwr:
+                        continue
+                    x.append(data[city][program][k][kx])
+                    y.append(data[city][program][k][ky])
+                    text.append(string.format(wwr_, o, gl, sh, shg, em, et, im, it))
+
+                fig.add_trace(go.Scatter(name='{}_{}'.format(city, program),
+                                        x=x,
+                                        y=y,
+                                        mode='markers',
+                                        hovertext=text),)
+
+                xaxis = go.layout.XAxis(title='{}'.format(kx))
+                yaxis = go.layout.YAxis(title='{}'.format(ky))
+                fig.update_layout(title={'text': 'Pareto Front'},
+                                  xaxis=xaxis,
+                                  yaxis=yaxis,
+                                  hovermode='closest',
+                                  autosize=False,
+                                  height=900,
+                                  width=1900,
+                                  )
         return fig
     app.run_server(debug=True)
 
 
 if __name__ == '__main__':
-    for i in range(50): print('')
-
     folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data'
     data = load_jsons(folderpath)
     # plot_pareto(data)
