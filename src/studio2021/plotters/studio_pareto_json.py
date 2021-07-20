@@ -282,6 +282,25 @@ def dash_pareto(data):
                                   height=900,
                                   width=1900,
                                   )
+        # Add annotation
+        fig.update_layout(
+            annotations=[
+                dict(text="City", showarrow=False,
+                                    x=0, y=1.14, yref="paper", align="left"),
+                dict(text="Program", showarrow=False,
+                                    x=.15, y=1.14, yref="paper", xref='paper', align="left"),
+                dict(text="Orientation", showarrow=False,
+                                    x=.35, y=1.14, yref="paper", xref='paper', align="left"),
+                dict(text="WWR", showarrow=False,
+                                    x=.55, y=1.14, yref="paper", xref='paper', align="left"),
+                dict(text="X axix", showarrow=False,
+                                    x=.75, y=1.14, yref="paper", xref='paper', align="left"),
+                dict(text="Y Axis", showarrow=False,
+                                    x=.95, y=1.14, yref="paper", xref='paper', align="left"),
+
+
+            ]
+        )
         return fig
     app.run_server(debug=True)
 
