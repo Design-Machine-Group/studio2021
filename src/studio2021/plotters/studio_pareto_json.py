@@ -33,6 +33,10 @@ def load_jsons(folderpath):
 
 
 def parse_building(bldg, filename):
+
+    gl_dict = {'Aluminum Double': 2, 'Aluminum Triple': 3}
+    int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0}
+
     data = {}
     area = bldg.floor_area
     win  = bldg.envelope.window_embodied or 0.
@@ -47,23 +51,29 @@ def parse_building(bldg, filename):
     hot = bldg.eui_kgco2e[zonek]['hot_water'] / area
     eq = bldg.eui_kgco2e[zonek]['equipment'] / area
 
+    data['max_cooling'] = bldg.max_cooling[zonek]['max']
+    data['max_heating'] = bldg.max_heating[zonek]['max']
+    data['max_lighting'] = bldg.max_lighting[zonek]['max']
+    data['max_solar'] = bldg.max_solar[zonek]['max']
+
     filename = filename.split('_')
     data['orient'] = filename[1]
     data['wwr'] = bldg.wwr['n']
-    data['glazing'] = bldg.glazing_system
+    data['glazing'] = gl_dict[bldg.glazing_system]
     data['shading'] = bldg.shade_depth_h['n']
     data['shgc'] = bldg.shade_gc['n']
     data['exterior_mat'] = bldg.external_insulation
     data['exterior_t'] = bldg.insulation_thickness or 0.
     data['interior_mat'] = bldg.interior_insul_mat
-    data['interior_t'] = bldg.ewall_framing
+    interior_thick = bldg.ewall_framing or 0.
+    data['interior_t'] = int_dict[interior_thick]
 
     data['total_embodied'] = win + wall
     data['window_embodied'] = win
     data['wall_embodied'] = wall
-    data['cooling_operational'] = cool
-    data['heating_operational'] = heat
-    data['lighting_operational'] = light
+    data['total_cooling'] = cool
+    data['total_heating'] = heat
+    data['total_lighting'] = light
     data['hot_water_operational'] = hot
     data['equipment_operational'] = eq
     data['total_operational'] = cool + heat + light + hot + eq
@@ -139,10 +149,17 @@ def dash_pareto(data):
     cities.append('all')
     programs = list(data['seattle'].keys())
     programs.append('all')
-    dtkey = list(data['seattle']['residential'].keys())[0]
-    data_types = list(data['seattle']['residential'][dtkey].keys())
+    
+    data_types = ['total_embodied', 'window_embodied', 'wall_embodied',
+                  'total_operational', 'total_cooling', 'total_heating','total_lighting',
+                  'max_cooling', 'max_heating', 'max_lighting', 'max_solar']
+    
     orientations = ['n', 'w', 's', 'e', 'all']
+    
     wwrs = ['0', '20', '40', '60', '80', 'all']
+    
+    labels = ['wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t',
+               'interior_mat', 'interior_t', 'None']
 
     app.layout = html.Div([
         html.Div([
@@ -151,57 +168,53 @@ def dash_pareto(data):
                 dcc.Dropdown(
                     id='cities',
                     options=[{'label': i, 'value': i} for i in cities],
-                    value='all'
-                ),
-            ],
-            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    value='all'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='programs',
                     options=[{'label': i, 'value': i} for i in programs],
-                    value='all'
-                ),
-            ],
-            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    value='all'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
 
 
             html.Div([
                 dcc.Dropdown(
                     id='orientations',
                     options=[{'label': i, 'value': i} for i in orientations],
-                    value='all'
-                ),
-            ],
-            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    value='all'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='wwr',
                     options=[{'label': i, 'value': i} for i in wwrs],
-                    value='all'
-                ),
-            ],
-            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    value='all'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+
+            html.Div([
+                dcc.Dropdown(
+                    id='labels',
+                    options=[{'label': i, 'value': i} for i in labels],
+                    value='None'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
 
 
             html.Div([
                 dcc.Dropdown(
                     id='xaxis',
                     options=[{'label': i, 'value': i} for i in data_types],
-                    value='total_embodied'
-                ),
-            ],
-            style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    value='total_embodied'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+
 
             html.Div([
                 dcc.Dropdown(
                     id='yaxis',
                     options=[{'label': i, 'value': i} for i in data_types],
-                    value='total_operational'
-                ),
-            ],style={'width': '15%', 'display': 'inline-block', 'font-family':'open sans'})
-        ]),
+                    value='total_operational'),],
+                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'})]),
 
         dcc.Graph(id='indicator-graphic'),
     ])
@@ -212,9 +225,10 @@ def dash_pareto(data):
         Input('programs', 'value'),
         Input('orientations', 'value'),
         Input('wwr', 'value'),
+        Input('labels', 'value'),
         Input('xaxis', 'value'),
         Input('yaxis', 'value'))
-    def update_graph(city, program, orientation, wwr, kx, ky):
+    def update_graph(city, program, orientation, wwr, label, kx, ky):
 
         if city == 'all':
             cities = ['seattle', 'san_antonio', 'milwaukee']
@@ -247,6 +261,7 @@ def dash_pareto(data):
                 x = []
                 y = []
                 text = []
+                hover = []
                 for k in data[city][program]:
                     o = data[city][program][k]['orient']
                     wwr_ = data[city][program][k]['wwr']
@@ -264,16 +279,21 @@ def dash_pareto(data):
                         continue
                     x.append(data[city][program][k][kx])
                     y.append(data[city][program][k][ky])
-                    text.append(string.format(wwr_, o, gl, sh, shg, em, et, im, it))
+                    hover.append(string.format(wwr_, o, gl, sh, shg, em, et, im, it))
+                    if label != 'None':
+                        text.append(data[city][program][k][label])
 
                 fig.add_trace(go.Scatter(name='{}_{}'.format(city, program),
                                         x=x,
                                         y=y,
-                                        mode='markers',
-                                        hovertext=text),)
+                                        mode='markers+text',
+                                        text=text,
+                                        textposition="bottom center",
+                                        hovertext=hover),)
 
                 xaxis = go.layout.XAxis(title='{}'.format(kx))
                 yaxis = go.layout.YAxis(title='{}'.format(ky))
+
                 fig.update_layout(title={'text': 'Pareto Front'},
                                   xaxis=xaxis,
                                   yaxis=yaxis,
@@ -283,30 +303,21 @@ def dash_pareto(data):
                                   width=1900,
                                   )
         # Add annotation
-        fig.update_layout(
-            annotations=[
-                dict(text="City", showarrow=False,
-                                    x=0, y=1.14, yref="paper", align="left"),
-                dict(text="Program", showarrow=False,
-                                    x=.15, y=1.14, yref="paper", xref='paper', align="left"),
-                dict(text="Orientation", showarrow=False,
-                                    x=.35, y=1.14, yref="paper", xref='paper', align="left"),
-                dict(text="WWR", showarrow=False,
-                                    x=.55, y=1.14, yref="paper", xref='paper', align="left"),
-                dict(text="X axix", showarrow=False,
-                                    x=.75, y=1.14, yref="paper", xref='paper', align="left"),
-                dict(text="Y Axis", showarrow=False,
-                                    x=.95, y=1.14, yref="paper", xref='paper', align="left"),
-
-
-            ]
-        )
+        fig.update_layout(annotations=[
+        dict(text="City", yref="paper", xref='paper',        x=-.04, y=1.14, showarrow=False),
+        dict(text="Program", yref="paper", xref='paper',     x=.07,  y=1.14, showarrow=False),
+        dict(text="Orientation", yref="paper", xref='paper', x=.19,  y=1.14, showarrow=False),
+        dict(text="WWR", yref="paper", xref='paper',         x=.31,  y=1.14, showarrow=False),
+        dict(text="Label", yref="paper", xref='paper',       x=.44,  y=1.14, showarrow=False),
+        dict(text="X axix", yref="paper", xref='paper',      x=.56,  y=1.14, showarrow=False),
+        dict(text="Y Axis", yref="paper", xref='paper',      x=.69,  y=1.14, showarrow=False),])
         return fig
     app.run_server(debug=True)
 
 
 if __name__ == '__main__':
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data'
+    for i in range(50): print('')
+    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
     data = load_jsons(folderpath)
     # plot_pareto(data)
     dash_pareto(data)
