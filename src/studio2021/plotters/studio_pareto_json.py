@@ -169,14 +169,14 @@ def dash_pareto(data):
                     id='cities',
                     options=[{'label': i, 'value': i} for i in cities],
                     value='all'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='programs',
                     options=[{'label': i, 'value': i} for i in programs],
                     value='all'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
 
             html.Div([
@@ -184,21 +184,21 @@ def dash_pareto(data):
                     id='orientations',
                     options=[{'label': i, 'value': i} for i in orientations],
                     value='all'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='wwr',
                     options=[{'label': i, 'value': i} for i in wwrs],
                     value='all'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
             html.Div([
                 dcc.Dropdown(
                     id='labels',
                     options=[{'label': i, 'value': i} for i in labels],
                     value='None'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
 
             html.Div([
@@ -206,7 +206,7 @@ def dash_pareto(data):
                     id='xaxis',
                     options=[{'label': i, 'value': i} for i in data_types],
                     value='total_embodied'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'}),
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
 
 
             html.Div([
@@ -214,7 +214,8 @@ def dash_pareto(data):
                     id='yaxis',
                     options=[{'label': i, 'value': i} for i in data_types],
                     value='total_operational'),],
-                    style={'width': '10%', 'display': 'inline-block', 'font-family':'open sans'})]),
+                    style={'width': '12%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
+                    ]),
 
         dcc.Graph(id='indicator-graphic'),
     ])
@@ -299,25 +300,26 @@ def dash_pareto(data):
                                   yaxis=yaxis,
                                   hovermode='closest',
                                   autosize=False,
-                                  height=900,
-                                  width=1900,
+                                  height=600,
+                                  width=1300,
                                   )
         # Add annotation
-        fig.update_layout(annotations=[
-        dict(text="City", yref="paper", xref='paper',        x=-.04, y=1.14, showarrow=False),
-        dict(text="Program", yref="paper", xref='paper',     x=.07,  y=1.14, showarrow=False),
-        dict(text="Orientation", yref="paper", xref='paper', x=.19,  y=1.14, showarrow=False),
-        dict(text="WWR", yref="paper", xref='paper',         x=.31,  y=1.14, showarrow=False),
-        dict(text="Label", yref="paper", xref='paper',       x=.44,  y=1.14, showarrow=False),
-        dict(text="X axix", yref="paper", xref='paper',      x=.56,  y=1.14, showarrow=False),
-        dict(text="Y Axis", yref="paper", xref='paper',      x=.69,  y=1.14, showarrow=False),])
+        # fig.update_layout(annotations=[
+        # dict(text="City", yref="paper", xref='paper',        x=-.04, y=1.14, showarrow=False),
+        # dict(text="Program", yref="paper", xref='paper',     x=.07,  y=1.14, showarrow=False),
+        # dict(text="Orientation", yref="paper", xref='paper', x=.19,  y=1.14, showarrow=False),
+        # dict(text="WWR", yref="paper", xref='paper',         x=.31,  y=1.14, showarrow=False),
+        # dict(text="Label", yref="paper", xref='paper',       x=.44,  y=1.14, showarrow=False),
+        # dict(text="X axix", yref="paper", xref='paper',      x=.56,  y=1.14, showarrow=False),
+        # dict(text="Y Axis", yref="paper", xref='paper',      x=.69,  y=1.14, showarrow=False),])
         return fig
     app.run_server(debug=True)
 
 
 if __name__ == '__main__':
     for i in range(50): print('')
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
+    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data'
+    # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
     data = load_jsons(folderpath)
     # plot_pareto(data)
     dash_pareto(data)
