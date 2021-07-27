@@ -12,39 +12,16 @@ import pandas as pd
 import plotly.express as px
 
 
-def load_jsons(folderpath):
-    cdict = {'Seattle': 'seattle', 'San Antonio': 'san_antonio',
-             'Milwaukee': 'milwaukee', 'Los Angeles': 'los_angeles'}
-    pdict = {'2013::MidriseApartment::Apartment': 'residential',
-             '2013::MediumOffice::OpenOffice': 'office'}
-
-    data = {'seattle':{'residential':{}, 'office':{}},
-            'san_antonio':{'residential':{}, 'office':{}},
-            'milwaukee':{'residential':{}, 'office':{}},
-            # 'los_angeles':{'residential':{}, 'office':{}}
-            }
-
+def load_jsons_pandas(folderpath):
+    data = {}
     files = os.listdir(folderpath)
     for f in files:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
-            program = pdict[b.zone_program]
-            city = cdict[b.city]
-            data[city][program][key] = parse_building(b, f)
-    return data
-
-
-def load_jsons_pandas(folderpath):
-    data = {}
-    files = os.listdir(folderpath)
-    for f in files[:1000]:
-        if f.endswith('json'):
-            b = Building.from_json(os.path.join(folderpath, f))
-            key = os.path.splitext(f)[0]
             data[key] = parse_building(b, f)
-    data = pd.DataFrame.from_dict(data, orient='index')
-    return data
+    frame = pd.DataFrame.from_dict(data, orient='index')
+    return data, frame
 
 
 def parse_building(bldg, filename):
@@ -53,6 +30,10 @@ def parse_building(bldg, filename):
     int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0}
     pdict = {'2013::MidriseApartment::Apartment': 'residential',
              '2013::MediumOffice::OpenOffice': 'office'}
+
+
+    city_gwp = {'San Antonio': 0.414311, 'Seattle': 0.135669, 'Milwaukee': 0.559278936}
+
     data = {}
     area = bldg.floor_area
     win  = bldg.envelope.window_embodied or 0.
@@ -93,11 +74,65 @@ def parse_building(bldg, filename):
     data['hot_water_operational'] = hot
     data['equipment_operational'] = eq
     data['total_operational'] = cool + heat + light + hot + eq
+    data['wall_r'] = bldg.wall_r
 
     data['city'] = bldg.city
     data['program'] = pdict[bldg.zone_program]
 
+    data['eui_kwh'] = bldg.eui_kwh[zonek]['total']
+    data['kgCo2e_kwh'] = city_gwp[bldg.city]
+    data['area'] = bldg.floor_area
+
+    ny = 30
+    years = list(range(1, ny))
+    imp = .05
+    city_gwp = data['kgCo2e_kwh']
+    op = data['total_operational']
+    eui = data['eui_kwh'] / data['area']
+    emb = data['total_embodied']
+    temp = 0
+    for y in years:
+        n = eui * city_gwp   
+        data['total_nonlinear{}'.format(y)] = n + temp + emb
+        data['total_bau{}'.format(y)] = op * y
+        data['op_nonlinear{}'.format(y)] = n + temp
+        city_gwp *= (1 - imp)
+        temp += n
+
     return data
+
+
+def plot_lifecycle(data, keys=None):
+
+    ny = 30
+    years = list(range(1, ny))
+    fig = go.Figure()
+    imp = .05
+    if not keys:
+        keys = data.keys()
+    for k in keys:
+        city_gwp = data[k]['kgCo2e_kwh']
+        op = data[k]['total_operational']
+        bau = [op * i for i in years]
+        eui = data[k]['eui_kwh'] / data[k]['area']
+        emb = []
+        non = []
+        temp = 0
+        tot = []
+        for _ in years:
+            n = eui * city_gwp
+            non.append(n + temp)
+            emb.append(data[k]['total_embodied'])
+            tot.append(n + temp + data[k]['total_embodied'])
+            city_gwp *= (1 - imp)
+            temp += n
+
+        fig.add_trace(go.Scatter(x=years, y=bau, name= 'BAU - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=non, name= 'Non linear - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=emb, name= 'Embodied - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=tot, name= 'Total - {}'.format(k)))
+    
+    fig.show()
 
 
 def plot_pareto(data):
@@ -338,17 +373,42 @@ def dash_pareto(data):
 
 def dash_pareto_pandas(frame):
     app = dash.Dash(__name__)
+    data_types = ['total_embodied', 'total_operational', 'total_nonlinear', 'op_nonlinear',
+                  'wall_embodied', 'window_embodied', 'total_cooling', 'total_heating',
+                  'total_lighting','max_cooling', 'max_heating', 'max_lighting',
+                  'max_solar']
     cities = ['Seattle', 'San Antonio', 'Milwaukee', 'all']
     programs = ['office', 'residential', 'all']
     orientations = ['n', 'w', 's', 'e', 'all']
     wwrs = ['0', '20', '40', '60', '80', 'all']
-    colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program']
-    sizes = ['wwr', 'exterior_t', 'interior_t']
+    glazings = ['all', 'Double', 'Triple']
+    colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program', 'wall_r']
+    sizes = ['None', 'wwr', 'exterior_t', 'interior_t', 'wall_r']
     labels = ['wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t',
-               'interior_mat', 'interior_t', 'None']
+               'interior_mat', 'interior_t', 'wall_r', 'None']
 
     app.layout = html.Div([
         html.Div([
+
+            html.Div([
+                html.Label('X axis'),
+                dcc.Dropdown(
+                    id='x_axis',
+                    options=[{'label': i, 'value': i} for i in data_types],
+                    clearable=False,
+                    value='total_embodied', ),],
+                    style={'width': '10%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),
+
+            html.Div([
+                html.Label('Y axis'),
+                dcc.Dropdown(
+                    id='y_axis',
+                    options=[{'label': i, 'value': i} for i in data_types],
+                    clearable=False,
+                    value='total_operational', ),],
+                    style={'width': '10%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),
 
             html.Div([
                 html.Label('City'),
@@ -357,7 +417,7 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in cities],
                     clearable=False,
                     value='all', ),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),
 
             html.Div([
@@ -367,7 +427,7 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in programs],
                     clearable=False,
                     value='all'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),                    
 
             html.Div([
@@ -377,7 +437,7 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in orientations],
                     clearable=False,
                     value='all'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),    
 
             html.Div([
@@ -387,8 +447,18 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in wwrs],
                     clearable=False,
                     value='all'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),    
+
+            html.Div([
+                html.Label('Glazing'),
+                dcc.Dropdown(
+                    id='glazings',
+                    options=[{'label': i, 'value': i} for i in glazings],
+                    clearable=False,
+                    value='all'),],
+                    style={'width': '10%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),   
 
             html.Div([
                 html.Label('Color by'),
@@ -397,7 +467,7 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in colors],
                     clearable=False,
                     value='city'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),    
 
             html.Div([
@@ -406,8 +476,8 @@ def dash_pareto_pandas(frame):
                     id='sizes',
                     options=[{'label': i, 'value': i} for i in sizes],
                     clearable=False,
-                    value='wwr'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    value='None'),],
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}),  
 
             html.Div([
@@ -417,7 +487,7 @@ def dash_pareto_pandas(frame):
                     options=[{'label': i, 'value': i} for i in labels],
                     clearable=False,
                     value='None'),],
-                    style={'width': '14%', 'display': 'inline-block',
+                    style={'width': '10%', 'display': 'inline-block',
                            'font-family':'open sans', 'font-size':'12px'}), 
 
 
@@ -425,22 +495,48 @@ def dash_pareto_pandas(frame):
                     ]),
 
         dcc.Graph(id='indicator-graphic'),
+
+        dcc.Slider(
+            id='year',
+            min=1,
+            max=30,
+            step=1,
+            value=1,
+            marks={i:str(i) for i in list(range(1, 30))},
+        ),
+        html.Div(id='slider-output-container')
     ])
-
-
 
     @app.callback(
         Output('indicator-graphic', 'figure'),
+        Input('x_axis', 'value'),
+        Input('y_axis', 'value'),
         Input('cities', 'value'),
         Input('programs', 'value'),
         Input('orientations', 'value'),
         Input('wwrs', 'value'),
+        Input('glazings', 'value'),
         Input('colors', 'value'),
         Input('sizes', 'value'),
         Input('labels', 'value'),
+        Input('year', 'value'),
         )
-    def update_graph(city, program, orient, wwr, color, size, lable):
+    def update_graph(x_axis, y_axis, city, program, orient, wwr, glazing, color, size, lable, year):
         hd = ['total_embodied','total_operational','wwr','glazing','orient']
+        labdict = {'total_embodied': 'total_embodied (kg CO2e / ft^2)',
+                   'total_operational': 'total_operational (kg CO2e / ft^2 year )',
+                   'op_nonlinear{}'.format(year): 'operational non-linear year {} (kg CO2e / ft^2)'.format(year),
+                   'total_nonlinear{}'.format(year): 'total non-linear year {} (kg CO2e / ft^2)'.format(year),
+                   'window_embodied':'window_embodied (kg CO2e / ft^2)',
+                   'wall_embodied':'wall_embodied (kg CO2e / ft^2)',
+                   'total_cooling':'total_cooling',
+                   'total_heating':'total_heating',
+                   'total_lighting':'total_lighting',
+                   'max_cooling':'max_cooling', 
+                   'max_heating':'max_heating',
+                   'max_lighting':'max_lighting',
+                   'max_solar':'max_solar_gains',
+                   }
 
         if city != 'all':
             mask = (frame['city'] == city)
@@ -466,30 +562,52 @@ def dash_pareto_pandas(frame):
         else:
             df = df
 
+        if glazing != 'all':
+            mask = (df['glazing'] == glazing)
+            df = df[mask]
+        else:
+            df = df
+
         if color == 'None':
             color = None
 
         if lable == 'None':
             lable = None
 
+        if size == 'None':
+            size = None
+
+        if y_axis == 'total_nonlinear':
+            y_axis = 'total_nonlinear{}'.format(year)
+        if x_axis == 'total_nonlinear':
+            x_axis = 'total_nonlinear{}'.format(year)
+        
+        if y_axis == 'op_nonlinear':
+            y_axis = 'op_nonlinear{}'.format(year)
+        if x_axis == 'op_nonlinear':
+            x_axis = 'op_nonlinear{}'.format(year)
+
         fig = px.scatter(df,
-                         x='total_embodied',
-                         y='total_operational',
+                         x=x_axis,
+                         y=y_axis,
                          color=color,
                          size=size,
+                         size_max=10,
                          text=lable,
                          hover_data=hd,
+                         labels=labdict,
                         )
+        
         string = 'City: {} | Program: {} | Orientation: {} | WWR: {}'
         fig.update_layout(title={'text':string.format(city, program, orient, wwr)},
-                        #   xaxis='total_embodied',
-                        #   yaxis='total_operational',
                           hovermode='closest',
                           autosize=False,
-                          height=900,
-                          width=1200,
+                          height=800,
+                          width=1300,
                         )
-        fig.update_traces(textposition='middle center')
+        
+        fig.update_traces(textposition='top right')
+        # fig.update_traces(marker_sizemin = 5) 
         return fig
 
     app.run_server(debug=True)
@@ -500,6 +618,8 @@ if __name__ == '__main__':
     for i in range(50): print('')
     folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
-    frame = load_jsons_pandas(folderpath)
+    data, frame = load_jsons_pandas(folderpath)
     dash_pareto_pandas(frame)
+    # keys = list(data.keys())[9900]
+    # plot_lifecycle(data, keys=[keys])
 
