@@ -6,6 +6,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
+import pandas as pd
 import plotly.express as px
 
 
@@ -29,6 +30,18 @@ def load_jsons(folderpath):
             program = pdict[b.zone_program]
             city = cdict[b.city]
             data[city][program][key] = parse_building(b, f)
+    return data
+
+
+def load_jsons_pandas(folderpath):
+    data = {}
+    files = os.listdir(folderpath)
+    for f in files[:1000]:
+        if f.endswith('json'):
+            b = Building.from_json(os.path.join(folderpath, f))
+            key = os.path.splitext(f)[0]
+            data[key] = parse_building(b, f)
+    data = pd.DataFrame.from_dict(data, orient='index')
     return data
 
 
@@ -77,6 +90,10 @@ def parse_building(bldg, filename):
     data['hot_water_operational'] = hot
     data['equipment_operational'] = eq
     data['total_operational'] = cool + heat + light + hot + eq
+
+    data['city'] = bldg.city
+    data['program'] = bldg.zone_program
+
     return data
 
 
@@ -316,11 +333,70 @@ def dash_pareto(data):
     app.run_server(debug=True)
 
 
+def dash_pareto_pandas(frame):
+    app = dash.Dash(__name__)
+    cities = ['Seattle', 'San Antonio', 'Milwaukee', 'all']
+
+    app.layout = html.Div([
+        html.Div([
+
+            html.Div([
+                dcc.Dropdown(
+                    id='cities',
+                    options=[{'label': i, 'value': i} for i in cities],
+                    value='all'),],
+                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
+                    
+                    ]),
+
+        dcc.Graph(id='indicator-graphic'),
+    ])
+
+
+
+    @app.callback(
+        Output('indicator-graphic', 'figure'),
+        Input('cities', 'value'))
+    def update_graph(city):
+        if city != 'all':
+            mask = (frame['city'] == city)
+            df = frame[mask]
+        else:
+            df = frame
+
+        fig = px.scatter(df,
+                        x='total_embodied',
+                        y='total_operational',
+                        color='wwr',
+                        size='wwr',
+                        text='wwr',
+                        hover_data=['total_embodied',
+                                    'total_operational',
+                                    'wwr',
+                                    'glazing',
+                                    'orient'],
+                        )
+
+        fig.update_layout(title={'text': 'Pareto Front'},
+                        #   xaxis=xaxis,
+                        #   yaxis=yaxis,
+                          hovermode='closest',
+                          autosize=False,
+                          height=800,
+                          width=1300,
+                        )
+
+        return fig
+
+    app.run_server(debug=True)
+
+
 if __name__ == '__main__':
     for i in range(50): print('')
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data'
+    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
-    data = load_jsons(folderpath)
+    frame = load_jsons_pandas(folderpath)
     # plot_pareto(data)
-    dash_pareto(data)
+    # dash_pareto(data)
+    dash_pareto_pandas(frame)
 
