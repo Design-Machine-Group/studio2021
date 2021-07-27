@@ -196,6 +196,7 @@ class Building(object):
                 'context'                   : self.context,
                 'win_geometry'              : self.win_geometry,
                 'total_shade_len'           : self.total_shade_len,
+                'wall_r'                    : self.wall_r,
                 }
 
 
@@ -455,6 +456,7 @@ class Building(object):
         self.context                = data.get('context') or {}
         self.win_geometry           = data.get('win_geometry') or {}
         self.total_shade_len        = data.get('total_shade_len') or {}
+        self.wall_r                 = data.get('wall_r') or {}
         structure                   = data.get('structure') or {}
         envelope                    = data.get('envelope') or {}  
         self.structure              = Structure.from_data(structure)

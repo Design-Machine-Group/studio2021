@@ -15,11 +15,12 @@ import plotly.express as px
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files:
+    for f in files[:2]:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
             data[key] = parse_building(b, f)
+            print(b.wall_r)
     frame = pd.DataFrame.from_dict(data, orient='index')
     return data, frame
 
