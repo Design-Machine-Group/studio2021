@@ -1,4 +1,6 @@
 import os
+
+from pandas.core.indexes import multi
 from studio2021.datastructures import Building
 import plotly.graph_objects as go
 
@@ -49,7 +51,8 @@ def parse_building(bldg, filename):
 
     gl_dict = {'Aluminum Double': 2, 'Aluminum Triple': 3}
     int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0}
-
+    pdict = {'2013::MidriseApartment::Apartment': 'residential',
+             '2013::MediumOffice::OpenOffice': 'office'}
     data = {}
     area = bldg.floor_area
     win  = bldg.envelope.window_embodied or 0.
@@ -92,7 +95,7 @@ def parse_building(bldg, filename):
     data['total_operational'] = cool + heat + light + hot + eq
 
     data['city'] = bldg.city
-    data['program'] = bldg.zone_program
+    data['program'] = pdict[bldg.zone_program]
 
     return data
 
@@ -336,17 +339,89 @@ def dash_pareto(data):
 def dash_pareto_pandas(frame):
     app = dash.Dash(__name__)
     cities = ['Seattle', 'San Antonio', 'Milwaukee', 'all']
+    programs = ['office', 'residential', 'all']
+    orientations = ['n', 'w', 's', 'e', 'all']
+    wwrs = ['0', '20', '40', '60', '80', 'all']
+    colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program']
+    sizes = ['wwr', 'glazing']
+    labels = ['wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t',
+               'interior_mat', 'interior_t', 'None']
 
     app.layout = html.Div([
         html.Div([
 
             html.Div([
+                html.Label('City'),
                 dcc.Dropdown(
                     id='cities',
                     options=[{'label': i, 'value': i} for i in cities],
+                    clearable=False,
+                    value='all', ),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),
+
+            html.Div([
+                html.Label('Program'),
+                dcc.Dropdown(
+                    id='programs',
+                    options=[{'label': i, 'value': i} for i in programs],
+                    clearable=False,
                     value='all'),],
-                    style={'width': '14%', 'display': 'inline-block', 'font-family':'open sans', 'font-size':'12px'}),
-                    
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),                    
+
+            html.Div([
+                html.Label('Orientation'),
+                dcc.Dropdown(
+                    id='orientations',
+                    options=[{'label': i, 'value': i} for i in orientations],
+                    clearable=False,
+                    value='all'),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),    
+
+            html.Div([
+                html.Label('WWR'),
+                dcc.Dropdown(
+                    id='wwrs',
+                    options=[{'label': i, 'value': i} for i in wwrs],
+                    clearable=False,
+                    value='all'),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),    
+
+            html.Div([
+                html.Label('Color by'),
+                dcc.Dropdown(
+                    id='colors',
+                    options=[{'label': i, 'value': i} for i in colors],
+                    clearable=False,
+                    value='city'),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),    
+
+            html.Div([
+                html.Label('Size by'),
+                dcc.Dropdown(
+                    id='sizes',
+                    options=[{'label': i, 'value': i} for i in sizes],
+                    clearable=False,
+                    value='wwr'),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}),  
+
+            html.Div([
+                html.Label('Label by'),
+                dcc.Dropdown(
+                    id='labels',
+                    options=[{'label': i, 'value': i} for i in labels],
+                    clearable=False,
+                    value='None'),],
+                    style={'width': '14%', 'display': 'inline-block',
+                           'font-family':'open sans', 'font-size':'12px'}), 
+
+
+
                     ]),
 
         dcc.Graph(id='indicator-graphic'),
@@ -356,25 +431,54 @@ def dash_pareto_pandas(frame):
 
     @app.callback(
         Output('indicator-graphic', 'figure'),
-        Input('cities', 'value'))
-    def update_graph(city):
+        Input('cities', 'value'),
+        Input('programs', 'value'),
+        Input('orientations', 'value'),
+        Input('wwrs', 'value'),
+        Input('colors', 'value'),
+        Input('sizes', 'value'),
+        Input('labels', 'value'),
+        )
+    def update_graph(city, program, orient, wwr, color, size, lable):
+        hd = ['total_embodied','total_operational','wwr','glazing','orient']
+
         if city != 'all':
             mask = (frame['city'] == city)
             df = frame[mask]
         else:
             df = frame
 
+        if program != 'all':
+            mask = (df['program'] == program)
+            df = df[mask]
+        else:
+            df = df
+
+        if orient != 'all':
+            mask = (df['orient'] == orient)
+            df = df[mask]
+        else:
+            df = df
+
+        if wwr != 'all':
+            mask = (df['wwr'] == float(wwr) / 100.)
+            df = df[mask]
+        else:
+            df = df
+
+        if color == 'None':
+            color = None
+
+        if lable == 'None':
+            lable = None
+
         fig = px.scatter(df,
-                        x='total_embodied',
-                        y='total_operational',
-                        color='wwr',
-                        size='wwr',
-                        text='wwr',
-                        hover_data=['total_embodied',
-                                    'total_operational',
-                                    'wwr',
-                                    'glazing',
-                                    'orient'],
+                         x='total_embodied',
+                         y='total_operational',
+                         color=color,
+                         size=size,
+                         text=lable,
+                         hover_data=hd,
                         )
 
         fig.update_layout(title={'text': 'Pareto Front'},
@@ -382,21 +486,19 @@ def dash_pareto_pandas(frame):
                         #   yaxis=yaxis,
                           hovermode='closest',
                           autosize=False,
-                          height=800,
-                          width=1300,
+                          height=900,
+                          width=1200,
                         )
-
         return fig
 
     app.run_server(debug=True)
 
 
 if __name__ == '__main__':
+    #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
     for i in range(50): print('')
     folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
     frame = load_jsons_pandas(folderpath)
-    # plot_pareto(data)
-    # dash_pareto(data)
     dash_pareto_pandas(frame)
 
