@@ -49,7 +49,7 @@ def load_jsons_pandas(folderpath):
 
 def parse_building(bldg, filename):
 
-    gl_dict = {'Aluminum Double': 2, 'Aluminum Triple': 3}
+    gl_dict = {'Aluminum Double': 'Double', 'Aluminum Triple': 'Triple'}
     int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0}
     pdict = {'2013::MidriseApartment::Apartment': 'residential',
              '2013::MediumOffice::OpenOffice': 'office'}
@@ -343,7 +343,7 @@ def dash_pareto_pandas(frame):
     orientations = ['n', 'w', 's', 'e', 'all']
     wwrs = ['0', '20', '40', '60', '80', 'all']
     colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program']
-    sizes = ['wwr', 'glazing']
+    sizes = ['wwr', 'exterior_t', 'interior_t']
     labels = ['wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t',
                'interior_mat', 'interior_t', 'None']
 
@@ -480,15 +480,16 @@ def dash_pareto_pandas(frame):
                          text=lable,
                          hover_data=hd,
                         )
-
-        fig.update_layout(title={'text': 'Pareto Front'},
-                        #   xaxis=xaxis,
-                        #   yaxis=yaxis,
+        string = 'City: {} | Program: {} | Orientation: {} | WWR: {}'
+        fig.update_layout(title={'text':string.format(city, program, orient, wwr)},
+                        #   xaxis='total_embodied',
+                        #   yaxis='total_operational',
                           hovermode='closest',
                           autosize=False,
                           height=900,
                           width=1200,
                         )
+        fig.update_traces(textposition='middle center')
         return fig
 
     app.run_server(debug=True)
