@@ -15,7 +15,7 @@ import plotly.express as px
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files[:100]:
+    for f in files:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
@@ -660,8 +660,8 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
 if __name__ == '__main__':
     #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
     for i in range(50): print('')
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
-    # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
+    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
+    # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     data, frame = load_jsons_pandas(folderpath)
     dash_pareto_pandas(frame, 800, 1300)
     # keys = list(data.keys())[9900]
