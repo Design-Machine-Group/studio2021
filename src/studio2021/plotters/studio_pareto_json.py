@@ -15,12 +15,11 @@ import plotly.express as px
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files[:2]:
+    for f in files:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
             data[key] = parse_building(b, f)
-            print(b.wall_r)
     frame = pd.DataFrame.from_dict(data, orient='index')
     return data, frame
 
@@ -500,7 +499,7 @@ def dash_pareto_pandas(frame):
         dcc.Slider(
             id='year',
             min=1,
-            max=30,
+            max=50,
             step=1,
             value=1,
             marks={i:str(i) for i in list(range(1, 30))},
@@ -617,8 +616,8 @@ def dash_pareto_pandas(frame):
 if __name__ == '__main__':
     #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
     for i in range(50): print('')
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
-    # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/data_072021'
+    # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
+    folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data'
     data, frame = load_jsons_pandas(folderpath)
     dash_pareto_pandas(frame)
     # keys = list(data.keys())[9900]
