@@ -29,8 +29,11 @@ def weather(city_name):
     se = os.path.join(studio2021.DATA, 'USA_WA_Seattle-Tacoma.Intl.AP.727930_TMY3.epw')
     mi = os.path.join(studio2021.DATA, 'USA_WI_Milwaukee-Mitchell.Intl.AP.726400_TMY3.epw')
     sa = os.path.join(studio2021.DATA, 'USA_TX_San.Antonio.Intl.AP.722530_TMY3.epw')
+    la = os.path.join(studio2021.DATA, 'USA_CA_Los.Angeles.Intl.AP.722950_TMY3.epw')
+    ny = os.path.join(studio2021.DATA, 'USA_NY_New.York-Central.Park.725033_TMY3.epw')
+    at = os.path.join(studio2021.DATA, 'USA_GA_Atlanta-Hartsfield-Jackson.Intl.AP.722190_TMY3.epw')
 
-    weather = {'Seattle': se, 'Milwaukee': mi, 'San Antonio':sa}
+    weather = {'Seattle': se, 'Milwaukee': mi, 'San Antonio':sa, 'Los Angeles':la, 'New York':ny, 'Atlanta':at}
     return weather[city_name]
 
 if __name__ == '__main__':

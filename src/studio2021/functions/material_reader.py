@@ -40,7 +40,10 @@ def read_materials_city(material, city):
         data[l[0]] = {'National': float(l[2]),
                       'Seattle': float(l[3]),
                       'Milwaukee': float(l[4]),
-                      'San Antonio': float(l[5])}
+                      'San Antonio': float(l[5]),
+                      'Los Angeles': float(l[6]),
+                      'Atlanta': float(l[7]),
+                      'New York': float(l[8])}
     if data[material][city] == 0:
         return data[material]['National']
     else:
