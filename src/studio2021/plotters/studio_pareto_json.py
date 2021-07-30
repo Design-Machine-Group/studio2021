@@ -471,6 +471,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                          text=lable,
                          hover_data=hd,
                          labels=None,
+                         color_continuous_scale='Viridis' # 'sunsetdark'
                         )
         
         string = 'City: {} | Program: {} | Orientation: {} | WWR: {}'
