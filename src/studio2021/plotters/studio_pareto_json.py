@@ -15,7 +15,7 @@ import plotly.express as px
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files:
+    for f in files[:1000]:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
@@ -136,7 +136,6 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                'Cooling EUI (kBtu / ft2 * year)', 'Heating EUI (kBtu / ft2 * year)',
                'Lighting EUI (kBtu / ft2 * year)',
                'Total GWP non-linear (kg CO2e / ft2) N year',
-            #    'Total GWP linear (kg CO2e / ft2) N year',
                'Operational GWP non-linear (kg CO2e / ft2) N year',
                   ]
 
@@ -148,206 +147,68 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
     labels = ['None', 'wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t (in)',
                'interior_mat', 'interior_t (in)', 'Wall R (ft2 * F * h / BTU)']
 
-    cities = ['all', 'Seattle', 'San Antonio', 'Milwaukee']
-    programs = ['all', 'office', 'residential']
-    orientations = ['all', 'n', 'w', 's', 'e']
-    wwrs = ['all', '0', '20', '40', '60', '80']
-    glazings = ['all', 'Double', 'Triple']
-    ext_ts = ['all', '0', '4', '8']
-    ext_ms = ['all', 'EPS', 'Polyiso']
-    int_ts = ['all', '6', '8', '10']
-    int_ms = ['all', 'Fiberglass', 'Cellulose']
-    shgcs = ['all', '0.25', '0.6']
-    shadings = ['all', '0.0', '2.5']
+    cities =        ['all', 'Seattle', 'San Antonio', 'Milwaukee']
+    programs =      ['all', 'office', 'residential']
+    orientations =  ['all', 'n', 'w', 's', 'e']
+    wwrs =          ['all', '0', '20', '40', '60', '80']
+    glazings =      ['all', 'Double', 'Triple']
+    ext_ts =        ['all', '0', '4', '8']
+    ext_ms =        ['all', 'EPS', 'Polyiso']
+    int_ts =        ['all', '6', '8', '10']
+    int_ms =        ['all', 'Fiberglass', 'Cellulose']
+    shgcs =         ['all', '0.25', '0.6']
+    shadings =      ['all', '0.0', '2.5']
 
     wset = '20%'
     wfilt = '9%'
 
-    app.layout = html.Div([
-        html.Div([
+    ddict1 = {'X axis': {'id': 'x_axis', 'list': xy_axis, 'value': 'Embodied (kg CO2e / ft2)'},
+              'Y axis': {'id': 'y_axis', 'list': xy_axis, 'value': 'Operational (kg CO2e / ft2 * year)'},
+              'Color by': {'id': 'colors', 'list': colors, 'value': 'city'},
+              'Size by': {'id': 'sizes', 'list': sizes, 'value': 'None'},
+              'Label by': {'id': 'labels', 'list': labels, 'value': 'None'},
+            }
 
-            html.Div([
-                html.Label('X axis'),
-                dcc.Dropdown(
-                    id='x_axis',
-                    options=[{'label': i, 'value': i} for i in xy_axis],
-                    clearable=False,
-                    value='Embodied (kg CO2e / ft2)', ),],
-                    style={'width': wset, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),
+    ddict2 = {'City': {'id': 'cities', 'list': cities, 'value': 'all'},
+              'Program': {'id': 'programs', 'list': programs, 'value': 'all'},
+              'Orientation': {'id': 'orientations', 'list': orientations, 'value': 'all'},
+              'WWR': {'id': 'wwrs', 'list': wwrs, 'value': 'all'},
+              'Glazing': {'id': 'glazings', 'list': glazings, 'value': 'all'},
+              'Ext thick': {'id': 'ex_thicks', 'list': ext_ts, 'value': 'all'},
+              'Ext Material': {'id': 'ex_mats', 'list': ext_ms, 'value': 'all'},
+              'Int thick': {'id': 'in_thicks', 'list': int_ts, 'value': 'all'},
+              'Int Material': {'id': 'in_mats', 'list': int_ms, 'value': 'all'},
+              'Solar HGC': {'id': 'shgcs', 'list': shgcs, 'value': 'all'},
+              'Shading': {'id': 'shadings', 'list': shadings, 'value': 'all'},
+            }
+    wlist = [wset, wfilt]
+    dds = []
+    for i, ddict in enumerate([ddict1, ddict2]):
+        drop_width = wlist[i]
+        temp = []
+        for k in ddict:
+            div = html.Div([html.Label(k),
+                dcc.Dropdown(id=ddict[k]['id'],
+                            options=[{'label': i, 'value': i} for i in ddict[k]['list']],
+                            clearable=False,
+                            value=ddict[k]['value']),],
+                            style={'width': drop_width, 'display': 'inline-block',
+                                    'font-family':'open sans', 'font-size':'8px'})
+            temp.append(div)
+        dds.append(temp)
 
-            html.Div([
-                html.Label('Y axis'),
-                dcc.Dropdown(
-                    id='y_axis',
-                    options=[{'label': i, 'value': i} for i in xy_axis],
-                    clearable=False,
-                    value='Operational (kg CO2e / ft2 * year)', ),],
-                    style={'width': wset, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),
+    graph = dcc.Graph(id='indicator-graphic')
+    slider = dcc.Slider(id='year', min=1, max=50, step=1,value=1,
+             marks={i:str(i) for i in list(range(1, 30))})
+    slider_div = html.Div(id='slider-output-container')
 
-            html.Div([
-                html.Label('Color by'),
-                dcc.Dropdown(
-                    id='colors',
-                    options=[{'label': i, 'value': i} for i in colors],
-                    clearable=False,
-                    value='city'),],
-                    style={'width': wset, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),    
+    app.layout = html.Div([html.Div(dds[0]),
+                           html.Div(dds[1]),
+                           graph,
+                           slider,
+                           slider_div,]
+                          )
 
-            html.Div([
-                html.Label('Size by'),
-                dcc.Dropdown(
-                    id='sizes',
-                    options=[{'label': i, 'value': i} for i in sizes],
-                    clearable=False,
-                    value='None'),],
-                    style={'width': wset, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),  
-
-            html.Div([
-                html.Label('Label by'),
-                dcc.Dropdown(
-                    id='labels',
-                    options=[{'label': i, 'value': i} for i in labels],
-                    clearable=False,
-                    value='None'),],
-                    style={'width': wset, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-        ]),
-
-
-        html.Div([
-
-            html.Div([
-                html.Label('City'),
-                dcc.Dropdown(
-                    id='cities',
-                    options=[{'label': i, 'value': i} for i in cities],
-                    clearable=False,
-                    value='all', ),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),
-
-            html.Div([
-                html.Label('Program'),
-                dcc.Dropdown(
-                    id='programs',
-                    options=[{'label': i, 'value': i} for i in programs],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),
-
-
-            html.Div([
-                html.Label('Orientation'),
-                dcc.Dropdown(
-                    id='orientations',
-                    options=[{'label': i, 'value': i} for i in orientations],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),    
-
-            html.Div([
-                html.Label('WWR'),
-                dcc.Dropdown(
-                    id='wwrs',
-                    options=[{'label': i, 'value': i} for i in wwrs],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),    
-
-            html.Div([
-                html.Label('Glazing'),
-                dcc.Dropdown(
-                    id='glazings',
-                    options=[{'label': i, 'value': i} for i in glazings],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}),   
-
-            html.Div([
-                html.Label('Ext thick'),
-                dcc.Dropdown(
-                    id='ex_thicks',
-                    options=[{'label': i, 'value': i} for i in ext_ts],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-            html.Div([
-                html.Label('Ext Material'),
-                dcc.Dropdown(
-                    id='ex_mats',
-                    options=[{'label': i, 'value': i} for i in ext_ms],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-
-            html.Div([
-                html.Label('Int thick'),
-                dcc.Dropdown(
-                    id='in_thicks',
-                    options=[{'label': i, 'value': i} for i in int_ts],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-            html.Div([
-                html.Label('Int Material'),
-                dcc.Dropdown(
-                    id='in_mats',
-                    options=[{'label': i, 'value': i} for i in int_ms],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-            html.Div([
-                html.Label('Solar HGC'),
-                dcc.Dropdown(
-                    id='shgcs',
-                    options=[{'label': i, 'value': i} for i in shgcs],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-            html.Div([
-                html.Label('Shading'),
-                dcc.Dropdown(
-                    id='shadings',
-                    options=[{'label': i, 'value': i} for i in shadings],
-                    clearable=False,
-                    value='all'),],
-                    style={'width': wfilt, 'display': 'inline-block',
-                           'font-family':'open sans', 'font-size':'8px'}), 
-
-
-                    ]),
-
-        dcc.Graph(id='indicator-graphic'),
-
-        dcc.Slider(
-            id='year',
-            min=1,
-            max=50,
-            step=1,
-            value=1,
-            marks={i:str(i) for i in list(range(1, 30))},
-        ),
-        html.Div(id='slider-output-container')
-    ])
 
     @app.callback(
         Output('indicator-graphic', 'figure'),
