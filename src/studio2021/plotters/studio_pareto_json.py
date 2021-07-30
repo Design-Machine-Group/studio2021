@@ -1,6 +1,5 @@
 import os
 
-from pandas.core.indexes import multi
 from studio2021.datastructures import Building
 import plotly.graph_objects as go
 
@@ -15,7 +14,7 @@ import plotly.express as px
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files[:1000]:
+    for f in files:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
@@ -351,13 +350,14 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
 
 
 if __name__ == '__main__':
+    import studio2021
     #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
     for i in range(50): print('')
     # folderpath = 'C:/IDL/StudioTool/Paper/data/all_data_/all_data_'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
-    folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
-    data, frame = load_jsons_pandas(folderpath)
+    # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
+    # data, frame = load_jsons_pandas(folderpath)
+    filepath = os.path.join(studio2021.DATA, 'frames', 'all_data_.csv')
+    frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
-    # keys = list(data.keys())[9900]
-    # plot_lifecycle(data, keys=[keys])
 
