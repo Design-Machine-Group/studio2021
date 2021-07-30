@@ -392,7 +392,6 @@ class Structure(object):
                 tdist += distance_point_point(a, b)
         vol = tdist * self.height * 0.037037
         self.core_embodied = (vol * self.conc_kgco2_yd3) + (vol * .04 * self.rebar_kgco2_yd3)
-        
 
 if __name__ == "__main__":
     pass
