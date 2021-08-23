@@ -8,6 +8,13 @@ __version__ = "0.1.0"
 
 from ast import literal_eval
 
+from studio2021.functions import material_reader
+try:
+    reload(material_reader)
+except:
+    pass
+
+
 from studio2021.functions import read_materials
 from studio2021.functions import read_materials_city
 from studio2021.functions import read_glazing

@@ -633,6 +633,7 @@ class Building(object):
         b.building_type         = data['building_type']
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
+        b.inf_rate              = data['inf_rate']
         return b
 
     def add_structure(self, data):
@@ -864,6 +865,7 @@ class Building(object):
         data['simulation_folder']       = self.simulation_folder
         data['run_simulation']          = self.run_simulation
         data['interior_insul_mat']      = self.interior_insul_mat
+        data['inf_rate']                = self.inf_rate
 
         if self.ewall_framing == '2x4 Wood Studs':
             int_ins_thick = 4. / 12.
