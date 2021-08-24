@@ -117,6 +117,8 @@ class Building(object):
         self.wall_r                 = None
         self.win_geometry           = None
         self.total_shade_len        = None
+        self.inf_rate               = None
+        self.opaque_r               = None
 
     def __str__(self):
         return TPL.format(self.__name__)
@@ -197,6 +199,8 @@ class Building(object):
                 'win_geometry'              : self.win_geometry,
                 'total_shade_len'           : self.total_shade_len,
                 'wall_r'                    : self.wall_r,
+                'inf_rate'                  : self.inf_rate,
+                'opaque_r'                  : self.opaque_r,
                 }
 
 
@@ -457,6 +461,8 @@ class Building(object):
         self.win_geometry           = data.get('win_geometry') or {}
         self.total_shade_len        = data.get('total_shade_len') or {}
         self.wall_r                 = data.get('wall_r') or {}
+        self.inf_rate               = data.get('inf_rate') or {}
+        self.opaque_r               = data.get('opaque_r') or {}
         structure                   = data.get('structure') or {}
         envelope                    = data.get('envelope') or {}  
         self.structure              = Structure.from_data(structure)
@@ -634,6 +640,7 @@ class Building(object):
         b.num_floors_above      = data['num_floors_above']
         b.composite_slab        = data['composite_slab']
         b.inf_rate              = data['inf_rate']
+        b.opaque_r              = data['opaque_r']
         return b
 
     def add_structure(self, data):
@@ -866,6 +873,7 @@ class Building(object):
         data['run_simulation']          = self.run_simulation
         data['interior_insul_mat']      = self.interior_insul_mat
         data['inf_rate']                = self.inf_rate
+        data['opaque_r']                = self.opaque_r
 
         if self.ewall_framing == '2x4 Wood Studs':
             int_ins_thick = 4. / 12.
