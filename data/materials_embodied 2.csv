@@ -1,4 +1,4 @@
-Material,Type,National gwp (kgCO2/yd3),Seattle gwp (kgCO2/yd3),Milwaukee gwp (kgCO2/yd3),San Antonio gwp (kgCO2/yd3),Los Angeles gwp (kgCO2/yd3),Atlanta gwp (kgCO2/yd3),New York City gwp (kgCO2/yd3)
+Material,Type,National gwp (kgCO2/yd3),Seattle gwp (kgCO2/yd3),Milwaukee gwp (kgCO2/yd3),San Antonio gwp (kgCO2/yd3),Los Angeles gwp (kgCO2/yd3),Atlanta gwp (kgCO2/yd3), New York City gwp (kgCO2/yd3)
 Gyp,Interior Finish,273,0,0,0,0,0,0
 Plywood,Exterior Sheathing,186,0,0,0,0,0,0
 Rigid,EPS Insulation,236.5,198.3,195.47,187.94,0,0,0
@@ -11,7 +11,6 @@ Stone,Façade Cladding,0.0136,0,0,0,0,0,0
 2x6 Metal Studs,Exterior Wall Framing,0.975,0,0,0,0,0,0
 CLT,Exterior Wall Framing,140.2,110,173.5,0,0,0,0
 Concrete,Exterior Wall Framing,435,387.5,429,453.6,393.7,413.8,412.4
-2x6 No Insulation,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x4 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x6 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x8 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0

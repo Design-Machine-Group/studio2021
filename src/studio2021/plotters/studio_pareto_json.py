@@ -26,12 +26,18 @@ def load_jsons_pandas(folderpath):
 def parse_building(bldg, filename):
 
     gl_dict = {'Aluminum Double': 'Double', 'Aluminum Triple': 'Triple'}
-    int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0}
+    int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0,
+                '2x6 No Insulation':0,}
     pdict = {'2013::MidriseApartment::Apartment': 'residential',
              '2013::MediumOffice::OpenOffice': 'office'}
 
 
-    city_gwp = {'San Antonio': 0.414311, 'Seattle': 0.135669, 'Milwaukee': 0.559278936}
+    city_gwp = {'San Antonio': 0.414311,
+                'Seattle': 0.135669,
+                'Milwaukee': 0.559278936,
+                'New York': 0.171548494,
+                'Los Angeles':0.175630822,
+                'Atlanta': 0.399590512}
 
     data = {}
 
@@ -41,6 +47,7 @@ def parse_building(bldg, filename):
     data['glazing'] = gl_dict[bldg.glazing_system]
     data['shading'] = bldg.shade_depth_h['n']
     data['shgc'] = bldg.shade_gc['n']
+    data['inf_rate'] = bldg.inf_rate
 
     data['exterior_mat'] = bldg.external_insulation
     data['exterior_t (in)'] = bldg.insulation_thickness or 0.
@@ -138,15 +145,20 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                'Operational GWP non-linear (kg CO2e / ft2) N year',
                   ]
 
-    colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program', 'Wall R (ft2 * F * h / BTU)',
-              'shgc', 'exterior_mat', 'exterior_t (in)', 'interior_mat', 'interior_t (in)']
+    colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program',
+              'Wall R (ft2 * F * h / BTU)', 'shgc', 'exterior_mat',
+              'exterior_t (in)', 'interior_mat', 'interior_t (in)',
+              'inf_rate']
     
-    sizes = ['None', 'wwr', 'exterior_t (in)', 'interior_t (in)', 'Wall R (ft2 * F * h / BTU)', 'shading']
+    sizes = ['None', 'wwr', 'exterior_t (in)', 'interior_t (in)',
+             'Wall R (ft2 * F * h / BTU)', 'shading', 'inf_rate']
     
-    labels = ['None', 'wwr', 'shading', 'glazing', 'shgc', 'exterior_mat', 'exterior_t (in)',
-               'interior_mat', 'interior_t (in)', 'Wall R (ft2 * F * h / BTU)']
+    labels = ['None', 'wwr', 'orient', 'shading', 'glazing', 'shgc',
+              'exterior_mat', 'exterior_t (in)', 'interior_mat',
+              'interior_t (in)', 'Wall R (ft2 * F * h / BTU)', 'inf_rate']
 
-    cities =        ['all', 'Seattle', 'San Antonio', 'Milwaukee']
+    cities =        ['all', 'Seattle', 'San Antonio', 'Milwaukee',
+                     'New York', 'Los Angeles', 'Atlanta']
     programs =      ['all', 'office', 'residential']
     orientations =  ['all', 'n', 'w', 's', 'e']
     wwrs =          ['all', '0', '20', '40', '60', '80']
@@ -157,9 +169,10 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
     int_ms =        ['all', 'Fiberglass', 'Cellulose']
     shgcs =         ['all', '0.25', '0.6']
     shadings =      ['all', '0.0', '2.5']
+    inf_rates =     ['all', '0.00056', '0.0003', '0.00015']
 
     wset = '20%'
-    wfilt = '9%'
+    wfilt = '8.33%'
 
     ddict1 = {'X axis': {'id': 'x_axis', 'list': xy_axis, 'value': 'Embodied (kg CO2e / ft2)'},
               'Y axis': {'id': 'y_axis', 'list': xy_axis, 'value': 'Operational (kg CO2e / ft2 * year)'},
@@ -179,6 +192,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
               'Int Material': {'id': 'in_mats', 'list': int_ms, 'value': 'all'},
               'Solar HGC': {'id': 'shgcs', 'list': shgcs, 'value': 'all'},
               'Shading': {'id': 'shadings', 'list': shadings, 'value': 'all'},
+              'Inf Rate': {'id': 'inf_rates', 'list': inf_rates, 'value': 'all'}
             }
     wlist = [wset, wfilt]
     dds = []
@@ -228,10 +242,11 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
         Input('in_mats', 'value'),
         Input('shgcs', 'value'),
         Input('shadings', 'value'),
+        Input('inf_rates', 'value'),
         )
     def update_graph(x_axis, y_axis, color, size, lable, year,
                      city, program, orient, wwr, glazing, ext_thick, 
-                     ext_mat, in_thick, in_mat, shgc, shading):
+                     ext_mat, in_thick, in_mat, shgc, shading, inf_rate):
 
         hd = ['city', 'program', 'orient', 'wwr', 'glazing', 'exterior_t (in)',
              'exterior_mat', 'interior_t (in)', 'interior_mat', 'shgc', 'shading'
@@ -303,6 +318,13 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
         else:
             df = df
 
+        if inf_rate != 'all':
+            mask = (df['inf_rate'] == float(inf_rate))
+            df = df[mask]
+        else:
+            df = df
+
+
         if color == 'None':
             color = None
 
@@ -356,8 +378,10 @@ if __name__ == '__main__':
     # folderpath = 'C:/IDL/StudioTool/Paper/data/all_data_/all_data_'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
-    # data, frame = load_jsons_pandas(folderpath)
-    filepath = os.path.join(studio2021.DATA, 'frames', 'all_data_.csv')
-    frame = pd.read_csv(filepath)
+    # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
+    folderpath = studio2021.TEMP
+    data, frame = load_jsons_pandas(folderpath)
+    # filepath = os.path.join(studio2021.DATA, 'frames', 'all_data_.csv')
+    # frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
 

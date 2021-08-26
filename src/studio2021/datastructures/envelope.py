@@ -192,7 +192,6 @@ class Envelope(object):
             opaque_orient = 0
             win_orient = 0
             for zkey in self.opaque_areas[okey]:
-                print(okey, zkey, self.opaque_areas[okey][zkey])
                 opaque_orient += self.opaque_areas[okey][zkey]
                 win_orient += self.window_areas[okey][zkey]
             sides[okey] = (opaque_orient + win_orient) / self.height
@@ -243,6 +242,10 @@ class Envelope(object):
             int_ins_thick = 12. / 12. 
             int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
             self.int_finish = 'Gyp'
+        elif fram_mat == '2x6 No Insulation':
+            int_ins_thick = 0.
+            int_ins_emb_ = 0. 
+            self.int_finish = 'Gyp'  
         else:
             int_ins_thick = 0.
             int_ins_emb_ = 0.       

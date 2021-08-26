@@ -3,6 +3,7 @@ import studio2021
 
 
 def read_materials(material_name):
+    print('material_name', material_name)
     filepath = os.path.join(studio2021.DATA, 'materials.csv')
     fh = open(filepath, 'r')
     lines = fh.readlines()

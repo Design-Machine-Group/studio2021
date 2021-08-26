@@ -14,7 +14,6 @@ Stone,Façade Cladding,0.08,0.08,1,0.0254,1.802,1920,190,0.0136
 2x6 Metal Studs,Exterior Wall Framing,5.5,1.38,1,0.1016,0.105,None,None,0.975
 CLT,Exterior Wall Framing,6.63,1.47,4.5,0.1143,0.098,470,1600,140.2
 Concrete,Exterior Wall Framing,0.08,0.08,5,0.0254,1.802,2255,750,435
-2x6 No Insulation,Exterior Wall Framing,14.68,3.55,1,0.0889,0.041,141.25,None,44.3
 2x4 Wood Studs,Exterior Wall Framing,None,None,0.66,None,None,None,None,None
 2x6 Wood Studs,Exterior Wall Framing,14.68,3.55,1,0.0889,0.041,141.25,None,44.3
 2x8 Wood Studs,Exterior Wall Framing,None,None,1.33,None,None,None,None,None
