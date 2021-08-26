@@ -379,9 +379,10 @@ if __name__ == '__main__':
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
-    folderpath = studio2021.TEMP
-    data, frame = load_jsons_pandas(folderpath)
-    # filepath = os.path.join(studio2021.DATA, 'frames', 'all_data_.csv')
-    # frame = pd.read_csv(filepath)
+    # folderpath = studio2021.TEMP
+    # data, frame = load_jsons_pandas(folderpath)
+    # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
+    filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
+    frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
 
