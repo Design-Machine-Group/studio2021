@@ -32,7 +32,7 @@ Wood Siding,Facade Cladding,None,None,None,0.01,0.11,545,1209,0.0136
 EPS,Insulation,None,5,None,None,None,None,None,None
 Polyiso,Insulation,None,7,None,None,None,None,None,None
 Rockwool,Insulation,None,3.55,None,None,None,None,None,None
-Cellulose,Insulation,None,xxx,None,None,None,None,None,None
+Cellulose,Insulation,None,3.7,None,None,None,None,None,None
 Cellulose 2x4 Wood Studs,Exterior Wall Framing,12.29,None,None,None,None,None,None,None
 Cellulose 2x6 Wood Studs,Exterior Wall Framing,18.95,None,None,None,None,None,None,None
 Cellulose 2x8 Wood Studs,Exterior Wall Framing,24.77,None,None,None,None,None,None,None
