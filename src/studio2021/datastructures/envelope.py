@@ -55,6 +55,7 @@ class Envelope(object):
         self.int_finish             = None
         self.ewall_framing          = None
         self.interior_insul_mat     = None
+        self.int_ins_thickness      = None
 
     @classmethod
     def from_data(cls, data):
@@ -79,6 +80,7 @@ class Envelope(object):
                       int_finish,
                       ewall_framing,
                       interior_insul_mat,
+                      int_ins_thickness,
                       total_shade_len):
 
         env = cls()
@@ -97,6 +99,7 @@ class Envelope(object):
         env.int_finish              = int_finish
         env.ewall_framing           = ewall_framing
         env.interior_insul_mat      = interior_insul_mat
+        env.int_ins_thickness       = int_ins_thickness
         env.total_shade_len         = total_shade_len
         return env
 
@@ -120,6 +123,7 @@ class Envelope(object):
             'int_finish'                : self.int_finish,
             'ewall_framing'             : self.ewall_framing,
             'interior_insul_mat'        : self.interior_insul_mat,
+            'int_ins_thickness'         : self.int_ins_thickness,
         }
 
         for okey in self.shade_depth_h:
@@ -163,6 +167,7 @@ class Envelope(object):
         self.int_finish             = data.get('int_finish') or {}
         self.ewall_framing          = data.get('ewall_framing') or {}
         self.interior_insul_mat     = data.get('interior_insul_mat') or {}
+        self.int_ins_thickness      = data.get('int_ins_thickness') or {}
 
         for okey in opaque_areas:
             for zkey in opaque_areas[okey]:
@@ -222,34 +227,8 @@ class Envelope(object):
 
         # interior insulation - - -
         int_ins_mat = self.interior_insul_mat
-        if fram_mat == '2x4 Wood Studs':
-            int_ins_thick = 4. / 12.
-            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-            self.int_finish = 'Gyp'
-        elif fram_mat == '2x6 Wood Studs':
-            int_ins_thick = 6. / 12.
-            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-            self.int_finish = 'Gyp'
-        elif fram_mat == '2x8 Wood Studs':
-            int_ins_thick = 8. / 12.
-            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-            self.int_finish = 'Gyp'
-        elif fram_mat == '2x10 Wood Studs':
-            int_ins_thick = 10. / 12.
-            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-            self.int_finish = 'Gyp'
-        elif fram_mat == '2x12 Wood Studs':
-            int_ins_thick = 12. / 12. 
-            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-            self.int_finish = 'Gyp'
-        elif fram_mat == '2x6 No Insulation':
-            int_ins_thick = 0.
-            int_ins_emb_ = 0. 
-            self.int_finish = 'Gyp'  
-        else:
-            int_ins_thick = 0.
-            int_ins_emb_ = 0.       
-        
+        int_ins_thick = self.int_ins_thickness / 12.
+        int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
         int_ins_emb = tot_opaque * int_ins_thick * int_ins_emb_ 
 
         # interior finish - - -

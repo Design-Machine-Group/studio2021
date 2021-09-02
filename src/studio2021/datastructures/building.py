@@ -98,6 +98,7 @@ class Building(object):
         self.external_insulation    = None
         self.insulation_thickness   = None
         self.interior_insul_mat     = None
+        self.int_ins_thickness      = None
         self.ewall_framing          = None
         self.int_finish             = None
         self.glazing_system         = None
@@ -187,6 +188,7 @@ class Building(object):
                 'external_insulation'       : self.external_insulation,
                 'insulation_thickness'      : self.insulation_thickness,
                 'interior_insul_mat'        : self.interior_insul_mat,
+                'int_ins_thickness'         : self.int_ins_thickness,
                 'ewall_framing'             : self.ewall_framing,
                 'int_finish'                : self.int_finish,
                 'glazing_system'            : self.glazing_system,
@@ -446,6 +448,7 @@ class Building(object):
         self.external_insulation    = data.get('external_insulation') or {}
         self.insulation_thickness   = data.get('insulation_thickness') or {}
         self.interior_insul_mat     = data.get('interior_insul_mat') or {}
+        self.int_ins_thickness      = data.get('int_ins_thickness') or {}
         self.ewall_framing          = data.get('ewall_framing') or {}
         self.int_finish             = data.get('int_finish') or {}
         self.glazing_system         = data.get('glazing_system') or {}
@@ -486,6 +489,7 @@ class Building(object):
         external_insulation     = data['external_insulation']
         insulation_thickness    = data['insulation_thickness']
         interior_insul_mat      = data['interior_insul_mat']
+        int_ins_thickness       = data['int_ins_thickness']
         ewall_framing           = data['ewall_framing']
         int_finish              = data['int_finish']
         glazing_system          = data['glazing_system']
@@ -607,6 +611,7 @@ class Building(object):
         b.external_insulation   = external_insulation
         b.insulation_thickness  = insulation_thickness
         b.interior_insul_mat    = interior_insul_mat
+        b.int_ins_thickness     = int_ins_thickness
         b.ewall_framing         = ewall_framing
         b.int_finish            = int_finish
         b.glazing_system        = glazing_system
@@ -658,6 +663,7 @@ class Building(object):
                                                self.int_finish,
                                                self.ewall_framing,
                                                self.interior_insul_mat,
+                                               self.int_ins_thickness,
                                                self.total_shade_len)
 
     def compute_areas(self):
@@ -858,6 +864,7 @@ class Building(object):
         data['facade_cladding']         = self.facade_cladding
         data['external_insulation']     = self.external_insulation
         data['insulation_thickness']    = self.insulation_thickness
+        data['int_ins_thickness']       = self.int_ins_thickness
         data['ewall_framing']           = self.ewall_framing
         data['int_finish']              = self.int_finish
         data['glazing_system']          = self.glazing_system
@@ -870,19 +877,19 @@ class Building(object):
         data['interior_insul_mat']      = self.interior_insul_mat
         data['inf_rate']                = self.inf_rate
 
-        if self.ewall_framing == '2x4 Wood Studs':
-            int_ins_thick = 4. / 12.
-        elif self.ewall_framing == '2x6 Wood Studs':
-            int_ins_thick = 6. / 12.
-        elif self.ewall_framing == '2x8 Wood Studs':
-            int_ins_thick = 8. / 12.
-        elif self.ewall_framing == '2x10 Wood Studs':
-            int_ins_thick = 10. / 12.
-        elif self.ewall_framing == '2x12 Wood Studs':
-            int_ins_thick = 12. / 12. 
-        else:
-            int_ins_thick = 0.
-        data['int_ins_thick']    = int_ins_thick
+        # if self.ewall_framing == '2x4 Wood Studs':
+        #     int_ins_thick = 4. / 12.
+        # elif self.ewall_framing == '2x6 Wood Studs':
+        #     int_ins_thick = 6. / 12.
+        # elif self.ewall_framing == '2x8 Wood Studs':
+        #     int_ins_thick = 8. / 12.
+        # elif self.ewall_framing == '2x10 Wood Studs':
+        #     int_ins_thick = 10. / 12.
+        # elif self.ewall_framing == '2x12 Wood Studs':
+        #     int_ins_thick = 12. / 12. 
+        # else:
+        #     int_ins_thick = 0.
+        # data['int_ins_thick']    = int_ins_thick
 
         # floor - ceiling data - - - - - - - - - - - - - - - - - - - - - - - - -
 

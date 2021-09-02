@@ -17,6 +17,9 @@ Concrete,Exterior Wall Framing,435,387.5,429,453.6,393.7,413.8,412.4
 2x8 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x10 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x12 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
+Steel 4,Exterior Wall Framing,10000000000,0,0,0,0,0,0
+Steel 6,Exterior Wall Framing,10000000000,0,0,0,0,0,0
+Steel 8,Exterior Wall Framing,10000000000,0,0,0,0,0,0
 Glulam,Beams or columns,179.4,138,141.4,141.4,139.7,139.7,139.7
 GypsumX,Type X fire protecting sypsum,386,409,425.92,415,0,0,0
 Rebar,Beams or columns,7771,7103.6,7933.671104,7938.963746,0,0,0
