@@ -2,7 +2,7 @@ Material,Type,R value (F°-ft2-hr/Btu),r per inch (F°-ft2-hr/Btu-in),thickness 
 Exterior wall air film,Air,0.17,None,None,None,None,None,None,None
 Interior wall air film,Air,0.68,None,None,None,None,None,None,None
 "Air space (1/2"" up to 4"")",Air,1,None,None,None,None,None,None,None
-Gyp,Interior Finish,0.45,0.9,0.5,0.0127,0.16,800,109,273
+Gyp,Interior Finish,0.45,0.9,0.625,0.0127,0.16,800,109,273
 Plywood,Exterior Sheathing,1.25,1.25,1,0.0254,0.115,540,1210,186
 Rigid,Insulation,4,4,1,0.0254,0.036,40,1210,6.42
 Fiberglass,Insulation,3.5,3.5,1,0.0254,0.041,100,960,0.0557
@@ -13,7 +13,10 @@ Wood,Façade Cladding,0.93,1.24,0.75,0.0191,0.116,540,1210,-1.35
 Stone,Façade Cladding,0.08,0.08,1,0.0254,1.802,1920,190,0.0136
 2x6 Metal Studs,Exterior Wall Framing,5.5,1.38,1,0.1016,0.105,None,None,0.975
 CLT,Exterior Wall Framing,6.63,1.47,4.5,0.1143,0.098,470,1600,140.2
-Concrete,Exterior Wall Framing,0.08,0.08,5,0.0254,1.802,2255,750,435
+Concrete,,0.08,0.08,5,0.0254,1.802,2255,750,435
+Steel 4,Exterior Wall Framing,None,None,0.019,None,None,None,None,None
+Steel 6,Exterior Wall Framing,None,None,0.02475,None,None,None,None,None
+Steel 8,Exterior Wall Framing,None,None,0.03958333,None,None,None,None,None
 2x6 No Insulation,Exterior Wall Framing,14.68,3.55,1,0.0889,0.041,141.25,None,44.3
 2x4 Wood Studs,Exterior Wall Framing,None,None,0.66,None,None,None,None,None
 2x6 Wood Studs,Exterior Wall Framing,14.68,3.55,1,0.0889,0.041,141.25,None,44.3
@@ -24,7 +27,7 @@ Glulam,Beams or columns,None,None,None,None,None,None,None,98.6
 GypsumX,Type X fire protecting sypsum,None,None,0.625,0.015875,None,None,None,241.52
 Rebar,Beams or columns,None,None,None,None,None,None,None,7771
 Steel,plates,None,None,None,None,None,None,None,7771
-Aluminum,NOT CORRECT YET,None,None,None,None,None,None,None,23800
+Aluminum,Façade Cladding,None,None,0.0196,None,None,None,None,23800
 Glass Double,windows,None,None,0.472441,None,None,None,None,None
 Glass Triple,windows,None,None,0.708661,None,None,None,None,None
 Metal Panel,Facade Cladding,None,None,None,0.001,44,7688,409,10.46

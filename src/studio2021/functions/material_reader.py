@@ -11,6 +11,7 @@ def read_materials(material_name):
     materials = {}
     for line in lines:
         data = line.split(',')
+        
         for i in range(len(data)):
             try:
                 data[i] = float(data[i])
@@ -45,10 +46,11 @@ def read_materials_city(material, city):
                       'Atlanta': float(l[7]),
                       'New York': float(l[8])}
 
-    if data[material][city] == 0:
-        return data[material]['National']
-    else:
-        return data[material][city]
+    # if data[material][city] == 0:
+    #     return data[material]['National']
+    # else:
+    #     return data[material][city]
+    return data[material]['National']
 
 if __name__ == "__main__":
     pass

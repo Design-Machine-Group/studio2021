@@ -17,7 +17,6 @@ except:
 
 from studio2021.functions import read_materials
 from studio2021.functions import read_materials_city
-from studio2021.functions import read_glazing
 
 
 TPL = """
@@ -209,6 +208,7 @@ class Envelope(object):
             ins_thick = 0.
             ins_emb_ = 0
         else:
+            
             ins_thick = float(self.insulation_thickness) / 12. # currently in inches
             ins_emb_ = float(read_materials_city(ins_mat, self.city)) / 27.  # currently (kgCO2/yd3)
         ins_emb = tot_opaque * ins_thick * ins_emb_ 

@@ -8,7 +8,7 @@ Fiber Cement,Façade Cladding,900,0,0,0,0,0,0
 Steel Panel,Façade Cladding,10000.46,0,0,0,0,0,0
 Wood,Façade Cladding,-1.35,0,0,0,0,0,0
 Stone,Façade Cladding,0.0136,0,0,0,0,0,0
-2x6 Metal Studs,Exterior Wall Framing,0.975,0,0,0,0,0,0
+2x6 Metal Studs,Exterior Wall Framing,0,0,0,0,0,0,0
 CLT,Exterior Wall Framing,140.2,110,173.5,0,0,0,0
 Concrete,Exterior Wall Framing,435,387.5,429,453.6,393.7,413.8,412.4
 2x6 No Insulation,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
@@ -17,14 +17,14 @@ Concrete,Exterior Wall Framing,435,387.5,429,453.6,393.7,413.8,412.4
 2x8 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x10 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
 2x12 Wood Studs,Exterior Wall Framing,82.55,77.7,56.42,47.9,0,0,0
-Steel 4,Exterior Wall Framing,10000000000,0,0,0,0,0,0
-Steel 6,Exterior Wall Framing,10000000000,0,0,0,0,0,0
-Steel 8,Exterior Wall Framing,10000000000,0,0,0,0,0,0
+Steel 4,Exterior Wall Framing,15500,0,0,0,0,0,0
+Steel 6,Exterior Wall Framing,15500,0,0,0,0,0,0
+Steel 8,Exterior Wall Framing,15500,0,0,0,0,0,0
 Glulam,Beams or columns,179.4,138,141.4,141.4,139.7,139.7,139.7
 GypsumX,Type X fire protecting sypsum,386,409,425.92,415,0,0,0
 Rebar,Beams or columns,7771,7103.6,7933.671104,7938.963746,0,0,0
 Steel,plates,14593,14593.2,25933.94824,14554.76687,0,0,0
-Aluminum,,24054.77407,24978.37497,24978.37497,24964.65813,0,0,0
+Aluminum,Façade Cladding,24054.77407,24978.37497,24978.37497,24964.65813,0,0,0
 Glass Double,Windows,4077,0,0,0,0,0,0
 Glass Triple,Windows,4077,0,0,0,0,0,0
 Wood Siding,0,0,0,0,0,0,0,0
