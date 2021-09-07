@@ -79,7 +79,7 @@ def parse_building(bldg, filename):
     data['Heating EUI (kBtu / ft2 * year)'] = bldg.eui_kbtu_ft[zonek]['heating']
     data['Lighting EUI (kBtu / ft2 * year)'] = bldg.eui_kbtu_ft[zonek]['lighting']
 
-    data['Wall R (ft2 * F * h / BTU)'] = bldg.wall_r
+    data['Wall R (ft2 * F * h / BTU)'] = round(bldg.wall_r, 1)
 
     data['city'] = bldg.city
     data['program'] = pdict[bldg.zone_program]
@@ -92,7 +92,7 @@ def parse_building(bldg, filename):
 
     temp = 0
     imp = .05   
-    for y in list(range(1, 30)):
+    for y in list(range(1, 50)):
         n = eui * city_gwp   
         data['Total GWP non-linear (kg CO2e / ft2) {} year'.format(y)] = n + temp + emb
         # data['Total GWP linear (kg CO2e / ft2) {} year'.format(y)] = op * y
@@ -213,7 +213,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
 
     graph = dcc.Graph(id='indicator-graphic')
     slider = dcc.Slider(id='year', min=1, max=50, step=1,value=1,
-             marks={i:str(i) for i in list(range(1, 30))})
+             marks={i:str(i) for i in list(range(1, 50))})
     slider_div = html.Div(id='slider-output-container')
 
     app.layout = html.Div([html.Div(dds[0]),
@@ -381,10 +381,10 @@ if __name__ == '__main__':
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
-    # folderpath = studio2021.TEMP
-    # data, frame = load_jsons_pandas(folderpath)
+    folderpath = studio2021.TEMP
+    data, frame = load_jsons_pandas(folderpath)
     # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
-    filepath = os.path.join(studio2021.DATA, 'frames', 'assemblies_data.csv')
-    frame = pd.read_csv(filepath)
+    # filepath = os.path.join(studio2021.DATA, 'frames', 'assemblies_data.csv')
+    # frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
 
