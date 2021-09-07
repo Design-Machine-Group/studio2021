@@ -27,7 +27,8 @@ def parse_building(bldg, filename):
 
     gl_dict = {'Aluminum Double': 'Double', 'Aluminum Triple': 'Triple'}
     int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0,
-                '2x6 No Insulation':0,}
+                '2x6 No Insulation':0, 'Steel 4':4, 'Steel 6':6, 'Steel 8':8,
+                '2x4 Wood Studs':4,}
     pdict = {'2013::MidriseApartment::Apartment': 'residential',
              '2013::MediumOffice::OpenOffice': 'office'}
 
@@ -169,7 +170,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
     int_ms =        ['all', 'Fiberglass', 'Cellulose']
     shgcs =         ['all', '0.25', '0.6']
     shadings =      ['all', '0.0', '2.5']
-    inf_rates =     ['all', '0.00056', '0.0003', '0.00015']
+    inf_rates =     ['all', '0.00059', '0.0003', '0.00015']
 
     wset = '20%'
     wfilt = '8.33%'
@@ -249,7 +250,8 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                      ext_mat, in_thick, in_mat, shgc, shading, inf_rate):
 
         hd = ['city', 'program', 'orient', 'wwr', 'glazing', 'exterior_t (in)',
-             'exterior_mat', 'interior_t (in)', 'interior_mat', 'shgc', 'shading'
+             'exterior_mat', 'interior_t (in)', 'interior_mat', 'shgc', 'shading',
+             'inf_rate',
              ]
 
         if city != 'all':
@@ -349,7 +351,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                          y=y_axis,
                          color=color,
                          size=size,
-                         size_max=10,
+                         size_max=12,
                          text=lable,
                          hover_data=hd,
                          labels=None,
@@ -365,7 +367,7 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                         )
         
         fig.update_traces(textposition='top right')
-        # fig.update_traces(marker_sizemin = 5) 
+        fig.update_traces(marker_sizemin=3) 
         return fig
 
     app.run_server(debug=True)
@@ -381,8 +383,8 @@ if __name__ == '__main__':
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
     # folderpath = studio2021.TEMP
     # data, frame = load_jsons_pandas(folderpath)
-    # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
-    filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
+    # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
+    filepath = os.path.join(studio2021.DATA, 'frames', 'assemblies_data.csv')
     frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
 
