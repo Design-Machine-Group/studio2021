@@ -33,7 +33,7 @@ def parse_building(bldg, filename):
              '2013::MediumOffice::OpenOffice': 'office'}
 
 
-    city_gwp = {'San Antonio': 0.414311,
+    city_gwp_d = {'San Antonio': 0.414311,
                 'Seattle': 0.135669,
                 'Milwaukee': 0.559278936,
                 'New York': 0.171548494,
@@ -83,55 +83,123 @@ def parse_building(bldg, filename):
 
     data['city'] = bldg.city
     data['program'] = pdict[bldg.zone_program]
+    data['city_gwp'] = city_gwp_d[bldg.city]
+    data['tot_eui_kwh'] = bldg.eui_kwh[zonek]['total']
+    data['area'] = area
 
-    city_gwp = city_gwp[bldg.city]
+    
     op = cool + heat + light + hot + eq
     tot_eui_kwh = bldg.eui_kwh[zonek]['total']
     eui = tot_eui_kwh / area
     emb = win + wall
 
-    temp = 0
-    imp = .05   
-    for y in list(range(1, 50)):
-        n = eui * city_gwp   
-        data['Total GWP non-linear (kg CO2e / ft2) {} year'.format(y)] = n + temp + emb
-        # data['Total GWP linear (kg CO2e / ft2) {} year'.format(y)] = op * y
-        data['Operational GWP non-linear (kg CO2e / ft2) {} year'.format(y)] = n + temp
-        city_gwp *= (1 - imp)
-        temp += n
+    accl = 0
+    acc2 = 0
+    acc3 = 0
+    acc5 = 0
+    city_gwpl = data['city_gwp']
+    city_gwp2 = data['city_gwp']
+    city_gwp3 = data['city_gwp']
+    city_gwp5 = data['city_gwp']
+    delta2 = city_gwp2 * .02
+    delta3 = city_gwp3 * .03
+    delta5 = city_gwp5 * .05
+    
+    for y in list(range(1, 51)):    
+        opl_year_x = eui * city_gwpl
+        op2_year_x = eui * city_gwp2
+        op3_year_x = eui * city_gwp3
+        op5_year_x = eui * city_gwp5
+
+        data['Total GWP Linear (kg CO2e / ft2) {} year'.format(y)] = opl_year_x + accl + emb
+        data['Op GWP Linear (kg CO2e / ft2) {} year'.format(y)] = opl_year_x + accl
+
+        data['Total GWP non-linear 2% (kg CO2e / ft2) {} year'.format(y)] = op2_year_x + acc2 + emb
+        data['Op GWP non-linear 2% (kg CO2e / ft2) {} year'.format(y)] = op2_year_x + acc2
+        
+        data['Total GWP non-linear 3% (kg CO2e / ft2) {} year'.format(y)] = op3_year_x + acc3 + emb
+        data['Op GWP non-linear 3% (kg CO2e / ft2) {} year'.format(y)] = op3_year_x + acc3
+
+        data['Total GWP non-linear 5% (kg CO2e / ft2) {} year'.format(y)] = op5_year_x + acc5 + emb
+        data['Op GWP non-linear 5% (kg CO2e / ft2) {} year'.format(y)] = op5_year_x + acc5
+
+        # non linear models - - - - - - -
+
+        if city_gwp2 >= 0.:
+            city_gwp2 -= delta2  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+
+        if city_gwp3 >= 0.:
+            city_gwp3 -= delta3  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+        
+        if city_gwp5 >= 0.:
+            city_gwp5 -= delta5  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+        
+        accl += opl_year_x
+        acc2 += op2_year_x
+        acc3 += op3_year_x
+        acc5 += op5_year_x
 
     return data
 
 
 def plot_lifecycle(data, keys=None):
-
-    ny = 30
-    years = list(range(1, ny))
+    ny = 50
+    years = list(range(ny))
     fig = go.Figure()
-    imp = .05
     if not keys:
         keys = data.keys()
     for k in keys:
-        city_gwp = data[k]['kgCo2e_kwh']
-        op = data[k]['total_operational']
+        op = data[k]['Operational (kg CO2e / ft2 * year)']
         bau = [op * i for i in years]
-        eui = data[k]['eui_kwh'] / data[k]['area']
-        emb = []
-        non = []
-        temp = 0
-        tot = []
+        eui = data[k]['tot_eui_kwh'] / data[k]['area']
+        emb = [0]
+        non2 = [0]
+        non3 = [0]
+        non5 = [0]
+        acc2 = 0
+        acc3 = 0
+        acc5 = 0
+        city_gwp2 = data[k]['city_gwp']
+        city_gwp3 = data[k]['city_gwp']
+        city_gwp5 = data[k]['city_gwp']
+        delta2 = city_gwp2 * .02
+        delta3 = city_gwp3 * .03
+        delta5 = city_gwp5 * .05
+        # tot = []
         for _ in years:
-            n = eui * city_gwp
-            non.append(n + temp)
-            emb.append(data[k]['total_embodied'])
-            tot.append(n + temp + data[k]['total_embodied'])
-            city_gwp *= (1 - imp)
-            temp += n
+            op2_year_x = eui * city_gwp2
+            op3_year_x = eui * city_gwp3
+            op5_year_x = eui * city_gwp5
+
+            non2.append(op2_year_x + acc2)
+            non3.append(op3_year_x + acc3)
+            non5.append(op2_year_x + acc5)
+
+            emb.append(data[k]['Embodied (kg CO2e / ft2)'])
+            # non linear models - - - - - - - - - - - - - - - - - - - - - - - - -
+
+            # city_gwp *= (1 - imp)  # X% every year, never getting to 0 (GWP/kWh)
+
+            if city_gwp2 >= 0.:
+                city_gwp2 -= delta2  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+
+            if city_gwp3 >= 0.:
+                city_gwp3 -= delta3  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+            
+            if city_gwp5 >= 0.:
+                city_gwp5 -= delta5  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+            
+            acc2 += op2_year_x
+            acc3 += op3_year_x
+            acc5 += op5_year_x
+
 
         fig.add_trace(go.Scatter(x=years, y=bau, name= 'BAU - {}'.format(k)))
-        fig.add_trace(go.Scatter(x=years, y=non, name= 'Non linear - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=non2, name= 'Non linear 2% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=non3, name= 'Non linear 3% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=non5, name= 'Non linear 5% - {}'.format(k)))
         fig.add_trace(go.Scatter(x=years, y=emb, name= 'Embodied - {}'.format(k)))
-        fig.add_trace(go.Scatter(x=years, y=tot, name= 'Total - {}'.format(k)))
+        # fig.add_trace(go.Scatter(x=years, y=tot, name= 'Total - {}'.format(k)))
     
     fig.show()
 
@@ -142,8 +210,14 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                'Win Embodied (kg CO2e / ft2)', 'Wall Embodied (kg CO2e / ft2)',
                'Cooling EUI (kBtu / ft2 * year)', 'Heating EUI (kBtu / ft2 * year)',
                'Lighting EUI (kBtu / ft2 * year)',
-               'Total GWP non-linear (kg CO2e / ft2) N year',
-               'Operational GWP non-linear (kg CO2e / ft2) N year',
+               'Op GWP Linear (kg CO2e / ft2) N year',
+               'Op GWP non-linear 2% (kg CO2e / ft2) N year',
+               'Op GWP non-linear 3% (kg CO2e / ft2) N year',
+               'Op GWP non-linear 5% (kg CO2e / ft2) N year',
+               'Total GWP Linear (kg CO2e / ft2) N year',
+               'Total GWP non-linear 2% (kg CO2e / ft2) N year',
+               'Total GWP non-linear 3% (kg CO2e / ft2) N year',
+               'Total GWP non-linear 5% (kg CO2e / ft2) N year',
                   ]
 
     colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program',
@@ -212,8 +286,8 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
         dds.append(temp)
 
     graph = dcc.Graph(id='indicator-graphic')
-    slider = dcc.Slider(id='year', min=1, max=50, step=1,value=1,
-             marks={i:str(i) for i in list(range(1, 50))})
+    slider = dcc.Slider(id='year', min=1, max=51, step=1,value=1,
+             marks={i:str(i) for i in list(range(1, 51))})
     slider_div = html.Div(id='slider-output-container')
 
     app.layout = html.Div([html.Div(dds[0]),
@@ -336,15 +410,41 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
         if size == 'None':
             size = None
 
-        if y_axis == 'Total GWP non-linear (kg CO2e / ft2) N year':
-            y_axis = 'Total GWP non-linear (kg CO2e / ft2) {} year'.format(year)
-        if x_axis == 'Total GWP non-linear (kg CO2e / ft2) N year':
-            x_axis = 'Total GWP non-linear (kg CO2e / ft2) {} year'.format(year)
+        if y_axis == 'Total GWP non-linear 2% (kg CO2e / ft2) N year':
+            y_axis = 'Total GWP non-linear 2% (kg CO2e / ft2) {} year'.format(year)
+        elif y_axis == 'Total GWP non-linear 3% (kg CO2e / ft2) N year':
+            y_axis = 'Total GWP non-linear 3% (kg CO2e / ft2) {} year'.format(year) 
+        elif y_axis == 'Total GWP non-linear 5% (kg CO2e / ft2) N year':
+            y_axis = 'Total GWP non-linear 5% (kg CO2e / ft2) {} year'.format(year)        
+        elif y_axis == 'Total GWP Linear (kg CO2e / ft2) N year':
+            y_axis = 'Total GWP Linear (kg CO2e / ft2) {} year'.format(year)     
+
+        if x_axis == 'Total GWP non-linear 2% (kg CO2e / ft2) N year':
+            x_axis = 'Total GWP non-linear 2% (kg CO2e / ft2) {} year'.format(year)
+        elif x_axis == 'Total GWP non-linear 3% (kg CO2e / ft2) N year':
+            x_axis = 'Total GWP non-linear 3% (kg CO2e / ft2) {} year'.format(year) 
+        elif x_axis == 'Total GWP non-linear 5% (kg CO2e / ft2) N year':
+            x_axis = 'Total GWP non-linear 5% (kg CO2e / ft2) {} year'.format(year) 
+        elif x_axis == 'Total GWP Linear (kg CO2e / ft2) N year':
+            x_axis = 'Total GWP Linear (kg CO2e / ft2) {} year'.format(year)  
         
-        if y_axis == 'Operational GWP non-linear (kg CO2e / ft2) N year':
-            y_axis = 'Operational GWP non-linear (kg CO2e / ft2) {} year'.format(year)
-        if x_axis == 'Operational GWP non-linear (kg CO2e / ft2) N year':
-            x_axis = 'Operational GWP non-linear (kg CO2e / ft2) {} year'.format(year)
+        if y_axis == 'Op GWP non-linear 2% (kg CO2e / ft2) N year':
+            y_axis = 'Op GWP non-linear 2% (kg CO2e / ft2) {} year'.format(year)
+        elif y_axis == 'Op GWP non-linear 3% (kg CO2e / ft2) N year':
+            y_axis = 'Op GWP non-linear 3% (kg CO2e / ft2) {} year'.format(year) 
+        elif y_axis == 'Op GWP non-linear 5% (kg CO2e / ft2) N year':
+            y_axis = 'Op GWP non-linear 5% (kg CO2e / ft2) {} year'.format(year)      
+        elif y_axis == 'Op GWP Linear (kg CO2e / ft2) N year':
+            y_axis = 'Op GWP Linear (kg CO2e / ft2) {} year'.format(year)  
+
+        if x_axis == 'Op GWP non-linear 2% (kg CO2e / ft2) N year':
+            x_axis = 'Op GWP non-linear 2% (kg CO2e / ft2) {} year'.format(year)
+        elif x_axis == 'Op GWP non-linear 3% (kg CO2e / ft2) N year':
+            x_axis = 'Op GWP non-linear 3% (kg CO2e / ft2) {} year'.format(year) 
+        elif x_axis == 'Op GWP non-linear 5% (kg CO2e / ft2) N year':
+            x_axis = 'Op GWP non-linear 5% (kg CO2e / ft2) {} year'.format(year)    
+        elif x_axis == 'Op GWP Linear (kg CO2e / ft2) N year':
+            x_axis = 'Op GWP Linear (kg CO2e / ft2) {} year'.format(year)  
 
         fig = px.scatter(df,
                          x=x_axis,
@@ -381,10 +481,13 @@ if __name__ == '__main__':
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
-    folderpath = studio2021.TEMP
-    data, frame = load_jsons_pandas(folderpath)
-    # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
-    # filepath = os.path.join(studio2021.DATA, 'frames', 'assemblies_data.csv')
-    # frame = pd.read_csv(filepath)
+    # folderpath = studio2021.TEMP
+    # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/r_data'
+    # data, frame = load_jsons_pandas(folderpath)
+    # plot_lifecycle(data)
+    # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
+    filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
+    # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
+    frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 800, 1300)
 
