@@ -497,7 +497,7 @@ if __name__ == '__main__':
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/r_data'
     # data, frame = load_jsons_pandas(folderpath)
     # plot_lifecycle(data, keys=['la_w_40_1_1_office'])
-    # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
+    # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
     filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
     # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
     frame = pd.read_csv(filepath)
