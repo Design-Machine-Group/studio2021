@@ -9,12 +9,13 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
 
 def load_jsons_pandas(folderpath):
     data = {}
     files = os.listdir(folderpath)
-    for f in files:
+    for f in files[:200]:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
             key = os.path.splitext(f)[0]
@@ -26,9 +27,9 @@ def load_jsons_pandas(folderpath):
 def parse_building(bldg, filename):
 
     gl_dict = {'Aluminum Double': 'Double', 'Aluminum Triple': 'Triple'}
-    int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0,
-                '2x6 No Insulation':0, 'Steel 4':4, 'Steel 6':6, 'Steel 8':8,
-                '2x4 Wood Studs':4,}
+    # int_dict = {'2x6 Wood Studs':6, '2x8 Wood Studs':8, '2x10 Wood Studs':10, 0:0,
+    #             '2x6 No Insulation':0, 'Steel 4':4, 'Steel 6':6, 'Steel 8':8,
+    #             '2x4 Wood Studs':4,}
     pdict = {'2013::MidriseApartment::Apartment': 'residential',
              '2013::MediumOffice::OpenOffice': 'office'}
 
@@ -53,8 +54,7 @@ def parse_building(bldg, filename):
     data['exterior_mat'] = bldg.external_insulation
     data['exterior_t (in)'] = bldg.insulation_thickness or 0.
     data['interior_mat'] = bldg.interior_insul_mat
-    interior_thick = bldg.ewall_framing or 0.
-    data['interior_t (in)'] = int_dict[interior_thick]
+    data['interior_t (in)'] = bldg.int_ins_thickness or 0.
 
     area = bldg.floor_area
     win  = bldg.envelope.window_embodied or 0.
@@ -87,8 +87,7 @@ def parse_building(bldg, filename):
     data['tot_eui_kwh'] = bldg.eui_kwh[zonek]['total']
     data['area'] = area
 
-    
-    op = cool + heat + light + hot + eq
+    # op = cool + heat + light + hot + eq
     tot_eui_kwh = bldg.eui_kwh[zonek]['total']
     eui = tot_eui_kwh / area
     emb = win + wall
@@ -104,7 +103,9 @@ def parse_building(bldg, filename):
     delta2 = city_gwp2 * .02
     delta3 = city_gwp3 * .03
     delta5 = city_gwp5 * .05
-    
+
+    data['payback_linear'] = round(emb / (eui * city_gwpl), 2)
+
     for y in list(range(1, 51)):    
         opl_year_x = eui * city_gwpl
         op2_year_x = eui * city_gwp2
@@ -199,12 +200,19 @@ def plot_lifecycle(data, keys=None):
         fig.add_trace(go.Scatter(x=years, y=non3, name= 'Non linear 3% - {}'.format(k)))
         fig.add_trace(go.Scatter(x=years, y=non5, name= 'Non linear 5% - {}'.format(k)))
         fig.add_trace(go.Scatter(x=years, y=emb, name= 'Embodied - {}'.format(k)))
-        # fig.add_trace(go.Scatter(x=years, y=tot, name= 'Total - {}'.format(k)))
-    
+
+
+    fig.update_layout(title={'text':'Lifecycle Carbon emissions'},
+                        hovermode='closest',
+                        autosize=True,
+                        xaxis_title="Year",
+                        yaxis_title="GWP (kg CO2e / ft2)",
+                    )
+
     fig.show()
 
 
-def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
+def dash_pareto_pandas(frame, gheight=700, gwidth=1200):
     app = dash.Dash(__name__)
     xy_axis = ['Embodied (kg CO2e / ft2)', 'Operational (kg CO2e / ft2 * year)',
                'Win Embodied (kg CO2e / ft2)', 'Wall Embodied (kg CO2e / ft2)',
@@ -223,51 +231,53 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
     colors = ['None', 'city', 'orient', 'wwr', 'glazing', 'program',
               'Wall R (ft2 * F * h / BTU)', 'shgc', 'exterior_mat',
               'exterior_t (in)', 'interior_mat', 'interior_t (in)',
-              'inf_rate']
+              'inf_rate', 'payback_linear']
     
     sizes = ['None', 'wwr', 'exterior_t (in)', 'interior_t (in)',
-             'Wall R (ft2 * F * h / BTU)', 'shading', 'inf_rate']
+             'Wall R (ft2 * F * h / BTU)', 'shading', 'inf_rate',
+             'payback_linear']
     
-    labels = ['None', 'wwr', 'orient', 'shading', 'glazing', 'shgc',
-              'exterior_mat', 'exterior_t (in)', 'interior_mat',
-              'interior_t (in)', 'Wall R (ft2 * F * h / BTU)', 'inf_rate']
+    labels = ['None', 'wwr', 'orient', 'shading', 'glazing', 'program',
+              'shgc', 'exterior_mat', 'exterior_t (in)', 'interior_mat',
+              'interior_t (in)', 'Wall R (ft2 * F * h / BTU)', 'inf_rate',
+              'payback_linear']
 
-    cities =        ['all', 'Seattle', 'San Antonio', 'Milwaukee',
+    cities =        ['Seattle', 'San Antonio', 'Milwaukee',
                      'New York', 'Los Angeles', 'Atlanta']
-    programs =      ['all', 'office', 'residential']
-    orientations =  ['all', 'n', 'w', 's', 'e']
-    wwrs =          ['all', '0', '20', '40', '60', '80']
-    glazings =      ['all', 'Double', 'Triple']
-    ext_ts =        ['all', '0', '4', '8']
-    ext_ms =        ['all', 'EPS', 'Polyiso']
-    int_ts =        ['all', '6', '8', '10']
-    int_ms =        ['all', 'Fiberglass', 'Cellulose']
-    shgcs =         ['all', '0.25', '0.6']
-    shadings =      ['all', '0.0', '2.5']
-    inf_rates =     ['all', '0.00059', '0.0003', '0.00015']
+    programs =      ['office', 'residential']
+    orientations =  ['n', 'w', 's', 'e']
+    wwrs =          ['0', '.2', '.4', '.6', '.8']
+    glazings =      ['Double', 'Triple']
+    ext_ts =        ['0', '.5', '1', '2', '3', '4', '5', '6']
+    ext_ms =        ['EPS', 'Polyiso']
+    int_ts =        ['0', '3.5', '5.5', '7.25', '9.25', '4', '6', '8']
+    int_ms =        ['Fiberglass', 'Cellulose']
+    shgcs =         ['0.25', '0.6']
+    shadings =      ['0.0', '2.5']
+    inf_rates =     ['0.00059', '0.0003', '0.00015']
 
     wset = '20%'
     wfilt = '8.33%'
 
-    ddict1 = {'X axis': {'id': 'x_axis', 'list': xy_axis, 'value': 'Embodied (kg CO2e / ft2)'},
-              'Y axis': {'id': 'y_axis', 'list': xy_axis, 'value': 'Operational (kg CO2e / ft2 * year)'},
-              'Color by': {'id': 'colors', 'list': colors, 'value': 'city'},
-              'Size by': {'id': 'sizes', 'list': sizes, 'value': 'None'},
-              'Label by': {'id': 'labels', 'list': labels, 'value': 'None'},
+    ddict1 = {'X axis': {'id': 'x_axis', 'list': xy_axis, 'value': 'Embodied (kg CO2e / ft2)', 'multi':False},
+              'Y axis': {'id': 'y_axis', 'list': xy_axis, 'value': 'Operational (kg CO2e / ft2 * year)', 'multi':False},
+              'Color by': {'id': 'colors', 'list': colors, 'value': 'city', 'multi':False},
+              'Size by': {'id': 'sizes', 'list': sizes, 'value': 'None', 'multi':False},
+              'Label by': {'id': 'labels', 'list': labels, 'value': 'None', 'multi':False},
             }
 
-    ddict2 = {'City': {'id': 'cities', 'list': cities, 'value': 'all'},
-              'Program': {'id': 'programs', 'list': programs, 'value': 'all'},
-              'Orientation': {'id': 'orientations', 'list': orientations, 'value': 'all'},
-              'WWR': {'id': 'wwrs', 'list': wwrs, 'value': 'all'},
-              'Glazing': {'id': 'glazings', 'list': glazings, 'value': 'all'},
-              'Ext thick': {'id': 'ex_thicks', 'list': ext_ts, 'value': 'all'},
-              'Ext Material': {'id': 'ex_mats', 'list': ext_ms, 'value': 'all'},
-              'Int thick': {'id': 'in_thicks', 'list': int_ts, 'value': 'all'},
-              'Int Material': {'id': 'in_mats', 'list': int_ms, 'value': 'all'},
-              'Solar HGC': {'id': 'shgcs', 'list': shgcs, 'value': 'all'},
-              'Shading': {'id': 'shadings', 'list': shadings, 'value': 'all'},
-              'Inf Rate': {'id': 'inf_rates', 'list': inf_rates, 'value': 'all'}
+    ddict2 = {'City': {'id': 'cities', 'list': cities, 'value': cities, 'multi':True},
+              'Program': {'id': 'programs', 'list': programs, 'value': programs, 'multi':True},
+              'Orientation': {'id': 'orientations', 'list': orientations, 'value': orientations, 'multi':True},
+              'WWR': {'id': 'wwrs', 'list': wwrs,'value': wwrs,'multi':True},
+              'Glazing': {'id': 'glazings', 'list': glazings, 'value': glazings, 'multi':True},
+              'Ext thick': {'id': 'ex_thicks', 'list': ext_ts, 'value': ext_ts, 'multi':True},
+              'Ext Material': {'id': 'ex_mats', 'list': ext_ms, 'value': ext_ms, 'multi':True},
+              'Int thick': {'id': 'in_thicks', 'list': int_ts, 'value': int_ts, 'multi':True},
+              'Int Material': {'id': 'in_mats', 'list': int_ms, 'value': int_ms, 'multi':True},
+              'Solar HGC': {'id': 'shgcs', 'list': shgcs, 'value': shgcs, 'multi':True},
+              'Shading': {'id': 'shadings', 'list': shadings, 'value': shadings, 'multi':True},
+              'Inf Rate': {'id': 'inf_rates', 'list': inf_rates, 'value': inf_rates, 'multi':True}
             }
     wlist = [wset, wfilt]
     dds = []
@@ -277,10 +287,11 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
         for k in ddict:
             div = html.Div([html.Label(k),
                 dcc.Dropdown(id=ddict[k]['id'],
-                            options=[{'label': i, 'value': i} for i in ddict[k]['list']],
-                            clearable=False,
-                            value=ddict[k]['value']),],
-                            style={'width': drop_width, 'display': 'inline-block',
+                             multi=ddict[k]['multi'],
+                             options=[{'label': i, 'value': i} for i in ddict[k]['list']],
+                             clearable=False,
+                             value=ddict[k]['value']),],
+                             style={'width': drop_width, 'display': 'inline-block',
                                     'font-family':'open sans', 'font-size':'8px'})
             temp.append(div)
         dds.append(temp)
@@ -294,7 +305,10 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                            html.Div(dds[1]),
                            graph,
                            slider,
-                           slider_div,]
+                           slider_div,
+                           html.Button('Download CSV', id='btn_csv'),
+                           dcc.Download(id='download-dataframe-csv'),
+                           ]
                           )
 
 
@@ -325,81 +339,32 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
 
         hd = ['city', 'program', 'orient', 'wwr', 'glazing', 'exterior_t (in)',
              'exterior_mat', 'interior_t (in)', 'interior_mat', 'shgc', 'shading',
-             'inf_rate',
+             'inf_rate', 'payback_linear'
              ]
 
-        if city != 'all':
-            mask = (frame['city'] == city)
-            df = frame[mask]
-        else:
-            df = frame
-
-        if program != 'all':
-            mask = (df['program'] == program)
-            df = df[mask]
-        else:
-            df = df
-
-        if orient != 'all':
-            mask = (df['orient'] == orient)
-            df = df[mask]
-        else:
-            df = df
-
-        if wwr != 'all':
-            mask = (df['wwr'] == float(wwr) / 100.)
-            df = df[mask]
-        else:
-            df = df
-
-        if glazing != 'all':
-            mask = (df['glazing'] == glazing)
-            df = df[mask]
-        else:
-            df = df
-
-        if ext_thick != 'all':
-            mask = (df['exterior_t (in)'] == float(ext_thick))
-            df = df[mask]
-        else:
-            df = df
-
-        if ext_mat != 'all':
-            mask = (df['exterior_mat'] == ext_mat)
-            df = df[mask]
-        else:
-            df = df
-
-        if in_thick != 'all':
-            mask = (df['interior_t (in)'] == int(in_thick))
-            df = df[mask]
-        else:
-            df = df
-
-        if in_mat != 'all':
-            mask = (df['interior_mat'] == in_mat)
-            df = df[mask]
-        else:
-            df = df
-
-        if shgc != 'all':
-            mask = (df['shgc'] == float(shgc))
-            df = df[mask]
-        else:
-            df = df
-
-        if shading != 'all':
-            mask = (df['shading'] == float(shading))
-            df = df[mask]
-        else:
-            df = df
-
-        if inf_rate != 'all':
-            mask = (df['inf_rate'] == float(inf_rate))
-            df = df[mask]
-        else:
-            df = df
-
+        ld = {'city':{'list':city, 'name': 'city', 'float':False},
+              'program':{'list':program, 'name': 'program', 'float':False},
+              'orient':{'list':orient, 'name': 'orient', 'float':False},
+              'glazing':{'list':glazing, 'name': 'glazing', 'float':False},
+              'ext_mat':{'list':ext_mat, 'name': 'exterior_mat', 'float':False},
+              'in_mat':{'list':in_mat, 'name': 'interior_mat', 'float':False},
+              'shgc':{'list':shgc, 'name': 'shgc', 'float':True},
+              'shading':{'list':shading, 'name': 'shading', 'float':True},
+              'inf_rate':{'list':inf_rate, 'name': 'inf_rate', 'float':True},
+              'wwr':{'list':wwr, 'name': 'wwr', 'float':True}, 
+              'in_thick':{'list':in_thick, 'name': 'interior_t (in)', 'float':True},
+              'ext_thick':{'list':ext_thick, 'name': 'exterior_t (in)', 'float':True},
+              }
+        
+        df = frame
+        for key in ld:
+            masks = []
+            for value in ld[key]['list']:
+                if ld[key]['float']:
+                    value = float(value)
+                mask = df[ld[key]['name']] == value
+                masks.append(mask)
+            df = df[np.logical_or.reduce(masks)]
 
         if color == 'None':
             color = None
@@ -458,8 +423,8 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                          color_continuous_scale='Viridis' # 'sunsetdark'
                         )
         
-        string = 'City: {} | Program: {} | Orientation: {} | WWR: {}'
-        fig.update_layout(title={'text':string.format(city, program, orient, wwr)},
+        string = 'Envelope carbon emissions'
+        fig.update_layout(title={'text':string},
                           hovermode='closest',
                           autosize=False,
                           height=gheight,
@@ -467,27 +432,74 @@ def dash_pareto_pandas(frame, gheight=800, gwidth=1200):
                         )
         
         fig.update_traces(textposition='top right')
-        fig.update_traces(marker_sizemin=3) 
+        fig.update_traces(marker_sizemin=3)
         return fig
 
+    @app.callback(
+        Output("download-dataframe-csv", "data"),
+        Input('cities', 'value'),
+        Input('programs', 'value'),
+        Input('orientations', 'value'),
+        Input('wwrs', 'value'),
+        Input('glazings', 'value'),
+        Input('ex_thicks', 'value'),
+        Input('ex_mats', 'value'),
+        Input('in_thicks', 'value'),
+        Input('in_mats', 'value'),
+        Input('shgcs', 'value'),
+        Input('shadings', 'value'),
+        Input('inf_rates', 'value'),
+        Input('btn_csv', 'n_clicks'),
+        prevent_initial_call=True,
+        )
+    def download_func(city, program, orient, wwr, glazing, ext_thick, ext_mat,
+                      in_thick, in_mat, shgc, shading, inf_rate, n_clicks):
+
+        ld = {'city':{'list':city, 'name': 'city', 'float':False},
+              'program':{'list':program, 'name': 'program', 'float':False},
+              'orient':{'list':orient, 'name': 'orient', 'float':False},
+              'glazing':{'list':glazing, 'name': 'glazing', 'float':False},
+              'ext_mat':{'list':ext_mat, 'name': 'exterior_mat', 'float':False},
+              'in_mat':{'list':in_mat, 'name': 'interior_mat', 'float':False},
+              'shgc':{'list':shgc, 'name': 'shgc', 'float':True},
+              'shading':{'list':shading, 'name': 'shading', 'float':True},
+              'inf_rate':{'list':inf_rate, 'name': 'inf_rate', 'float':True},
+              'wwr':{'list':wwr, 'name': 'wwr', 'float':True}, 
+              'in_thick':{'list':in_thick, 'name': 'interior_t (in)', 'float':True},
+              'ext_thick':{'list':ext_thick, 'name': 'exterior_t (in)', 'float':True},
+              }
+        
+        df = frame
+        for key in ld:
+            masks = []
+            for value in ld[key]['list']:
+                if ld[key]['float']:
+                    value = float(value)
+                mask = df[ld[key]['name']] == value
+                masks.append(mask)
+            df = df[np.logical_or.reduce(masks)] 
+        
+        changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+        if 'btn_csv' in changed_id:
+            return dcc.send_data_frame(df.to_csv, 'filtered_data.csv')
     app.run_server(debug=True)
 
 
 if __name__ == '__main__':
     import studio2021
     #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
-    for i in range(50): print('')
+    # for i in range(50): print('')
     # folderpath = 'C:/IDL/StudioTool/Paper/data/all_data_/all_data_'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
-    # folderpath = studio2021.TEMP
+    folderpath = studio2021.TEMP
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/r_data'
-    # data, frame = load_jsons_pandas(folderpath)
-    # plot_lifecycle(data)
+    data, frame = load_jsons_pandas(folderpath)
+    # plot_lifecycle(data, keys=['la_w_40_1_1_office'])
     # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
-    filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
+    # filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
     # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
-    frame = pd.read_csv(filepath)
-    dash_pareto_pandas(frame, 800, 1300)
+    # frame = pd.read_csv(filepath)
+    dash_pareto_pandas(frame, 700, 1300)
 
