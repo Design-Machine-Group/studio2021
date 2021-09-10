@@ -12,9 +12,12 @@ import plotly.express as px
 import numpy as np
 
 
-def load_jsons_pandas(folderpath):
+def load_jsons_pandas(folderpath, names=None):
     data = {}
-    files = os.listdir(folderpath)
+    if names:
+        files = ['{}.json'.format(name) for name in names]
+    else:
+        files = os.listdir(folderpath)
     for f in files:
         if f.endswith('json'):
             b = Building.from_json(os.path.join(folderpath, f))
@@ -126,15 +129,21 @@ def parse_building(bldg, filename):
 
         # non linear models - - - - - - -
 
-        if city_gwp2 >= 0.:
+        if city_gwp2 - delta2 >= 0.:
             city_gwp2 -= delta2  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+        else:
+            city_gwp2 = 0.
 
-        if city_gwp3 >= 0.:
+        if city_gwp3 - delta3 >= 0.:
             city_gwp3 -= delta3  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
-        
-        if city_gwp5 >= 0.:
+        else:
+            city_gwp3 = 0.
+
+        if city_gwp5 - delta5 >= 0.:
             city_gwp5 -= delta5  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
-        
+        else:
+            city_gwp5 = 0.
+
         accl += opl_year_x
         acc2 += op2_year_x
         acc3 += op3_year_x
@@ -143,62 +152,47 @@ def parse_building(bldg, filename):
     return data
 
 
-def plot_lifecycle(data, keys=None):
-    ny = 50
-    years = list(range(ny))
+def plot_licecyle_models(data, keys=None):
+
     fig = go.Figure()
     if not keys:
         keys = data.keys()
+    years = list(range(1, 51))
     for k in keys:
-        op = data[k]['Operational (kg CO2e / ft2 * year)']
-        bau = [op * i for i in years]
-        eui = data[k]['tot_eui_kwh'] / data[k]['area']
+        lin = [0]
+        opl = [0]
+        nl2 = [0]
+        onl2 = [0]
+        nl3 = [0]
+        onl3 = [0]
+        nl5 = [0]
+        onl5 = [0]
         emb = [0]
-        non2 = [0]
-        non3 = [0]
-        non5 = [0]
-        acc2 = 0
-        acc3 = 0
-        acc5 = 0
-        city_gwp2 = data[k]['city_gwp']
-        city_gwp3 = data[k]['city_gwp']
-        city_gwp5 = data[k]['city_gwp']
-        delta2 = city_gwp2 * .02
-        delta3 = city_gwp3 * .03
-        delta5 = city_gwp5 * .05
-        # tot = []
-        for _ in years:
-            op2_year_x = eui * city_gwp2
-            op3_year_x = eui * city_gwp3
-            op5_year_x = eui * city_gwp5
-
-            non2.append(op2_year_x + acc2)
-            non3.append(op3_year_x + acc3)
-            non5.append(op2_year_x + acc5)
-
+        for y in years:
             emb.append(data[k]['Embodied (kg CO2e / ft2)'])
-            # non linear models - - - - - - - - - - - - - - - - - - - - - - - - -
 
-            # city_gwp *= (1 - imp)  # X% every year, never getting to 0 (GWP/kWh)
+            lin.append(data[k]['Total GWP Linear (kg CO2e / ft2) {} year'.format(y)])
+            opl.append(data[k]['Op GWP Linear (kg CO2e / ft2) {} year'.format(y)])
 
-            if city_gwp2 >= 0.:
-                city_gwp2 -= delta2  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
-
-            if city_gwp3 >= 0.:
-                city_gwp3 -= delta3  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
+            nl2.append(data[k]['Total GWP non-linear 2% (kg CO2e / ft2) {} year'.format(y)])
+            onl2.append(data[k]['Op GWP non-linear 2% (kg CO2e / ft2) {} year'.format(y)])
             
-            if city_gwp5 >= 0.:
-                city_gwp5 -= delta5  # X% of initial city value, 5% gets to 0 (GWP/kWh) in 20y (Paris)
-            
-            acc2 += op2_year_x
-            acc3 += op3_year_x
-            acc5 += op5_year_x
+            nl3.append(data[k]['Total GWP non-linear 3% (kg CO2e / ft2) {} year'.format(y)])
+            onl3.append(data[k]['Op GWP non-linear 3% (kg CO2e / ft2) {} year'.format(y)])
 
+            nl5.append(data[k]['Total GWP non-linear 5% (kg CO2e / ft2) {} year'.format(y)])
+            onl5.append(data[k]['Op GWP non-linear 5% (kg CO2e / ft2) {} year'.format(y)])
 
-        fig.add_trace(go.Scatter(x=years, y=bau, name= 'BAU - {}'.format(k)))
-        fig.add_trace(go.Scatter(x=years, y=non2, name= 'Non linear 2% - {}'.format(k)))
-        fig.add_trace(go.Scatter(x=years, y=non3, name= 'Non linear 3% - {}'.format(k)))
-        fig.add_trace(go.Scatter(x=years, y=non5, name= 'Non linear 5% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=opl, name= 'Op Linear - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=onl2, name= 'Op Non linear 2% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=onl3, name= 'Op Non linear 3% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=onl5, name= 'Op Non linear 5% - {}'.format(k)))
+
+        fig.add_trace(go.Scatter(x=years, y=lin, name= 'Total linear 2% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=nl2, name= 'Total Non linear 2% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=nl3, name= 'Total Non linear 3% - {}'.format(k)))
+        fig.add_trace(go.Scatter(x=years, y=nl5, name= 'Total Non linear 5% - {}'.format(k)))
+
         fig.add_trace(go.Scatter(x=years, y=emb, name= 'Embodied - {}'.format(k)))
 
 
@@ -495,11 +489,18 @@ if __name__ == '__main__':
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
     # folderpath = studio2021.TEMP
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/r_data'
-    # data, frame = load_jsons_pandas(folderpath)
-    # plot_lifecycle(data, keys=['la_w_40_1_1_office'])
+    # names = ['at_w_40_1_1_office',
+    #         # 'se_w_40_1_1_office',
+    #         # 'la_w_40_1_1_office',
+    #         # 'ny_w_40_1_1_office',
+    #         # 'mi_w_40_1_1_office',
+    #         # 'sa_w_40_1_1_office',
+    #         ]
+    # data, frame = load_jsons_pandas(folderpath, names=None)
+    # plot_licecyle_models(data, keys=names)
     # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
-    filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
-    # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
+    # filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
+    filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
     frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 700, 1300)
 
