@@ -123,7 +123,7 @@ class Building(object):
     def __str__(self):
         return TPL.format(self.__name__)
 
-    def to_json(self, filepath):
+    def to_json(self, filepath=None):
         fn = os.path.splitext(self.csv)[0]
         if not filepath:
             filepath = os.path.join(studio2021.TEMP, '{}.json'.format(fn))
