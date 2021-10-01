@@ -14,14 +14,24 @@ import numpy as np
 
 def load_jsons_pandas(folderpath, names=None):
     data = {}
+    if type(folderpath) == list:
+        files = []
+        for fp in folderpath:
+            fnames = os.listdir(fp)
+            for fn in fnames:
+                files.append(os.path.join(fp, fn))
     if names:
         files = ['{}.json'.format(name) for name in names]
-    else:
-        files = os.listdir(folderpath)
+    elif type(folderpath) == str:
+        files = []
+        fnames = os.listdir(folderpath)
+        for fn in fnames:
+            files.append(os.path.join(fp, fn))
     for f in files:
         if f.endswith('json'):
-            b = Building.from_json(os.path.join(folderpath, f))
-            key = os.path.splitext(f)[0]
+            b = Building.from_json(f)
+            # key = os.path.splitext(f)[0]
+            key = os.path.basename(f)
             data[key] = parse_building(b, f)
     frame = pd.DataFrame.from_dict(data, orient='index')
     return data, frame
@@ -45,7 +55,7 @@ def parse_building(bldg, filename):
                 'Atlanta': 0.399590512}
 
     data = {}
-
+    filename = os.path.basename(filename)
     filename = filename.split('_')
     data['orient'] = filename[1]
     data['wwr'] = bldg.wwr['n']
@@ -481,26 +491,20 @@ def dash_pareto_pandas(frame, gheight=700, gwidth=1200):
 
 if __name__ == '__main__':
     import studio2021
-    #TODO: When sizing by WWR, size can go to zero, hiding data. FIX!
-    # for i in range(50): print('')
+    for i in range(50): print('')
     # folderpath = 'C:/IDL/StudioTool/Paper/data/all_data_/all_data_'
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
     # folderpath = studio2021.TEMP
-    # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/r_data'
-    # names = ['at_w_40_1_1_office',
-    #         # 'se_w_40_1_1_office',
-    #         # 'la_w_40_1_1_office',
-    #         # 'ny_w_40_1_1_office',
-    #         # 'mi_w_40_1_1_office',
-    #         # 'sa_w_40_1_1_office',
-    #         ]
-    # data, frame = load_jsons_pandas(folderpath, names=None)
-    # plot_licecyle_models(data, keys=names)
-    # frame.to_csv(os.path.join(studio2021.DATA, 'r_data.csv'))
-    # filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
-    filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
+    # folderpath1 = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_assemblies'
+    # folderpath2 = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_assemblies_shd'
+    # data, frame = load_jsons_pandas([folderpath1, folderpath2], names=None)
+    # # plot_licecyle_models(data, keys=names)
+    # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
+
+    filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
+    # # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
     frame = pd.read_csv(filepath)
     dash_pareto_pandas(frame, 700, 1300)
 
