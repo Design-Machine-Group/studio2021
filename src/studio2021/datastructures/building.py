@@ -877,6 +877,7 @@ class Building(object):
         data['run_simulation']          = self.run_simulation
         data['interior_insul_mat']      = self.interior_insul_mat
         data['inf_rate']                = self.inf_rate
+        data['int_ins_thickness']       = self.int_ins_thickness
 
         # if self.ewall_framing == '2x4 Wood Studs':
         #     int_ins_thick = 4. / 12.

@@ -228,8 +228,12 @@ class Envelope(object):
         # interior insulation - - -
         int_ins_mat = self.interior_insul_mat
         int_ins_thick = self.int_ins_thickness / 12.
-        int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
-        int_ins_emb = tot_opaque * int_ins_thick * int_ins_emb_ 
+        if int_ins_mat != 'None':
+            int_ins_emb_ = float(read_materials_city(int_ins_mat, self.city)) / 27. # currently (kgCO2/yd3)
+            int_ins_emb = tot_opaque * int_ins_thick * int_ins_emb_ 
+        else:
+            int_ins_emb = 0.
+            int_ins_emb_ = 0.
 
         # interior finish - - -
         int_mat = self.int_finish
