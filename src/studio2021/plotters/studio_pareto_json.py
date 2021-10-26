@@ -496,16 +496,18 @@ if __name__ == '__main__':
     # folderpath = '/Users/time/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/all_data_'
     # folderpath = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/temp_data'
-    folderpath = studio2021.TEMP
-    # folderpath1 = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_assemblies'
-    # folderpath2 = '/Users/tmendeze/Documents/UW/03_publications/studio2021/envelope_paper/data_assemblies_shd'
-    data, frame = load_jsons_pandas(folderpath, names=None)
-    names = [list(data.keys())[0]]
-    plot_licecyle_models(data, keys=names)
+    # folderpath = studio2021.TEMP
+    # folderpath1 = '/Users/tmendeze/Documents/UW/03_publications/05_Energy_and_buildings_2021/data_assemblies'
+    # folderpath2 = '/Users/tmendeze/Documents/UW/03_publications/05_Energy_and_buildings_2021/data_assemblies_shd'
+    # folderpath3 = '/Users/tmendeze/Documents/UW/03_publications/05_Energy_and_buildings_2021/data_assemblies_glazing'
+    # folderpaths = [folderpath1, folderpath2, folderpath3]
+    # data, frame = load_jsons_pandas(folderpaths, names=None)
+    # names = [list(data.keys())[0]]
+    # plot_licecyle_models(data, keys=names)
     # frame.to_csv(os.path.join(studio2021.DATA, 'assemblies_data.csv'))
 
     # filepath = os.path.join(studio2021.DATA, 'frames','assemblies_data.csv')
-    # # # filepath = os.path.join(studio2021.DATA, 'frames', 'r_data.csv')
-    # frame = pd.read_csv(filepath)
-    # dash_pareto_pandas(frame, 700, 1300)
+    filepath = os.path.join(studio2021.TEMP,'assemblies_data.csv')
+    frame = pd.read_csv(filepath)
+    dash_pareto_pandas(frame, 700, 1300)
 
